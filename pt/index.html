@@ -1,1 +1,1476 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitLog Pro - PT 회원 운동일지 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col md:flex-row overflow-hidden bg-slate-950 text-slate-100">
 
+  <!-- Sidebar Navigation (Desktop) / Header (Mobile) -->
+  <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex-shrink-0 flex flex-col justify-between z-20">
+    <div>
+      <!-- Brand Logo -->
+      <div class="p-4 flex items-center justify-between border-b border-slate-800">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-brand-500/20">
+            <i class="fa-solid fa-dumbbell"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg tracking-tight text-white leading-none">FitLog <span class="text-brand-500">PRO</span></h1>
+            <p class="text-xs text-slate-400 mt-1">PT 회원 관리 & 운동일지</p>
+          </div>
+        </div>
+        <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Quick Trainer Info -->
+      <div class="p-4 bg-slate-800/40 m-3 rounded-xl border border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="트레이너" class="w-10 h-10 rounded-full object-cover border border-brand-500/50">
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-brand-500 border-2 border-slate-900 rounded-full"></span>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white">강태양 트레이너</div>
+            <div class="text-xs text-slate-400">담당 회원: <span id="totalMemberCountBadge" class="text-brand-400 font-bold">0</span>명</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav id="navMenu" class="px-3 py-2 space-y-1 hidden md:block">
+        <button onclick="switchTab('workout')" id="nav-workout" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          <i class="fa-solid fa-clipboard-list w-5 text-center text-base"></i>
+          <span>오늘의 운동일지</span>
+        </button>
+
+        <button onclick="switchTab('inbody')" id="nav-inbody" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-chart-line w-5 text-center text-base"></i>
+          <span>인바디 & 신체변화</span>
+        </button>
+
+        <button onclick="switchTab('history')" id="nav-history" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all">
+          <i class="fa-regular fa-calendar-alt w-5 text-center text-base"></i>
+          <span>일지 기록 히스토리</span>
+        </button>
+
+        <button onclick="switchTab('members')" id="nav-members" class="nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all">
+          <i class="fa-solid fa-users w-5 text-center text-base"></i>
+          <span>회원 목록 & 등록</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Active Member Quick Selector Widget -->
+    <div class="p-3 border-t border-slate-800 bg-slate-900/80">
+      <label class="block text-xs font-medium text-slate-400 mb-1.5 flex justify-between">
+        <span>현재 선택된 회원</span>
+        <span class="text-brand-400 cursor-pointer hover:underline" onclick="openAddMemberModal()">+ 회원추가</span>
+      </label>
+      <select id="memberSelect" onchange="onMemberSelectChange(this.value)" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 font-medium">
+        <!-- JS injected -->
+      </select>
+    </div>
+  </aside>
+
+  <!-- Main Content View Container -->
+  <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-950">
+
+    <!-- Top Action Bar -->
+    <header class="h-16 border-b border-slate-800 bg-slate-900/50 px-4 md:px-6 flex items-center justify-between flex-shrink-0 backdrop-blur-md">
+      <div class="flex items-center space-x-3">
+        <div id="currentMemberAvatar" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-brand-400 text-sm">
+          -
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 id="currentMemberName" class="text-base md:text-lg font-bold text-white">회원을 선택해주세요</h2>
+            <span id="currentMemberStatusBadge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">
+              PT 진행중
+            </span>
+          </div>
+          <p id="currentMemberSubtext" class="text-xs text-slate-400 hidden sm:block">목표: - | 남은 횟수: -</p>
+        </div>
+      </div>
+
+      <!-- Quick Session Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="deductMemberSession()" class="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs md:text-sm font-medium transition flex items-center space-x-1.5" title="PT 1회 차감">
+          <i class="fa-solid fa-minus-circle"></i>
+          <span class="hidden sm:inline">PT 1회</span> 차감
+        </button>
+        <button onclick="openShareModal()" class="px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-lg text-xs md:text-sm font-medium transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-share-nodes"></i>
+          <span>카톡전송 복사</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Dynamic Content Area -->
+    <div id="contentScrollArea" class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar space-y-6">
+
+      <!-- TAB 1: WORKOUT LOG (오늘의 운동일지) -->
+      <section id="tab-workout" class="space-y-6">
+        <!-- Date Selector & PT Session Badge Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <div class="p-3 bg-brand-500/10 text-brand-400 rounded-xl border border-brand-500/20">
+              <i class="fa-solid fa-calendar-day text-xl"></i>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">운동 일자 선택</label>
+              <input type="date" id="workoutDateInput" onchange="loadMemberWorkoutLog()" class="bg-slate-800 border border-slate-700 text-white font-semibold text-sm rounded-lg px-3 py-1.5 mt-0.5 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 sm:gap-4 border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-6">
+            <div class="text-center md:text-left">
+              <span class="text-xs text-slate-400 block">진행 회차</span>
+              <span id="sessionProgressText" class="text-base md:text-lg font-bold text-white">0 / 0회</span>
+            </div>
+            <div class="text-center md:text-left">
+              <span class="text-xs text-slate-400 block">잔여 횟수</span>
+              <span id="sessionRemainingText" class="text-base md:text-lg font-bold text-brand-400">0회</span>
+            </div>
+            <div class="text-center md:text-left">
+              <span class="text-xs text-slate-400 block">오늘 총 중량</span>
+              <span id="totalVolumeText" class="text-base md:text-lg font-bold text-indigo-400">0 kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Routine Template Quick Load Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80">
+          <div class="flex items-center space-x-2 text-xs text-slate-400">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+            <span class="font-medium text-slate-300">추천 프리셋 루틴 불러오기:</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="applyRoutinePreset('lower')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition">
+              🔥 하체 강화 A
+            </button>
+            <button onclick="applyRoutinePreset('chest_triceps')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition">
+              💪 가슴/삼두 B
+            </button>
+            <button onclick="applyRoutinePreset('back_biceps')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition">
+              🏋️ 등/이두 C
+            </button>
+            <button onclick="applyRoutinePreset('shoulder_core')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition">
+              🛡️ 어깨/복근 D
+            </button>
+          </div>
+        </div>
+
+        <!-- Exercise Logs Section -->
+        <div id="exerciseListContainer" class="space-y-4">
+          <!-- Exercise items will be dynamically injected here -->
+        </div>
+
+        <!-- Add Exercise Button -->
+        <button onclick="addNewExerciseCard()" class="w-full py-3 border-2 border-dashed border-slate-800 hover:border-brand-500/50 hover:bg-brand-500/5 text-slate-400 hover:text-brand-400 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-plus-circle"></i>
+          <span>새 운동 종목 추가하기</span>
+        </button>
+
+        <!-- Trainer Feedback & Client Homework Note Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-comment-dots text-brand-400"></i>
+              <span>트레이너 피드백 & 오늘 과제(식단/개인운동)</span>
+            </h3>
+            <span class="text-xs text-slate-400">카톡 전송시 함께 포함됩니다</span>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">오늘의 총평 및 자세 교정 피드백</label>
+              <textarea id="trainerFeedbackInput" rows="3" placeholder="예: 스쿼트 시 무릎이 모이지 않도록 내전근과 중둔근에 자극 유지 필요. 수고 많으셨습니다!" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">유산소 및 내일 숙제 (식단/개인운동)</label>
+              <textarea id="clientHomeworkInput" rows="3" placeholder="예: 운동 후 러닝머신 경사도 5.0 속도 5.5 30분 진행. 저녁 단백질 30g 챙겨 드세요!" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-2">
+            <button onclick="saveCurrentLog()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-brand-600/20 flex items-center space-x-2">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>오늘 운동일지 저장하기</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: INBODY & BODY COMPOSITION (신체 변화 & 인바디) -->
+      <section id="tab-inbody" class="space-y-6 hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- InBody Record Input Form Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-weight-scale text-brand-400"></i>
+              <span>신체 측정 데이터 입력</span>
+            </h3>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">측정일</label>
+                <input type="date" id="inbodyDate" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">체중 (kg)</label>
+                  <input type="number" step="0.1" id="inbodyWeight" placeholder="70.5" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">골격근량 (kg)</label>
+                  <input type="number" step="0.1" id="inbodyMuscle" placeholder="32.1" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">체지방률 (%)</label>
+                  <input type="number" step="0.1" id="inbodyFatRatio" placeholder="18.5" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-400 mb-1">체지방량 (kg)</label>
+                  <input type="number" step="0.1" id="inbodyFatMass" placeholder="13.0" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+              <button onclick="addInBodyRecord()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-brand-400 font-semibold rounded-lg text-sm transition mt-2">
+                <i class="fa-solid fa-plus-circle mr-1"></i> 측정 기록 추가
+              </button>
+            </div>
+
+            <!-- Initial vs Latest Comparison Card -->
+            <div class="border-t border-slate-800 pt-4 mt-4 space-y-2">
+              <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">최초 대비 변화 스탯</h4>
+              <div id="inbodyStatSummary" class="grid grid-cols-3 gap-2 text-center">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Visualizer -->
+          <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-chart-area text-indigo-400"></i>
+                <span>체중 / 골격근 / 체지방 변화 트렌드</span>
+              </h3>
+              <span class="text-xs text-slate-400">최근 10회 기록</span>
+            </div>
+
+            <div class="relative w-full h-72 md:h-80">
+              <canvas id="inbodyChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- InBody Record History Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <h3 class="text-base font-bold text-white mb-4">인바디 측정이력 상세</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+              <thead class="bg-slate-800/80 text-xs text-slate-400 uppercase border-b border-slate-700">
+                <tr>
+                  <th class="py-3 px-4">측정일</th>
+                  <th class="py-3 px-4">체중 (kg)</th>
+                  <th class="py-3 px-4">골격근량 (kg)</th>
+                  <th class="py-3 px-4">체지방률 (%)</th>
+                  <th class="py-3 px-4">체지방량 (kg)</th>
+                  <th class="py-3 px-4 text-right">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="inbodyHistoryTableBody" class="divide-y divide-slate-800">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: WORKOUT HISTORY (일지 기록 히스토리) -->
+      <section id="tab-history" class="space-y-6 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                <i class="fa-regular fa-calendar-check text-brand-400"></i>
+                <span>과거 운동 기록 조회</span>
+              </h3>
+              <p class="text-xs text-slate-400">날짜별 수행한 운동과 볼륨 기록 목록입니다</p>
+            </div>
+            <input type="text" id="historySearchInput" onkeyup="filterHistoryLogs()" placeholder="운동종목 검색 (예: 스쿼트, 벤치)" class="bg-slate-800 border border-slate-700 text-xs md:text-sm text-white rounded-lg px-3 py-2 w-full sm:w-64 focus:outline-none focus:border-brand-500">
+          </div>
+
+          <!-- History Timeline Grid -->
+          <div id="historyLogsContainer" class="space-y-4">
+            <!-- Dynamic Injection -->
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: MEMBER LIST & MANAGEMENT (회원 목록 및 등록) -->
+      <section id="tab-members" class="space-y-6 hidden">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">전체 회원목록 관리</h3>
+            <p class="text-xs text-slate-400">등록된 회원 현황, 남아있는 수강권 및 목표를 관리합니다</p>
+          </div>
+          <button onclick="openAddMemberModal()" class="w-full sm:w-auto px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-brand-600/20">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>신규 회원 등록</span>
+          </button>
+        </div>
+
+        <!-- Members Grid -->
+        <div id="membersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Injected via JS -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL 1: Add/Edit Member Modal -->
+  <div id="addMemberModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="memberModalTitle" class="text-base font-bold text-white">신규 PT 회원 등록</h3>
+        <button onclick="closeAddMemberModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="memberForm" onsubmit="handleSaveMember(event)" class="space-y-3">
+        <input type="hidden" id="editMemberId">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">회원 이름 *</label>
+          <input type="text" id="memberInputName" required placeholder="예: 김헬스" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">성별</label>
+            <select id="memberInputGender" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+              <option value="남성">남성</option>
+              <option value="여성">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">연락처</label>
+            <input type="text" id="memberInputPhone" placeholder="010-0000-0000" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">총 PT 계약회차 *</label>
+            <input type="number" id="memberInputTotal" required value="20" min="1" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">현재 진행 회차</label>
+            <input type="number" id="memberInputCurrent" value="1" min="0" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">운동 목표</label>
+          <input type="text" id="memberInputGoal" placeholder="예: 체지방 감소 및 하체 근력 강화" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">특이사항 및 질환 (기억용)</label>
+          <input type="text" id="memberInputNote" placeholder="예: 좌측 허상 허리 디스크 이력, 조심할 것" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-2.5 text-sm focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeAddMemberModal()" class="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-lg text-sm font-medium">취소</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold rounded-lg text-sm">저장하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Kakao / Text Share Summary Modal -->
+  <div id="shareModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+          <i class="fa-solid fa-comment text-yellow-400"></i>
+          <span>카톡 전송용 운동일지 요약</span>
+        </h3>
+        <button onclick="closeShareModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400">아래 텍스트를 복사하여 회원님에게 카카오톡 메시지로 전송할 수 있습니다.</p>
+
+      <textarea id="shareTextPreview" rows="12" readonly class="w-full bg-slate-950 border border-slate-800 font-mono text-xs text-slate-200 p-3 rounded-xl focus:outline-none leading-relaxed select-all custom-scrollbar"></textarea>
+
+      <div class="flex justify-between items-center pt-2">
+        <span id="copyToastMessage" class="text-xs text-brand-400 font-medium hidden">✓ 클립보드에 복사되었습니다!</span>
+        <div class="flex space-x-2 ml-auto">
+          <button onclick="closeShareModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">닫기</button>
+          <button onclick="copyShareText()" class="px-5 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold rounded-lg text-sm flex items-center space-x-1.5 shadow-lg shadow-yellow-500/20">
+            <i class="fa-regular fa-copy"></i>
+            <span>텍스트 복사하기</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Container -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-brand-500/40 text-slate-100 px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center space-x-3 pointer-events-none">
+    <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center flex-shrink-0">
+      <i id="toastIcon" class="fa-solid fa-check"></i>
+    </div>
+    <span id="toastText" class="text-sm font-medium">처리되었습니다.</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. INITIAL DEFAULT MOCK DATA & APP STATE
+       ========================================================================== */
+    const STORAGE_KEY = 'FITLOG_PRO_MEMBERS_DATA_V1';
+
+    const DEFAULT_PRESETS = {
+      lower: [
+        { name: '바벨 스쿼트', category: '하체', sets: [{ weight: 60, reps: 12, rest: '90초', rpe: 8 }, { weight: 80, reps: 10, rest: '90초', rpe: 8.5 }, { weight: 100, reps: 8, rest: '120초', rpe: 9 }] },
+        { name: '레그 프레스', category: '하체', sets: [{ weight: 120, reps: 15, rest: '60초', rpe: 7 }, { weight: 160, reps: 12, rest: '60초', rpe: 8 }] },
+        { name: '루마니안 데드리프트', category: '하체', sets: [{ weight: 50, reps: 12, rest: '60초', rpe: 7 }, { weight: 70, reps: 10, rest: '90초', rpe: 8 }] }
+      ],
+      chest_triceps: [
+        { name: '바벨 벤치프레스', category: '가슴', sets: [{ weight: 40, reps: 12, rest: '60초', rpe: 7 }, { weight: 60, reps: 10, rest: '90초', rpe: 8 }, { weight: 70, reps: 8, rest: '90초', rpe: 9 }] },
+        { name: '덤벨 인클라인 프레스', category: '가슴', sets: [{ weight: 18, reps: 12, rest: '60초', rpe: 8 }, { weight: 22, reps: 10, rest: '60초', rpe: 8.5 }] },
+        { name: '케이블 트라이셉스 푸시다운', category: '팔', sets: [{ weight: 25, reps: 15, rest: '45초', rpe: 8 }, { weight: 30, reps: 12, rest: '45초', rpe: 9 }] }
+      ],
+      back_biceps: [
+        { name: '렛풀다운', category: '등', sets: [{ weight: 35, reps: 15, rest: '60초', rpe: 7 }, { weight: 45, reps: 12, rest: '60초', rpe: 8 }, { weight: 55, reps: 10, rest: '60초', rpe: 8.5 }] },
+        { name: '시티드 케이블 로우', category: '등', sets: [{ weight: 40, reps: 12, rest: '60초', rpe: 8 }, { weight: 50, reps: 10, rest: '60초', rpe: 8 }] },
+        { name: '이지바 바이셉스 컬', category: '팔', sets: [{ weight: 15, reps: 12, rest: '45초', rpe: 8 }, { weight: 20, reps: 10, rest: '45초', rpe: 9 }] }
+      ],
+      shoulder_core: [
+        { name: '오버헤드 바벨프레스', category: '어깨', sets: [{ weight: 25, reps: 12, rest: '60초', rpe: 7 }, { weight: 35, reps: 10, rest: '90초', rpe: 8.5 }] },
+        { name: '사이드 레터럴 레이즈', category: '어깨', sets: [{ weight: 5, reps: 20, rest: '45초', rpe: 8 }, { weight: 7, reps: 15, rest: '45초', rpe: 8.5 }] },
+        { name: '행잉 레그레이즈', category: '복근', sets: [{ weight: 0, reps: 15, rest: '45초', rpe: 8 }, { weight: 0, reps: 15, rest: '45초', rpe: 8.5 }] }
+      ]
+    };
+
+    const INITIAL_MEMBERS = [
+      {
+        id: 'mem_1',
+        name: '김민준',
+        gender: '남성',
+        phone: '010-1234-5678',
+        totalSessions: 20,
+        currentSession: 8,
+        goal: '골격근량 증가 및 스쿼트 자세 교정',
+        notes: '우측 무릎 과거 부상 이력 있음',
+        inbody: [
+          { date: '2026-06-01', weight: 78.5, muscle: 33.2, fatRatio: 22.1, fatMass: 17.3 },
+          { date: '2026-07-01', weight: 77.2, muscle: 34.0, fatRatio: 20.2, fatMass: 15.5 },
+          { date: '2026-08-01', weight: 76.8, muscle: 34.8, fatRatio: 18.8, fatMass: 14.4 }
+        ],
+        logs: {
+          '2026-08-01': {
+            sessionNum: 8,
+            feedback: '오늘 스쿼트 무게 올렸으나 고관절 힌지 접힘 아주 우수했습니다. 둔근 자극 잘 들어감!',
+            homework: '유산소 경사도 6.0 25분 진행 완료. 운동 후 수분 1L 이상 섭취하세요.',
+            exercises: [
+              {
+                id: 'ex_1',
+                name: '바벨 스쿼트',
+                category: '하체',
+                sets: [
+                  { weight: 60, reps: 12, rest: '90초', rpe: 7.5 },
+                  { weight: 80, reps: 10, rest: '90초', rpe: 8.5 },
+                  { weight: 90, reps: 8, rest: '120초', rpe: 9 }
+                ]
+              },
+              {
+                id: 'ex_2',
+                name: '레그 엑스텐션',
+                category: '하체',
+                sets: [
+                  { weight: 30, reps: 15, rest: '60초', rpe: 8 },
+                  { weight: 40, reps: 12, rest: '60초', rpe: 8.5 }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: 'mem_2',
+        name: '이지은',
+        gender: '여성',
+        phone: '010-9876-5432',
+        totalSessions: 30,
+        currentSession: 14,
+        goal: '체지방 5kg 감량 & 등/상체 라인 정리',
+        notes: '라운드 숄더 및 거북목 체형 개선 필요',
+        inbody: [
+          { date: '2026-06-15', weight: 58.2, muscle: 20.5, fatRatio: 28.5, fatMass: 16.5 },
+          { date: '2026-07-15', weight: 56.0, muscle: 21.0, fatRatio: 25.0, fatMass: 14.0 }
+        ],
+        logs: {
+          '2026-08-01': {
+            sessionNum: 14,
+            feedback: '렛풀다운 진행 시 견갑 하강 느낌 잘 잡으셨습니다. 타겟 부위 자극 우수.',
+            homework: '저녁 간식 자제하기, 폼롤러로 흉근 및 등 근육 5분 스트레칭!',
+            exercises: [
+              {
+                id: 'ex_3',
+                name: '렛풀다운',
+                category: '등',
+                sets: [
+                  { weight: 20, reps: 15, rest: '60초', rpe: 7 },
+                  { weight: 25, reps: 12, rest: '60초', rpe: 8 }
+                ]
+              },
+              {
+                id: 'ex_4',
+                name: '시티드 케이블 로우',
+                category: '등',
+                sets: [
+                  { weight: 20, reps: 12, rest: '60초', rpe: 8 }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ];
+
+    let membersData = [];
+    let currentMemberId = null;
+    let currentTab = 'workout';
+    let chartInstance = null;
+
+    // Load data from LocalStorage or initialize with defaults
+    function initData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          membersData = JSON.parse(saved);
+        } catch (e) {
+          membersData = INITIAL_MEMBERS;
+        }
+      } else {
+        membersData = INITIAL_MEMBERS;
+        saveData();
+      }
+
+      if (membersData.length > 0) {
+        currentMemberId = membersData[0].id;
+      }
+
+      // Set today's date in input
+      const todayStr = getTodayISOString();
+      document.getElementById('workoutDateInput').value = todayStr;
+      document.getElementById('inbodyDate').value = todayStr;
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(membersData));
+    }
+
+    function getTodayISOString() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function renderMemberSelect() {
+      const select = document.getElementById('memberSelect');
+      select.innerHTML = '';
+      membersData.forEach(m => {
+        const remaining = m.totalSessions - m.currentSession;
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.name} (${m.gender} / 잔여 ${remaining}회)`;
+        if (m.id === currentMemberId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      document.getElementById('totalMemberCountBadge').textContent = membersData.length;
+      updateHeaderMemberInfo();
+    }
+
+    function updateHeaderMemberInfo() {
+      const member = getCurrentMember();
+      if (!member) {
+        document.getElementById('currentMemberName').textContent = '회원을 등록하세요';
+        return;
+      }
+
+      document.getElementById('currentMemberAvatar').textContent = member.name.substring(0, 1);
+      document.getElementById('currentMemberName').textContent = member.name;
+      
+      const remaining = member.totalSessions - member.currentSession;
+      document.getElementById('currentMemberSubtext').textContent = `목표: ${member.goal || '미정'} | 잔여: ${remaining}회 (총 ${member.totalSessions}회)`;
+      
+      if (remaining <= 3) {
+        document.getElementById('currentMemberStatusBadge').textContent = '수강권 임박!';
+        document.getElementById('currentMemberStatusBadge').className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30';
+      } else {
+        document.getElementById('currentMemberStatusBadge').textContent = 'PT 진행중';
+        document.getElementById('currentMemberStatusBadge').className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30';
+      }
+    }
+
+    function getCurrentMember() {
+      return membersData.find(m => m.id === currentMemberId);
+    }
+
+    function onMemberSelectChange(memberId) {
+      currentMemberId = memberId;
+      updateHeaderMemberInfo();
+      refreshCurrentTab();
+      showToast(`${getCurrentMember().name} 회원으로 변경되었습니다.`);
+    }
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      ['workout', 'inbody', 'history', 'members'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const navEl = document.getElementById(`nav-${t}`);
+        if (t === tabName) {
+          tabEl.classList.remove('hidden');
+          navEl.className = 'nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20';
+        } else {
+          tabEl.classList.add('hidden');
+          navEl.className = 'nav-item w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all';
+        }
+      });
+
+      // Mobile Menu Hide
+      document.getElementById('navMenu').classList.add('hidden');
+      document.getElementById('navMenu').classList.remove('block');
+
+      refreshCurrentTab();
+    }
+
+    function refreshCurrentTab() {
+      if (currentTab === 'workout') {
+        loadMemberWorkoutLog();
+      } else if (currentTab === 'inbody') {
+        renderInBodySection();
+      } else if (currentTab === 'history') {
+        renderWorkoutHistorySection();
+      } else if (currentTab === 'members') {
+        renderMembersGrid();
+      }
+    }
+
+    function loadMemberWorkoutLog() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      const dateStr = document.getElementById('workoutDateInput').value;
+      const logData = member.logs && member.logs[dateStr] ? member.logs[dateStr] : null;
+
+      // Update Session Stats Card
+      document.getElementById('sessionProgressText').textContent = `${logData ? logData.sessionNum || member.currentSession : member.currentSession} / ${member.totalSessions}회`;
+      document.getElementById('sessionRemainingText').textContent = `${member.totalSessions - member.currentSession}회`;
+
+      // Render Exercises
+      const container = document.getElementById('exerciseListContainer');
+      container.innerHTML = '';
+
+      const exercises = logData ? logData.exercises : [];
+      let totalVolume = 0;
+
+      exercises.forEach((ex, exIdx) => {
+        ex.sets.forEach(s => {
+          totalVolume += (Number(s.weight) || 0) * (Number(s.reps) || 0);
+        });
+        container.appendChild(createExerciseCardDOM(ex, exIdx));
+      });
+
+      document.getElementById('totalVolumeText').textContent = `${totalVolume.toLocaleString()} kg`;
+
+      // Fill Feedback & Homework
+      document.getElementById('trainerFeedbackInput').value = logData ? logData.feedback || '' : '';
+      document.getElementById('clientHomeworkInput').value = logData ? logData.homework || '' : '';
+    }
+
+    function createExerciseCardDOM(ex, exIdx) {
+      const card = document.createElement('div');
+      card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-xl space-y-4 exercise-card-item';
+      card.dataset.exIdx = exIdx;
+
+      const categoryColors = {
+        '가슴': 'bg-red-500/10 text-red-400 border-red-500/20',
+        '등': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        '하체': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        '어깨': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        '팔': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+        '복근': 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+        '유산소': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+      };
+
+      const colorClass = categoryColors[ex.category] || 'bg-slate-800 text-slate-300 border-slate-700';
+
+      card.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center space-x-3 flex-1">
+            <select class="ex-category bg-slate-800 border border-slate-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-brand-500 text-slate-200">
+              <option value="하체" ${ex.category === '하체' ? 'selected' : ''}>하체</option>
+              <option value="가슴" ${ex.category === '가슴' ? 'selected' : ''}>가슴</option>
+              <option value="등" ${ex.category === '등' ? 'selected' : ''}>등</option>
+              <option value="어깨" ${ex.category === '어깨' ? 'selected' : ''}>어깨</option>
+              <option value="팔" ${ex.category === '팔' ? 'selected' : ''}>팔</option>
+              <option value="복근" ${ex.category === '복근' ? 'selected' : ''}>복근</option>
+              <option value="유산소" ${ex.category === '유산소' ? 'selected' : ''}>유산소</option>
+            </select>
+            <input type="text" value="${ex.name || ''}" placeholder="운동 종목명 (예: 바벨 스쿼트)" class="ex-name flex-1 bg-slate-800 border border-slate-700 font-bold text-sm text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-500">
+          </div>
+          <button onclick="removeExerciseCard(${exIdx})" class="self-end sm:self-center text-xs text-rose-400 hover:text-rose-300 px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg transition">
+            <i class="fa-solid fa-trash-can mr-1"></i> 종목 삭제
+          </button>
+        </div>
+
+        <!-- Sets Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300 min-w-[480px]">
+            <thead>
+              <tr class="text-slate-400 border-b border-slate-800/80 uppercase">
+                <th class="py-2 px-2 w-12 text-center">세트</th>
+                <th class="py-2 px-2">중량 (kg)</th>
+                <th class="py-2 px-2">횟수 (Reps)</th>
+                <th class="py-2 px-2">휴식시간</th>
+                <th class="py-2 px-2">강도 (RPE)</th>
+                <th class="py-2 px-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody class="sets-tbody divide-y divide-slate-800/40">
+              ${ex.sets.map((s, setIdx) => createSetRowHTML(setIdx, s)).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pt-2 flex justify-start">
+          <button onclick="addSetToExercise(${exIdx})" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+            <i class="fa-solid fa-plus text-brand-400"></i>
+            <span>세트 추가</span>
+          </button>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function createSetRowHTML(setIdx, setData) {
+      return `
+        <tr class="set-row">
+          <td class="py-2 px-2 text-center font-bold text-slate-400 set-number-cell">${setIdx + 1}</td>
+          <td class="py-2 px-2">
+            <input type="number" step="0.5" value="${setData.weight !== undefined ? setData.weight : ''}" placeholder="0" class="set-weight w-20 bg-slate-800 border border-slate-700 rounded p-1.5 text-center text-white font-medium focus:outline-none focus:border-brand-500">
+          </td>
+          <td class="py-2 px-2">
+            <input type="number" value="${setData.reps !== undefined ? setData.reps : ''}" placeholder="0" class="set-reps w-20 bg-slate-800 border border-slate-700 rounded p-1.5 text-center text-white font-medium focus:outline-none focus:border-brand-500">
+          </td>
+          <td class="py-2 px-2">
+            <input type="text" value="${setData.rest || '60초'}" placeholder="60초" class="set-rest w-20 bg-slate-800 border border-slate-700 rounded p-1.5 text-center text-white text-xs focus:outline-none focus:border-brand-500">
+          </td>
+          <td class="py-2 px-2">
+            <input type="number" step="0.5" max="10" value="${setData.rpe !== undefined ? setData.rpe : ''}" placeholder="8" class="set-rpe w-16 bg-slate-800 border border-slate-700 rounded p-1.5 text-center text-amber-400 font-semibold focus:outline-none focus:border-brand-500">
+          </td>
+          <td class="py-2 px-2 text-center">
+            <button onclick="removeSetRow(this)" class="text-slate-500 hover:text-rose-400">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function addNewExerciseCard() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      const dateStr = document.getElementById('workoutDateInput').value;
+      if (!member.logs[dateStr]) {
+        member.logs[dateStr] = { sessionNum: member.currentSession, feedback: '', homework: '', exercises: [] };
+      }
+
+      member.logs[dateStr].exercises.push({
+        id: 'ex_' + Date.now(),
+        name: '',
+        category: '하체',
+        sets: [{ weight: 0, reps: 10, rest: '60초', rpe: 8 }]
+      });
+
+      loadMemberWorkoutLog();
+    }
+
+    function removeExerciseCard(exIdx) {
+      const member = getCurrentMember();
+      const dateStr = document.getElementById('workoutDateInput').value;
+      if (member && member.logs[dateStr] && member.logs[dateStr].exercises[exIdx]) {
+        member.logs[dateStr].exercises.splice(exIdx, 1);
+        saveData();
+        loadMemberWorkoutLog();
+        showToast('운동 종목이 삭제되었습니다.');
+      }
+    }
+
+    function addSetToExercise(exIdx) {
+      // Gather current state from DOM first to avoid losing user input
+      collectCurrentDOMToData();
+      
+      const member = getCurrentMember();
+      const dateStr = document.getElementById('workoutDateInput').value;
+      const ex = member.logs[dateStr].exercises[exIdx];
+      
+      const lastSet = ex.sets.length > 0 ? ex.sets[ex.sets.length - 1] : { weight: 0, reps: 10, rest: '60초', rpe: 8 };
+      ex.sets.push({ ...lastSet });
+
+      saveData();
+      loadMemberWorkoutLog();
+    }
+
+    function removeSetRow(btn) {
+      const row = btn.closest('tr');
+      const card = btn.closest('.exercise-card-item');
+      row.remove();
+      
+      // Renumber remaining sets
+      card.querySelectorAll('.set-row').forEach((r, idx) => {
+        r.querySelector('.set-number-cell').textContent = idx + 1;
+      });
+    }
+
+    function collectCurrentDOMToData() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      const dateStr = document.getElementById('workoutDateInput').value;
+      if (!member.logs[dateStr]) {
+        member.logs[dateStr] = { sessionNum: member.currentSession, feedback: '', homework: '', exercises: [] };
+      }
+
+      const exerciseCards = document.querySelectorAll('.exercise-card-item');
+      const exercises = [];
+
+      exerciseCards.forEach(card => {
+        const category = card.querySelector('.ex-category').value;
+        const name = card.querySelector('.ex-name').value;
+        const setRows = card.querySelectorAll('.set-row');
+        const sets = [];
+
+        setRows.forEach(row => {
+          sets.push({
+            weight: parseFloat(row.querySelector('.set-weight').value) || 0,
+            reps: parseInt(row.querySelector('.set-reps').value) || 0,
+            rest: row.querySelector('.set-rest').value || '60초',
+            rpe: parseFloat(row.querySelector('.set-rpe').value) || 8
+          });
+        });
+
+        exercises.push({
+          id: 'ex_' + Math.random().toString(36).substr(2, 9),
+          name: name,
+          category: category,
+          sets: sets
+        });
+      });
+
+      member.logs[dateStr].exercises = exercises;
+      member.logs[dateStr].feedback = document.getElementById('trainerFeedbackInput').value;
+      member.logs[dateStr].homework = document.getElementById('clientHomeworkInput').value;
+    }
+
+    function saveCurrentLog() {
+      collectCurrentDOMToData();
+      saveData();
+      loadMemberWorkoutLog();
+      showToast('오늘의 운동일지가 저장되었습니다!');
+    }
+
+    function applyRoutinePreset(type) {
+      const preset = DEFAULT_PRESETS[type];
+      if (!preset) return;
+
+      const member = getCurrentMember();
+      const dateStr = document.getElementById('workoutDateInput').value;
+      if (!member.logs[dateStr]) {
+        member.logs[dateStr] = { sessionNum: member.currentSession, feedback: '', homework: '', exercises: [] };
+      }
+
+      // Add preset exercises
+      preset.forEach(pEx => {
+        member.logs[dateStr].exercises.push(JSON.parse(JSON.stringify(pEx)));
+      });
+
+      saveData();
+      loadMemberWorkoutLog();
+      showToast('프리셋 루틴이 추가되었습니다.');
+    }
+
+    function deductMemberSession() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      if (member.currentSession >= member.totalSessions) {
+        showToast('이미 모든 계약 회차가 소진되었습니다!', 'error');
+        return;
+      }
+
+      member.currentSession += 1;
+      saveData();
+      updateHeaderMemberInfo();
+      loadMemberWorkoutLog();
+      showToast(`PT 1회가 차감되었습니다. (현재 ${member.currentSession}/${member.totalSessions}회)`);
+    }
+
+    function renderInBodySection() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      const inbodyList = member.inbody || [];
+      const tbody = document.getElementById('inbodyHistoryTableBody');
+      tbody.innerHTML = '';
+
+      inbodyList.slice().reverse().forEach((ib, revIdx) => {
+        const realIdx = inbodyList.length - 1 - revIdx;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-200">${ib.date}</td>
+          <td class="py-3 px-4 text-emerald-400 font-medium">${ib.weight} kg</td>
+          <td class="py-3 px-4 text-indigo-400 font-medium">${ib.muscle} kg</td>
+          <td class="py-3 px-4 text-amber-400 font-medium">${ib.fatRatio}%</td>
+          <td class="py-3 px-4 text-rose-400 font-medium">${ib.fatMass || '-'} kg</td>
+          <td class="py-3 px-4 text-right">
+            <button onclick="deleteInbodyRecord(${realIdx})" class="text-slate-500 hover:text-rose-400">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Stat Summary
+      const summaryBox = document.getElementById('inbodyStatSummary');
+      if (inbodyList.length >= 2) {
+        const first = inbodyList[0];
+        const latest = inbodyList[inbodyList.length - 1];
+        
+        const weightDiff = (latest.weight - first.weight).toFixed(1);
+        const muscleDiff = (latest.muscle - first.muscle).toFixed(1);
+        const fatDiff = (latest.fatRatio - first.fatRatio).toFixed(1);
+
+        summaryBox.innerHTML = `
+          <div class="bg-slate-800/80 p-2 rounded-xl">
+            <span class="text-[10px] text-slate-400 block">체중</span>
+            <span class="text-sm font-bold ${weightDiff <= 0 ? 'text-emerald-400' : 'text-rose-400'}">${weightDiff > 0 ? '+' : ''}${weightDiff} kg</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-xl">
+            <span class="text-[10px] text-slate-400 block">골격근량</span>
+            <span class="text-sm font-bold ${muscleDiff >= 0 ? 'text-indigo-400' : 'text-rose-400'}">${muscleDiff > 0 ? '+' : ''}${muscleDiff} kg</span>
+          </div>
+          <div class="bg-slate-800/80 p-2 rounded-xl">
+            <span class="text-[10px] text-slate-400 block">체지방률</span>
+            <span class="text-sm font-bold ${fatDiff <= 0 ? 'text-amber-400' : 'text-rose-400'}">${fatDiff > 0 ? '+' : ''}${fatDiff} %p</span>
+          </div>
+        `;
+      } else {
+        summaryBox.innerHTML = `<div class="col-span-3 text-xs text-slate-500 py-2">측정 데이터가 2회 이상일 때 변화폭이 표시됩니다.</div>`;
+      }
+
+      // Render Chart.js
+      renderInbodyChart(inbodyList);
+    }
+
+    function renderInbodyChart(inbodyList) {
+      const ctx = document.getElementById('inbodyChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const labels = inbodyList.map(i => i.date);
+      const weights = inbodyList.map(i => i.weight);
+      const muscles = inbodyList.map(i => i.muscle);
+      const fatRatios = inbodyList.map(i => i.fatRatio);
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '체중 (kg)',
+              data: weights,
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: '골격근량 (kg)',
+              data: muscles,
+              borderColor: '#818cf8',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              tension: 0.3
+            },
+            {
+              label: '체지방률 (%)',
+              data: fatRatios,
+              borderColor: '#fbbf24',
+              backgroundColor: 'transparent',
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#94a3b8', font: { family: 'Pretendard' } }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b' }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b' }
+            }
+          }
+        }
+      });
+    }
+
+    function addInBodyRecord() {
+      const date = document.getElementById('inbodyDate').value;
+      const weight = parseFloat(document.getElementById('inbodyWeight').value);
+      const muscle = parseFloat(document.getElementById('inbodyMuscle').value);
+      const fatRatio = parseFloat(document.getElementById('inbodyFatRatio').value);
+      const fatMass = parseFloat(document.getElementById('inbodyFatMass').value) || 0;
+
+      if (!date || isNaN(weight) || isNaN(muscle) || isNaN(fatRatio)) {
+        showToast('모든 필수 수치를 입력해주세요.', 'error');
+        return;
+      }
+
+      const member = getCurrentMember();
+      if (!member.inbody) member.inbody = [];
+
+      member.inbody.push({ date, weight, muscle, fatRatio, fatMass });
+      member.inbody.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      saveData();
+      renderInBodySection();
+      showToast('신체 측정 기록이 추가되었습니다.');
+
+      // Clear inputs
+      document.getElementById('inbodyWeight').value = '';
+      document.getElementById('inbodyMuscle').value = '';
+      document.getElementById('inbodyFatRatio').value = '';
+      document.getElementById('inbodyFatMass').value = '';
+    }
+
+    function deleteInbodyRecord(idx) {
+      const member = getCurrentMember();
+      if (member && member.inbody && member.inbody[idx]) {
+        member.inbody.splice(idx, 1);
+        saveData();
+        renderInBodySection();
+        showToast('측정 기록이 삭제되었습니다.');
+      }
+    }
+
+    function renderWorkoutHistorySection() {
+      const member = getCurrentMember();
+      const container = document.getElementById('historyLogsContainer');
+      container.innerHTML = '';
+
+      if (!member || !member.logs || Object.keys(member.logs).length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-500">저장된 과거 운동 기록이 없습니다.</div>`;
+        return;
+      }
+
+      const sortedDates = Object.keys(member.logs).sort((a, b) => new Date(b) - new Date(a));
+
+      sortedDates.forEach(dateStr => {
+        const log = member.logs[dateStr];
+        const exCount = log.exercises ? log.exercises.length : 0;
+        let totalVol = 0;
+
+        (log.exercises || []).forEach(e => {
+          (e.sets || []).forEach(s => totalVol += (s.weight || 0) * (s.reps || 0));
+        });
+
+        const card = document.createElement('div');
+        card.className = 'history-log-card bg-slate-800/40 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition space-y-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="px-2.5 py-1 bg-brand-500/10 text-brand-400 font-bold text-xs rounded-lg border border-brand-500/20">${dateStr}</span>
+              <span class="text-xs text-slate-400">${log.sessionNum ? log.sessionNum + '회차 PT' : '일반 기록'}</span>
+            </div>
+            <div class="text-xs text-slate-400 font-medium">총 볼륨: <span class="text-indigo-400 font-bold">${totalVol.toLocaleString()} kg</span></div>
+          </div>
+
+          <div class="space-y-1">
+            ${(log.exercises || []).map(e => `
+              <div class="flex items-center text-xs text-slate-300">
+                <span class="w-16 font-semibold text-brand-500/80">[${e.category}]</span>
+                <span class="font-bold text-white mr-2">${e.name}</span>
+                <span class="text-slate-400">(${e.sets ? e.sets.length : 0}세트)</span>
+              </div>
+            `).join('')}
+          </div>
+
+          ${log.feedback ? `<div class="text-xs text-slate-400 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800"><span class="text-brand-400 font-semibold">피드백:</span> ${log.feedback}</div>` : ''}
+
+          <div class="pt-1 flex justify-end">
+            <button onclick="jumpToDateLog('${dateStr}')" class="text-xs text-brand-400 hover:underline flex items-center space-x-1">
+              <span>이 일지로 이동 및 수정</span>
+              <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function filterHistoryLogs() {
+      const q = document.getElementById('historySearchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.history-log-card');
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(q)) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    }
+
+    function jumpToDateLog(dateStr) {
+      document.getElementById('workoutDateInput').value = dateStr;
+      switchTab('workout');
+    }
+
+    function renderMembersGrid() {
+      const grid = document.getElementById('membersGrid');
+      grid.innerHTML = '';
+
+      membersData.forEach(m => {
+        const remaining = m.totalSessions - m.currentSession;
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4';
+
+        card.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 font-bold text-brand-400 flex items-center justify-center">
+                  ${m.name.substring(0, 1)}
+                </div>
+                <div>
+                  <h4 class="font-bold text-white text-base">${m.name} <span class="text-xs font-normal text-slate-400">(${m.gender})</span></h4>
+                  <p class="text-xs text-slate-400">${m.phone || '연락처 미등록'}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${remaining <= 3 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-brand-500/20 text-brand-400 border border-brand-500/30'}">
+                잔여 ${remaining}회
+              </span>
+            </div>
+
+            <div class="bg-slate-800/50 p-3 rounded-xl space-y-1 text-xs">
+              <div><span class="text-slate-400">목표:</span> <span class="text-slate-200 font-medium">${m.goal || '미정'}</span></div>
+              <div><span class="text-slate-400">메모:</span> <span class="text-amber-400 font-medium">${m.notes || '없음'}</span></div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div>
+              <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span>진행도 (${m.currentSession}/${m.totalSessions}회)</span>
+                <span>${Math.round((m.currentSession / m.totalSessions) * 100)}%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div class="bg-brand-500 h-2 rounded-full" style="width: ${Math.min(100, Math.round((m.currentSession / m.totalSessions) * 100))}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+            <button onclick="selectMemberAndGoToLog('${m.id}')" class="px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 rounded-lg text-xs font-semibold transition">
+              운동일지 작성
+            </button>
+            <div class="flex space-x-2">
+              <button onclick="openEditMemberModal('${m.id}')" class="p-1.5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button onclick="deleteMember('${m.id}')" class="p-1.5 text-slate-400 hover:text-rose-400">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function selectMemberAndGoToLog(memberId) {
+      currentMemberId = memberId;
+      renderMemberSelect();
+      switchTab('workout');
+    }
+
+    function openAddMemberModal() {
+      document.getElementById('memberModalTitle').textContent = '신규 PT 회원 등록';
+      document.getElementById('editMemberId').value = '';
+      document.getElementById('memberForm').reset();
+      document.getElementById('addMemberModal').classList.remove('hidden');
+    }
+
+    function openEditMemberModal(memberId) {
+      const m = membersData.find(item => item.id === memberId);
+      if (!m) return;
+
+      document.getElementById('memberModalTitle').textContent = '회원 정보 수정';
+      document.getElementById('editMemberId').value = m.id;
+      document.getElementById('memberInputName').value = m.name;
+      document.getElementById('memberInputGender').value = m.gender || '남성';
+      document.getElementById('memberInputPhone').value = m.phone || '';
+      document.getElementById('memberInputTotal').value = m.totalSessions || 20;
+      document.getElementById('memberInputCurrent').value = m.currentSession || 0;
+      document.getElementById('memberInputGoal').value = m.goal || '';
+      document.getElementById('memberInputNote').value = m.notes || '';
+
+      document.getElementById('addMemberModal').classList.remove('hidden');
+    }
+
+    function closeAddMemberModal() {
+      document.getElementById('addMemberModal').classList.add('hidden');
+    }
+
+    function handleSaveMember(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editMemberId').value;
+      const name = document.getElementById('memberInputName').value.trim();
+      const gender = document.getElementById('memberInputGender').value;
+      const phone = document.getElementById('memberInputPhone').value.trim();
+      const totalSessions = parseInt(document.getElementById('memberInputTotal').value) || 20;
+      const currentSession = parseInt(document.getElementById('memberInputCurrent').value) || 0;
+      const goal = document.getElementById('memberInputGoal').value.trim();
+      const notes = document.getElementById('memberInputNote').value.trim();
+
+      if (editId) {
+        // Edit existing
+        const m = membersData.find(item => item.id === editId);
+        if (m) {
+          m.name = name;
+          m.gender = gender;
+          m.phone = phone;
+          m.totalSessions = totalSessions;
+          m.currentSession = currentSession;
+          m.goal = goal;
+          m.notes = notes;
+        }
+      } else {
+        // Add new
+        const newMember = {
+          id: 'mem_' + Date.now(),
+          name,
+          gender,
+          phone,
+          totalSessions,
+          currentSession,
+          goal,
+          notes,
+          inbody: [],
+          logs: {}
+        };
+        membersData.push(newMember);
+        currentMemberId = newMember.id;
+      }
+
+      saveData();
+      renderMemberSelect();
+      closeAddMemberModal();
+      refreshCurrentTab();
+      showToast('회원 정보가 저장되었습니다.');
+    }
+
+    function deleteMember(memberId) {
+      if (membersData.length <= 1) {
+        showToast('최소 1명의 회원은 등록되어 있어야 합니다.', 'error');
+        return;
+      }
+
+      membersData = membersData.filter(m => m.id !== memberId);
+      if (currentMemberId === memberId) {
+        currentMemberId = membersData[0].id;
+      }
+
+      saveData();
+      renderMemberSelect();
+      renderMembersGrid();
+      showToast('회원 정보가 삭제되었습니다.');
+    }
+
+    function openShareModal() {
+      const member = getCurrentMember();
+      if (!member) return;
+
+      const dateStr = document.getElementById('workoutDateInput').value;
+      const logData = member.logs ? member.logs[dateStr] : null;
+
+      let text = `[FitLog Pro - PT 운동일지]\n`;
+      text += `🏋️‍♂️ 회원명: ${member.name}님\n`;
+      text += `📅 일자: ${dateStr} (${logData ? logData.sessionNum || member.currentSession : member.currentSession}/${member.totalSessions}회차)\n`;
+      text += `--------------------------\n\n`;
+
+      if (logData && logData.exercises && logData.exercises.length > 0) {
+        text += `💪 [오늘 수행한 운동]\n`;
+        logData.exercises.forEach((ex, idx) => {
+          text += `${idx + 1}. ${ex.name} (${ex.category})\n`;
+          ex.sets.forEach((s, sIdx) => {
+            text += `   - ${sIdx + 1}세트: ${s.weight}kg x ${s.reps}회 (휴식 ${s.rest})\n`;
+          });
+        });
+        text += `\n`;
+      } else {
+        text += `오늘 기록된 운동 종목이 없습니다.\n\n`;
+      }
+
+      if (logData && logData.feedback) {
+        text += `💬 [트레이너 총평 & 피드백]\n${logData.feedback}\n\n`;
+      }
+
+      if (logData && logData.homework) {
+        text += `🎯 [내일 과제 & 식단]\n${logData.homework}\n\n`;
+      }
+
+      text += `🔥 남은 PT 횟수: ${member.totalSessions - member.currentSession}회\n`;
+      text += `수고 많으셨습니다! 오늘 하루도 득근하세요!`;
+
+      document.getElementById('shareTextPreview').value = text;
+      document.getElementById('copyToastMessage').classList.add('hidden');
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.add('hidden');
+    }
+
+    function copyShareText() {
+      const textarea = document.getElementById('shareTextPreview');
+      textarea.select();
+      
+      try {
+        document.execCommand('copy');
+        document.getElementById('copyToastMessage').classList.remove('hidden');
+        showToast('클립보드에 운동일지 요약이 복사되었습니다!');
+      } catch (err) {
+        showToast('복사에 실패했습니다. 직접 텍스트를 선택해 복사하세요.', 'error');
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastText.textContent = msg;
+      
+      if (type === 'error') {
+        toastIcon.className = 'fa-solid fa-triangle-exclamation text-rose-400';
+      } else {
+        toastIcon.className = 'fa-solid fa-check text-brand-400';
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+      const navMenu = document.getElementById('navMenu');
+      if (navMenu.classList.contains('hidden')) {
+        navMenu.classList.remove('hidden');
+        navMenu.classList.add('block');
+      } else {
+        navMenu.classList.add('hidden');
+        navMenu.classList.remove('block');
+      }
+    });
+
+    window.onload = function() {
+      initData();
+      renderMemberSelect();
+      loadMemberWorkoutLog();
+    };
+  </script>
+</body>
+</html>
