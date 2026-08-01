@@ -1,1 +1,1396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Citadel: Cyber Defense</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #05050d;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glow-text-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        .glow-text-pink {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.5);
+        }
+        .glow-box-cyan {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.2);
+        }
+        .glow-box-pink {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.4), inset 0 0 15px rgba(236, 72, 153, 0.2);
+        }
+        .btn-neon {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-neon:active {
+            transform: scale(0.95);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.5);
+            border-radius: 3px;
+        }
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-center items-center bg-slate-950 overflow-hidden select-none">
 
+    <!-- Main Game Viewport -->
+    <div id="game-container" class="relative w-full h-full max-w-7xl max-h-[900px] flex flex-col items-center justify-center overflow-hidden md:rounded-2xl border border-cyan-900/40 shadow-2xl bg-slate-900/50">
+        
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas" class="w-full h-full"></canvas>
+
+        <!-- Dynamic HUD Bar Header -->
+        <div id="hud" class="absolute top-0 left-0 w-full p-3 md:p-5 flex justify-between items-center pointer-events-none z-10 bg-gradient-to-b from-slate-950/80 to-transparent">
+            <!-- Health & Energy Bar -->
+            <div class="flex flex-col gap-1 w-44 md:w-64">
+                <div class="flex justify-between items-center text-xs font-bold font-orbitron text-cyan-400">
+                    <span><i class="fa-solid font-bold fa-shield-halved mr-1"></i> 시타델 코어</span>
+                    <span id="hud-hp-text">100 / 100</span>
+                </div>
+                <div class="w-full bg-slate-800/80 h-3 rounded-full overflow-hidden border border-cyan-500/30">
+                    <div id="hud-hp-bar" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 w-full transition-all duration-300"></div>
+                </div>
+                
+                <div class="flex justify-between items-center text-xs font-bold font-orbitron text-pink-400 mt-1">
+                    <span><i class="fa-solid fa-bolt mr-1"></i> 플라즈마 게이지</span>
+                    <span id="hud-energy-text">0%</span>
+                </div>
+                <div class="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden border border-pink-500/30">
+                    <div id="hud-energy-bar" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 w-0 transition-all duration-100"></div>
+                </div>
+            </div>
+
+            <!-- Wave & Score Info -->
+            <div class="flex flex-col items-center">
+                <div class="text-xs uppercase tracking-widest text-slate-400 font-bold">WAVE</div>
+                <div id="hud-wave" class="text-2xl md:text-4xl font-black font-orbitron text-amber-400 glow-text-pink">1</div>
+                <div id="hud-wave-sub" class="text-[10px] text-cyan-300/80 mt-0.5">남은 적: <span id="hud-enemy-count">0</span></div>
+            </div>
+
+            <!-- Credits & Combos -->
+            <div class="flex flex-col items-end">
+                <div class="text-xs text-slate-400 font-bold uppercase">사이버 크레딧</div>
+                <div class="text-xl md:text-3xl font-black font-orbitron text-cyan-300 glow-text-cyan flex items-center">
+                    <i class="fa-solid fa-microchip text-sm mr-2 text-cyan-400"></i><span id="hud-credits">0</span>
+                </div>
+                <div id="hud-combo-container" class="text-xs font-bold text-pink-400 opacity-0 transition-opacity font-orbitron mt-1">
+                    <span id="hud-combo">0</span>x COMBO!
+                </div>
+            </div>
+        </div>
+
+        <!-- Ability Action Bar -->
+        <div id="ability-bar" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 md:gap-3 z-20 pointer-events-auto">
+            <button id="btn-ability-emp" onclick="triggerEMP()" class="btn-neon bg-slate-900/90 border border-cyan-500/50 hover:border-cyan-400 text-cyan-300 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-lg disabled:opacity-40">
+                <i class="fa-solid fa-burst text-lg text-cyan-400"></i>
+                <div class="flex flex-col items-start hidden sm:flex">
+                    <span>EMP 충격파 (1)</span>
+                    <span class="text-[10px] text-slate-400">전체 스턴 & 딜</span>
+                </div>
+            </button>
+            <button id="btn-ability-nuke" onclick="triggerNuke()" class="btn-neon bg-slate-900/90 border border-pink-500/50 hover:border-pink-400 text-pink-300 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-lg disabled:opacity-40">
+                <i class="fa-solid fa-radiation text-lg text-pink-400"></i>
+                <div class="flex flex-col items-start hidden sm:flex">
+                    <span>플라즈마 폭격 (2)</span>
+                    <span class="text-[10px] text-slate-400">에너지 100% 소비</span>
+                </div>
+            </button>
+            <button id="btn-open-shop" onclick="toggleShop(true)" class="btn-neon bg-amber-500/20 border border-amber-500/60 hover:bg-amber-500/30 text-amber-300 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-lg">
+                <i class="fa-solid fa-wrench text-lg text-amber-400"></i>
+                <span>상점</span>
+            </button>
+            <button id="btn-open-level" onclick="showLevelSelect()" class="btn-neon bg-cyan-600/30 border border-cyan-400 hover:bg-cyan-600/50 text-cyan-300 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-lg">
+                <i class="fa-solid fa-map text-lg text-cyan-400"></i>
+                <span>스테이지</span>
+            </button>
+            <button id="btn-open-ai" onclick="toggleAIModal(true)" class="btn-neon bg-purple-600/30 border border-purple-400 hover:bg-purple-600/50 text-purple-300 px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 text-xs md:text-sm font-bold shadow-lg glow-box-pink">
+                <i class="fa-solid fa-brain text-lg text-purple-400 animate-pulse"></i>
+                <span>NEXUS-9 AI</span>
+            </button>
+        </div>
+
+        <!-- Start / Title Overlay -->
+        <div id="screen-start" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col justify-center items-center p-6 z-40 text-center">
+            <div class="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-400/50 flex items-center justify-center mb-4 glow-box-cyan animate-pulse">
+                <i class="fa-solid fa-shield-halved text-4xl text-cyan-400"></i>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black font-orbitron text-cyan-400 glow-text-cyan mb-2">NEON CITADEL</h1>
+            <p class="text-sm md:text-base text-pink-400 font-orbitron tracking-widest mb-6">CYBER DEFENSE SYSTEM</p>
+            <p class="text-xs text-slate-400 max-w-md mb-8">시타델 코어를 노리는 침입 바이러스들로부터 인프라를 방어하십시오. 마우스나 터치로 조준하고 포탑을 방어 및 강화하십시오.</p>
+            
+            <div class="flex gap-4">
+                <button onclick="startGame('campaign', currentLevel)" class="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-orbitron font-bold text-base shadow-xl glow-box-cyan btn-neon">
+                    작전 개시 (STAGE <span id="start-lvl-num">1</span>)
+                </button>
+                <button onclick="showLevelSelect()" class="py-3 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-orbitron font-bold text-sm">
+                    스테이지 선택
+                </button>
+            </div>
+        </div>
+
+        <!-- Shop Modal Overlay -->
+        <div id="screen-shop" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-6 z-40 hidden">
+            <div class="flex justify-between items-center border-b border-amber-900/60 pb-3">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wrench text-amber-400 text-2xl"></i>
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-black font-orbitron text-amber-400">시타델 업그레이드 상점</h2>
+                        <p class="text-xs text-slate-400">획득한 사이버 크레딧으로 코어 시스템을 강화하십시오.</p>
+                    </div>
+                </div>
+                <button onclick="toggleShop(false)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Shop Items Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 my-auto py-3 overflow-y-auto max-h-[65vh]">
+                <!-- Item 1: Damage -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-cyan-300"><i class="fa-solid fa-bolt mr-1"></i> 플라즈마 위력</span>
+                            <span id="shop-damage-lvl" class="text-xs font-orbitron text-slate-400">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">탄환 발사 피해량을 향상시킵니다.</p>
+                    </div>
+                    <button id="btn-buy-damage" onclick="buyUpgrade('damage')" class="w-full py-2 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/50 rounded-lg text-xs font-orbitron font-bold text-cyan-200">
+                        강화 (<span id="shop-damage-cost">100</span> CR)
+                    </button>
+                </div>
+
+                <!-- Item 2: Fire Rate -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-cyan-300"><i class="fa-solid fa-gauge-high mr-1"></i> 발사 속도</span>
+                            <span id="shop-firerate-lvl" class="text-xs font-orbitron text-slate-400">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">주포 연사 속도를 가속합니다.</p>
+                    </div>
+                    <button id="btn-buy-firerate" onclick="buyUpgrade('fireRate')" class="w-full py-2 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/50 rounded-lg text-xs font-orbitron font-bold text-cyan-200">
+                        강화 (<span id="shop-firerate-cost">150</span> CR)
+                    </button>
+                </div>
+
+                <!-- Item 3: Multi-Shot -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-cyan-300"><i class="fa-solid fa-angles-up mr-1"></i> 멀티 배럴</span>
+                            <span id="shop-multishot-lvl" class="text-xs font-orbitron text-slate-400">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">추가 탄환을 확산 발사합니다.</p>
+                    </div>
+                    <button id="btn-buy-multishot" onclick="buyUpgrade('multiShot')" class="w-full py-2 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/50 rounded-lg text-xs font-orbitron font-bold text-cyan-200">
+                        강화 (<span id="shop-multishot-cost">250</span> CR)
+                    </button>
+                </div>
+
+                <!-- Item 4: Drones -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-cyan-300"><i class="fa-solid fa-robot mr-1"></i> 자율 방어 드론</span>
+                            <span id="shop-drones-lvl" class="text-xs font-orbitron text-slate-400">Lv.0</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">코어 주변을 회전하며 자율 사격합니다.</p>
+                    </div>
+                    <button id="btn-buy-drones" onclick="buyUpgrade('drones')" class="w-full py-2 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/50 rounded-lg text-xs font-orbitron font-bold text-cyan-200">
+                        강화 (<span id="shop-drones-cost">300</span> CR)
+                    </button>
+                </div>
+
+                <!-- Item 5: Repair -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-emerald-400"><i class="fa-solid fa-heart-pulse mr-1"></i> 코어 긴급 수리</span>
+                            <span class="text-xs font-orbitron text-slate-400">+30 HP</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">파손된 코어 내구도를 회복합니다.</p>
+                    </div>
+                    <button id="btn-buy-repair" onclick="buyUpgrade('repair')" class="w-full py-2 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 rounded-lg text-xs font-orbitron font-bold text-emerald-200">
+                        수리 (100 CR)
+                    </button>
+                </div>
+
+                <!-- Item 6: Max HP -->
+                <div class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold font-orbitron text-emerald-400"><i class="fa-solid fa-shield-cat mr-1"></i> 코어 장갑 확장</span>
+                            <span id="shop-maxhp-lvl" class="text-xs font-orbitron text-slate-400">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-3">최대 코어 체력을 증설합니다.</p>
+                    </div>
+                    <button id="btn-buy-maxhp" onclick="buyUpgrade('maxHp')" class="w-full py-2 bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/50 rounded-lg text-xs font-orbitron font-bold text-emerald-200">
+                        증설 (<span id="shop-maxhp-cost">200</span> CR)
+                    </button>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                <div class="text-xs text-slate-400">보유 크레딧: <span id="shop-current-credits" class="text-cyan-300 font-bold font-orbitron">0</span> CR</div>
+                <button onclick="toggleShop(false)" class="py-2 px-6 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold font-orbitron rounded-xl text-sm">
+                    닫기
+                </button>
+            </div>
+        </div>
+
+        <!-- NEXUS-9 AI Advisor Modal Overlay -->
+        <div id="screen-ai-advisor" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-6 z-40 hidden">
+            <div class="flex justify-between items-center border-b border-purple-900/60 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400 flex items-center justify-center glow-box-pink">
+                        <i class="fa-solid fa-robot text-purple-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-black font-orbitron text-purple-300 glow-text-pink">NEXUS-9 AI core</h2>
+                        <p class="text-xs text-purple-400/80">실시간 전술 조언 및 사이버 보안 인텔리전스 시스템</p>
+                    </div>
+                </div>
+                <button onclick="toggleAIModal(false)" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- AI Output Body -->
+            <div class="my-3 flex-1 bg-slate-900/90 border border-purple-900/40 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
+                <div id="ai-response-box" class="overflow-y-auto space-y-3 pr-2 flex-1 text-sm text-slate-200">
+                    <div class="p-3 bg-purple-950/40 border border-purple-500/30 rounded-lg flex gap-3 items-start">
+                        <i class="fa-solid fa-microchip text-purple-400 text-lg mt-0.5"></i>
+                        <div>
+                            <p class="font-bold text-xs text-purple-300 font-orbitron mb-1">SYSTEM CONNECTED</p>
+                            <p class="text-xs text-slate-300">반갑습니다 사령관님. 전술 AI NEXUS-9 가동 중입니다. 아래 버튼을 눌러 현재 상태 분석을 요청하십시오.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="ai-loading" class="hidden flex items-center gap-2 py-2 text-xs text-purple-400 font-orbitron animate-pulse">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> NEXUS-9 가 지능망에서 응답 생성 중...
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="space-y-2">
+                <div class="flex gap-2">
+                    <button onclick="requestTacticalAdvice()" class="flex-1 py-2 px-3 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 rounded-xl text-xs font-bold text-purple-200 font-orbitron flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-chart-line"></i> 전술 분석 요청
+                    </button>
+                    <button onclick="requestIntelSearch()" class="flex-1 py-2 px-3 bg-cyan-600/30 hover:bg-cyan-600/50 border border-cyan-500/50 rounded-xl text-xs font-bold text-cyan-200 font-orbitron flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-globe"></i> 위협 인텔 스캔
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <input id="ai-user-prompt" type="text" placeholder="NEXUS-9에 질문 입력..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-400" onkeydown="if(event.key==='Enter') sendUserQueryToAI()" />
+                    <button onclick="sendUserQueryToAI()" class="py-2 px-4 bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold font-orbitron text-xs rounded-xl">전송</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Mission Briefing Modal -->
+        <div id="screen-briefing" class="absolute inset-0 bg-slate-950/95 backdrop-blur-lg flex flex-col justify-between p-6 z-50 hidden">
+            <div class="flex items-center gap-3 border-b border-cyan-900/60 pb-3">
+                <i class="fa-solid fa-shield-halved text-cyan-400 text-2xl animate-pulse"></i>
+                <h2 class="text-2xl font-black font-orbitron text-cyan-400">작전 브리핑 (NEXUS-9 INTEL)</h2>
+            </div>
+            
+            <div class="my-auto bg-slate-900/80 border border-cyan-500/30 rounded-xl p-5 space-y-4">
+                <div id="briefing-text" class="text-sm text-slate-300 leading-relaxed space-y-2">
+                    <p class="animate-pulse text-cyan-400">작전 구역의 사이버 위협 데이터를 수집하는 중...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                <button onclick="speakBriefingText()" class="py-2 px-4 bg-pink-600/30 border border-pink-500/50 hover:bg-pink-600/50 text-pink-300 font-orbitron font-bold rounded-xl text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-volume-high"></i> 음성 브리핑 재생
+                </button>
+                <button onclick="confirmBriefingAndStart()" class="py-2.5 px-6 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-orbitron font-bold rounded-xl text-sm glow-box-cyan">
+                    작전 돌입
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Select Screen Overlay -->
+        <div id="screen-level" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-4 md:p-8 z-40 hidden">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black font-orbitron text-cyan-400 glow-text-cyan flex items-center">
+                        <i class="fa-solid fa-map mr-3"></i>작전 레벨 선택
+                    </h2>
+                    <p class="text-xs text-slate-400">공격 레벨을 선택하십시오. 높은 레벨일수록 침입 바이러스가 더욱 강력해집니다.</p>
+                </div>
+                <button onclick="hideLevelSelect()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Level Cards Grid -->
+            <div id="level-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-auto py-4 overflow-y-auto max-h-[65vh]">
+                <!-- Level Cards dynamically injected -->
+            </div>
+
+            <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                <span class="text-xs text-slate-500"><i class="fa-solid fa-floppy-disk mr-1"></i> 진행상황 자동 저장</span>
+                <button onclick="hideLevelSelect()" class="py-2 px-6 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold font-orbitron rounded-xl text-sm">
+                    뒤로 가기
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Clear Screen Modal -->
+        <div id="screen-levelclear" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-center items-center p-6 z-50 hidden text-center">
+            <div class="w-20 h-20 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center mb-4 animate-bounce glow-box-cyan">
+                <i class="fa-solid fa-trophy text-4xl text-cyan-400"></i>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-black font-orbitron text-cyan-400 glow-text-cyan mb-2">STAGE CLEAR!</h2>
+            <p id="lc-subtitle" class="text-sm text-slate-300 mb-4">시타델 구역의 모든 침입자를 격퇴했습니다.</p>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 w-full max-w-md mb-4 grid grid-cols-2 gap-3 text-left">
+                <div>
+                    <span class="text-xs text-slate-400 block">완료 레벨</span>
+                    <span id="lc-level" class="text-xl font-bold font-orbitron text-cyan-400">Lv.1</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">클리어 보상</span>
+                    <span id="lc-bonus" class="text-xl font-bold font-orbitron text-amber-400">+200 CR</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">처치 수</span>
+                    <span id="lc-kills" class="text-xl font-bold font-orbitron text-emerald-400">0</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">최대 콤보</span>
+                    <span id="lc-combo" class="text-xl font-bold font-orbitron text-pink-400">0</span>
+                </div>
+            </div>
+
+            <!-- AI Combat Evaluation Panel -->
+            <div class="w-full max-w-md bg-purple-950/30 border border-purple-500/40 rounded-xl p-3 mb-4 text-left">
+                <div class="flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-brain text-purple-400 text-sm"></i>
+                    <span class="text-xs font-bold font-orbitron text-purple-300">NEXUS-9 전투 평가</span>
+                </div>
+                <p id="lc-ai-eval" class="text-xs text-slate-300 italic">전투 데이터 분석 중...</p>
+            </div>
+
+            <!-- AI Hologram Generator Button & Output -->
+            <div class="w-full max-w-md mb-4 flex flex-col items-center">
+                <button onclick="generateVictoryBadge()" id="btn-gen-badge" class="py-2 px-4 rounded-xl bg-purple-600/30 border border-purple-400 text-purple-200 hover:bg-purple-600/50 text-xs font-orbitron font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> AI 승리 홀로그램 생성
+                </button>
+                <div id="badge-container" class="mt-2 hidden">
+                    <img id="badge-img" class="w-24 h-24 rounded-lg border border-cyan-400/60 shadow-lg object-cover" alt="AI Victory Badge" />
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="showLevelSelect()" class="py-3 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-orbitron font-bold text-sm">
+                    레벨 목록
+                </button>
+                <button id="btn-next-level" onclick="startNextLevel()" class="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-orbitron font-bold text-base shadow-xl glow-box-cyan btn-neon">
+                    다음 레벨 진입 <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen Modal -->
+        <div id="screen-gameover" class="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col justify-center items-center p-6 z-50 hidden text-center">
+            <div class="w-20 h-20 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center mb-4 animate-bounce">
+                <i class="fa-solid fa-skull text-4xl text-red-500"></i>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black font-orbitron text-red-500 mb-2">CORE DESTROYED</h2>
+            <p class="text-sm text-slate-400 mb-6">시타델 코어가 적의 공격에 파괴되었습니다.</p>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 w-full max-w-md mb-6 grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-xs text-slate-400 block">달성 웨이브</span>
+                    <span id="go-wave" class="text-2xl font-bold font-orbitron text-amber-400">1</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">총 처치 수</span>
+                    <span id="go-kills" class="text-2xl font-bold font-orbitron text-cyan-400">0</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">최대 콤보</span>
+                    <span id="go-combo" class="text-2xl font-bold font-orbitron text-pink-400">0</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block">획득 크레딧</span>
+                    <span id="go-credits" class="text-2xl font-bold font-orbitron text-emerald-400">0</span>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="py-3 px-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-orbitron font-bold text-lg shadow-xl glow-box-cyan">
+                <i class="fa-solid fa-rotate-right mr-2"></i>재도전
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = "";
+
+        // Audio Engine using Web Audio API Synthesizer
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playLaser() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playExplosion() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(20, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+            playEMP() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.5);
+            }
+        }
+        const audio = new AudioEngine();
+
+        // Game State Variables
+        let canvas, ctx;
+        let gameState = 'START'; // START, PLAYING, PAUSED, LEVELCLEAR, GAMEOVER
+        let currentLevel = 1;
+        let maxUnlockedLevel = parseInt(localStorage.getItem('neon_unlocked_lvl') || '1', 10);
+        let wave = 1;
+        let maxWaveForLevel = 3;
+        let credits = 100;
+        let totalKills = 0;
+        let comboCount = 0;
+        let maxCombo = 0;
+        let comboTimer = 0;
+
+        let lastShootTime = 0;
+        let mouseX = 0, mouseY = 0;
+
+        // Player Core & Turret Stats
+        const player = {
+            x: 0,
+            y: 0,
+            hp: 100,
+            maxHp: 100,
+            energy: 0,
+            maxEnergy: 100,
+            angle: -Math.PI / 2
+        };
+
+        // Upgrades
+        const upgrades = {
+            damage: { lvl: 1, cost: 100 },
+            fireRate: { lvl: 1, cost: 150 },
+            multiShot: { lvl: 1, cost: 250 },
+            drones: { lvl: 0, cost: 300 },
+            maxHp: { lvl: 1, cost: 200 }
+        };
+
+        // Entities Arrays
+        let bullets = [];
+        let enemies = [];
+        let particles = [];
+        let floatingTexts = [];
+        let droneAngles = [];
+
+        function initCanvas() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Controls listeners
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+            });
+
+            canvas.addEventListener('mousedown', () => {
+                audio.init();
+                if (gameState === 'PLAYING') tryShoot();
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0) {
+                    const rect = canvas.getBoundingClientRect();
+                    mouseX = e.touches[0].clientX - rect.left;
+                    mouseY = e.touches[0].clientY - rect.top;
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchstart', (e) => {
+                audio.init();
+                if (e.touches.length > 0) {
+                    const rect = canvas.getBoundingClientRect();
+                    mouseX = e.touches[0].clientX - rect.left;
+                    mouseY = e.touches[0].clientY - rect.top;
+                }
+                if (gameState === 'PLAYING') tryShoot();
+            }, { passive: true });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '1') triggerEMP();
+                if (e.key === '2') triggerNuke();
+            });
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 80;
+        }
+
+        function startGame(mode = 'campaign', level = 1) {
+            currentLevel = level;
+            maxWaveForLevel = 2 + level;
+            wave = 1;
+            player.hp = player.maxHp;
+            player.energy = 0;
+            bullets = [];
+            enemies = [];
+            particles = [];
+            floatingTexts = [];
+            
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-gameover').classList.add('hidden');
+            document.getElementById('screen-levelclear').classList.add('hidden');
+
+            updateHUD();
+
+            if (mode === 'campaign') {
+                gameState = 'PAUSED';
+                triggerLevelBriefing(level);
+            } else {
+                gameState = 'PLAYING';
+                startNewWave();
+            }
+        }
+
+        function startNewWave() {
+            const enemyCount = 8 + wave * 4 + currentLevel * 3;
+            document.getElementById('hud-wave').innerText = wave;
+            document.getElementById('hud-enemy-count').innerText = enemyCount;
+
+            for (let i = 0; i < enemyCount; i++) {
+                setTimeout(() => {
+                    if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+                        spawnEnemy();
+                    }
+                }, i * Math.max(300, 1500 - currentLevel * 100 - wave * 50));
+            }
+        }
+
+        function spawnEnemy() {
+            const types = ['virus', 'tank', 'trojan'];
+            if (wave === maxWaveForLevel) types.push('boss');
+
+            const typeChoice = types[Math.floor(Math.random() * types.length)];
+            const rX = Math.random() * (canvas.width - 60) + 30;
+
+            let hp = 20 + currentLevel * 10 + wave * 5;
+            let speed = 1.2 + currentLevel * 0.1;
+            let radius = 14;
+            let color = '#ef4444'; // Red
+
+            if (typeChoice === 'tank') {
+                hp *= 2.5;
+                speed *= 0.6;
+                radius = 22;
+                color = '#a855f7'; // Purple
+            } else if (typeChoice === 'trojan') {
+                speed *= 1.6;
+                radius = 12;
+                color = '#06b6d4'; // Cyan
+            } else if (typeChoice === 'boss') {
+                hp *= 6;
+                speed *= 0.4;
+                radius = 36;
+                color = '#f59e0b'; // Gold
+            }
+
+            enemies.push({
+                x: rX,
+                y: -30,
+                type: typeChoice,
+                hp,
+                maxHp: hp,
+                speed,
+                radius,
+                color,
+                vx: (Math.random() - 0.5) * (typeChoice === 'trojan' ? 2 : 0.5)
+            });
+        }
+
+        function tryShoot() {
+            const now = Date.now();
+            const delay = Math.max(100, 350 - upgrades.fireRate.lvl * 35);
+            if (now - lastShootTime < delay) return;
+
+            lastShootTime = now;
+            audio.playLaser();
+
+            const baseDamage = 15 + upgrades.damage.lvl * 8;
+            const count = upgrades.multiShot.lvl;
+
+            for (let i = 0; i < count; i++) {
+                const spread = (i - (count - 1) / 2) * 0.12;
+                const finalAngle = player.angle + spread;
+
+                bullets.push({
+                    x: player.x,
+                    y: player.y - 15,
+                    vx: Math.cos(finalAngle) * 12,
+                    vy: Math.sin(finalAngle) * 12,
+                    damage: baseDamage,
+                    radius: 4,
+                    color: '#06b6d4'
+                });
+            }
+        }
+
+        function levelClear() {
+            gameState = 'LEVELCLEAR';
+            audio.playEMP();
+
+            const reward = 150 + currentLevel * 50;
+            credits += reward;
+            if (currentLevel >= maxUnlockedLevel) {
+                maxUnlockedLevel = currentLevel + 1;
+                localStorage.setItem('neon_unlocked_lvl', maxUnlockedLevel);
+            }
+
+            document.getElementById('lc-level').innerText = `Lv.${currentLevel}`;
+            document.getElementById('lc-bonus').innerText = `+${reward} CR`;
+            document.getElementById('lc-kills').innerText = totalKills;
+            document.getElementById('lc-combo').innerText = `${maxCombo}x`;
+            document.getElementById('screen-levelclear').classList.remove('hidden');
+
+            updateHUD();
+        }
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            audio.playExplosion();
+
+            document.getElementById('go-wave').innerText = wave;
+            document.getElementById('go-kills').innerText = totalKills;
+            document.getElementById('go-combo').innerText = `${maxCombo}x`;
+            document.getElementById('go-credits').innerText = credits;
+            document.getElementById('screen-gameover').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            startGame('campaign', currentLevel);
+        }
+
+        function startNextLevel() {
+            startGame('campaign', currentLevel + 1);
+        }
+
+        function updateGame() {
+            if (gameState !== 'PLAYING') return;
+
+            // Turret Angle update
+            player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+
+            // Automatic Drones
+            if (upgrades.drones.lvl > 0) {
+                const droneCount = upgrades.drones.lvl;
+                droneAngles = droneAngles.length === droneCount ? droneAngles : new Array(droneCount).fill(0);
+
+                droneAngles.forEach((a, idx) => {
+                    droneAngles[idx] += 0.03;
+                    const dX = player.x + Math.cos(droneAngles[idx] + (idx * Math.PI * 2 / droneCount)) * 60;
+                    const dY = player.y + Math.sin(droneAngles[idx] + (idx * Math.PI * 2 / droneCount)) * 60;
+
+                    // Drone Auto Shoot nearest enemy
+                    if (Math.random() < 0.08 && enemies.length > 0) {
+                        const target = enemies[0];
+                        const ang = Math.atan2(target.y - dY, target.x - dX);
+                        bullets.push({
+                            x: dX,
+                            y: dY,
+                            vx: Math.cos(ang) * 9,
+                            vy: Math.sin(ang) * 9,
+                            damage: 8 + upgrades.damage.lvl * 3,
+                            radius: 3,
+                            color: '#ec4899'
+                        });
+                    }
+                });
+            }
+
+            // Update Bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.x += b.vx;
+                b.y += b.vy;
+
+                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Update Enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                e.y += e.speed;
+                e.x += e.vx;
+
+                if (e.x < 30 || e.x > canvas.width - 30) e.vx *= -1;
+
+                // Bullet Collision
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const b = bullets[j];
+                    const dist = Math.hypot(e.x - b.x, e.y - b.y);
+
+                    if (dist < e.radius + b.radius) {
+                        e.hp -= b.damage;
+                        createParticles(b.x, b.y, b.color, 4);
+                        bullets.splice(j, 1);
+
+                        if (e.hp <= 0) {
+                            // Enemy Destroyed
+                            audio.playExplosion();
+                            createParticles(e.x, e.y, e.color, 15);
+                            
+                            const earned = e.type === 'boss' ? 100 : 15;
+                            credits += earned;
+                            totalKills++;
+                            
+                            // Energy Charge
+                            player.energy = Math.min(player.maxEnergy, player.energy + 8);
+                            
+                            // Combo System
+                            comboCount++;
+                            comboTimer = 120;
+                            if (comboCount > maxCombo) maxCombo = comboCount;
+
+                            addFloatingText(e.x, e.y, `+${earned} CR`, '#5eead4');
+                            enemies.splice(i, 1);
+                            updateHUD();
+                            break;
+                        }
+                    }
+                }
+
+                // Core Collision
+                if (e.y >= player.y - 20) {
+                    player.hp -= Math.floor(e.hp * 0.5);
+                    createParticles(e.x, e.y, '#ef4444', 20);
+                    enemies.splice(i, 1);
+                    updateHUD();
+
+                    if (player.hp <= 0) {
+                        gameOver();
+                        return;
+                    }
+                }
+            }
+
+            // Wave Check
+            document.getElementById('hud-enemy-count').innerText = enemies.length;
+            if (enemies.length === 0 && gameState === 'PLAYING') {
+                if (wave < maxWaveForLevel) {
+                    wave++;
+                    startNewWave();
+                } else {
+                    levelClear();
+                }
+            }
+
+            // Update Combo Timer
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer === 0) comboCount = 0;
+            }
+
+            // Update Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Update Floating Texts
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y -= 0.8;
+                ft.alpha -= 0.015;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Background Grid
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.08)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Draw Citadel Core
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Turret Barrel
+            ctx.rotate(player.angle);
+            ctx.fillStyle = '#22d3ee';
+            ctx.fillRect(0, -5, 30, 10);
+            ctx.restore();
+
+            // Draw Drones
+            if (upgrades.drones.lvl > 0 && gameState === 'PLAYING') {
+                const count = upgrades.drones.lvl;
+                droneAngles.forEach((a, idx) => {
+                    const dX = player.x + Math.cos(a + (idx * Math.PI * 2 / count)) * 60;
+                    const dY = player.y + Math.sin(a + (idx * Math.PI * 2 / count)) * 60;
+                    ctx.fillStyle = '#ec4899';
+                    ctx.beginPath();
+                    ctx.arc(dX, dY, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            // Draw Bullets
+            bullets.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw Enemies
+            enemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // HP Bar
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(e.x - 15, e.y - e.radius - 8, 30, 4);
+                ctx.fillStyle = '#10b981';
+                ctx.fillRect(e.x - 15, e.y - e.radius - 8, (e.hp / e.maxHp) * 30, 4);
+            });
+
+            // Draw Particles
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw Floating Texts
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = ft.alpha;
+                ctx.fillStyle = ft.color;
+                ctx.font = 'bold 12px Orbitron';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+        }
+
+        function createParticles(x, y, color, amount) {
+            for (let i = 0; i < amount; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 3 + 1,
+                    color,
+                    alpha: 1
+                });
+            }
+        }
+
+        function addFloatingText(x, y, text, color) {
+            floatingTexts.push({ x, y, text, color, alpha: 1 });
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-hp-text').innerText = `${Math.max(0, player.hp)} / ${player.maxHp}`;
+            document.getElementById('hud-hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+            
+            document.getElementById('hud-energy-text').innerText = `${Math.floor((player.energy / player.maxEnergy) * 100)}%`;
+            document.getElementById('hud-energy-bar').style.width = `${(player.energy / player.maxEnergy) * 100}%`;
+
+            document.getElementById('hud-credits').innerText = credits;
+            document.getElementById('shop-current-credits').innerText = credits;
+
+            const comboContainer = document.getElementById('hud-combo-container');
+            if (comboCount > 1) {
+                comboContainer.classList.remove('opacity-0');
+                document.getElementById('hud-combo').innerText = comboCount;
+            } else {
+                comboContainer.classList.add('opacity-0');
+            }
+
+            // Ability buttons
+            document.getElementById('btn-ability-nuke').disabled = player.energy < player.maxEnergy;
+        }
+
+        function triggerEMP() {
+            if (credits < 50) return;
+            credits -= 50;
+            audio.playEMP();
+            createParticles(player.x, player.y, '#06b6d4', 60);
+
+            enemies.forEach(e => {
+                e.hp -= 40;
+                e.speed *= 0.5;
+            });
+            updateHUD();
+        }
+
+        function triggerNuke() {
+            if (player.energy < player.maxEnergy) return;
+            player.energy = 0;
+            audio.playExplosion();
+            createParticles(canvas.width / 2, canvas.height / 2, '#ec4899', 120);
+
+            enemies.forEach(e => { e.hp -= 200; });
+            enemies = enemies.filter(e => e.hp > 0);
+            updateHUD();
+        }
+
+        function toggleShop(show) {
+            const modal = document.getElementById('screen-shop');
+            if (show) {
+                modal.classList.remove('hidden');
+                if (gameState === 'PLAYING') gameState = 'PAUSED';
+            } else {
+                modal.classList.add('hidden');
+                if (gameState === 'PAUSED') gameState = 'PLAYING';
+            }
+        }
+
+        function buyUpgrade(type) {
+            const item = upgrades[type];
+            if (type === 'repair') {
+                if (credits >= 100 && player.hp < player.maxHp) {
+                    credits -= 100;
+                    player.hp = Math.min(player.maxHp, player.hp + 30);
+                    updateHUD();
+                }
+                return;
+            }
+
+            if (credits >= item.cost) {
+                credits -= item.cost;
+                item.lvl++;
+                item.cost = Math.floor(item.cost * 1.5);
+
+                if (type === 'maxHp') {
+                    player.maxHp += 25;
+                    player.hp += 25;
+                }
+
+                document.getElementById(`shop-${type.toLowerCase()}-lvl`).innerText = `Lv.${item.lvl}`;
+                const costEl = document.getElementById(`shop-${type.toLowerCase()}-cost`);
+                if (costEl) costEl.innerText = item.cost;
+                updateHUD();
+            }
+        }
+
+        function showLevelSelect() {
+            const grid = document.getElementById('level-grid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 8; i++) {
+                const isUnlocked = i <= maxUnlockedLevel;
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border flex flex-col items-center justify-between transition-all ${
+                    isUnlocked 
+                        ? 'bg-slate-900/90 border-cyan-500/40 hover:border-cyan-400 cursor-pointer glow-box-cyan' 
+                        : 'bg-slate-950/60 border-slate-800 opacity-40 cursor-not-allowed'
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-xs font-orbitron font-bold text-cyan-400 mb-1">STAGE ${i}</div>
+                    <i class="fa-solid ${isUnlocked ? 'fa-shield-halved text-cyan-300' : 'fa-lock text-slate-600'} text-2xl my-2"></i>
+                    <span class="text-[10px] text-slate-400">${2 + i} WAVES</span>
+                `;
+
+                if (isUnlocked) {
+                    card.onclick = () => {
+                        hideLevelSelect();
+                        startGame('campaign', i);
+                    };
+                }
+                grid.appendChild(card);
+            }
+
+            document.getElementById('screen-level').classList.remove('hidden');
+            if (gameState === 'PLAYING') gameState = 'PAUSED';
+        }
+
+        function hideLevelSelect() {
+            document.getElementById('screen-level').classList.add('hidden');
+            if (gameState === 'PAUSED') gameState = 'PLAYING';
+        }
+
+        // Helper: Convert Base64 to ArrayBuffer for WAV Audio Player
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Helper: Convert PCM16 Raw Stream to Browser WAV Blob
+        function pcmToWav(pcm16Array, sampleRate = 24000) {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16Array.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            const writeString = (v, offset, str) => {
+                for (let i = 0; i < str.length; i++) v.setUint8(offset + i, str.charCodeAt(i));
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16Array.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16Array[i], true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function fetchGeminiText(prompt, systemInstruction = '', enableGrounding = false) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined
+            };
+
+            if (enableGrounding) {
+                payload.tools = [{ "google_search": {} }];
+            }
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "데이터 응답 실패.";
+                let sources = [];
+                const attributions = result?.candidates?.[0]?.groundingMetadata?.groundingAttributions;
+                if (attributions) {
+                    sources = attributions.map(a => ({ title: a.web?.title, uri: a.web?.uri })).filter(s => s.uri);
+                }
+                return { text, sources };
+            } catch (err) {
+                console.error('Gemini Text API error:', err);
+                return { text: "NEXUS-9 통신 장애 발생.", sources: [] };
+            }
+        }
+
+        async function playGeminiTTS(text, voiceName = "Kore") {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${API_KEY}`;
+            const payload = {
+                contents: [{ parts: [{ text: `Say in a crisp, military sci-fi computer tone: ${text}` }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } }
+                }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const base64Data = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || '';
+
+                if (base64Data) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    const pcmData = base64ToArrayBuffer(base64Data);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audioEl = new Audio(audioUrl);
+                    audioEl.play();
+                }
+            } catch (err) {
+                console.error('Gemini TTS error:', err);
+            }
+        }
+
+        async function generateGeminiImage(prompt) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${API_KEY}`;
+            const payload = {
+                instances: [{ prompt }],
+                parameters: { sampleCount: 1 }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.predictions?.[0]?.bytesBase64Encoded) {
+                    return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                }
+            } catch (err) {
+                console.error('Imagen generation error:', err);
+            }
+            return null;
+        }
+
+        // AI Interfacing functions
+        function toggleAIModal(show) {
+            const modal = document.getElementById('screen-ai-advisor');
+            if (show) {
+                modal.classList.remove('hidden');
+                if (gameState === 'PLAYING') gameState = 'PAUSED';
+            } else {
+                modal.classList.add('hidden');
+                if (gameState === 'PAUSED') gameState = 'PLAYING';
+            }
+        }
+
+        let currentBriefingText = "";
+
+        async function triggerLevelBriefing(level) {
+            const briefingModal = document.getElementById('screen-briefing');
+            const briefingTextEl = document.getElementById('briefing-text');
+            briefingModal.classList.remove('hidden');
+            briefingTextEl.innerHTML = '<p class="animate-pulse text-cyan-400 font-orbitron text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i>NEXUS-9 인텔리전스 망에서 위협 분석 중...</p>';
+
+            const sysInst = "You are NEXUS-9 tactical advisor. Provide a concise 2-sentence tactical briefing in Korean about incoming cyber threats.";
+            const prompt = `Stage level: ${level}. Dmg Lv.${upgrades.damage.lvl}. Give brief military advice.`;
+
+            const res = await fetchGeminiText(prompt, sysInst);
+            currentBriefingText = res.text;
+
+            briefingTextEl.innerHTML = `<p class="font-bold text-cyan-300 text-xs font-orbitron uppercase mb-1">STATION INTEL REPORT - STAGE ${level}</p><p class="text-xs leading-relaxed text-slate-200">${res.text}</p>`;
+        }
+
+        function speakBriefingText() {
+            if (currentBriefingText) playGeminiTTS(currentBriefingText, "Kore");
+        }
+
+        function confirmBriefingAndStart() {
+            document.getElementById('screen-briefing').classList.add('hidden');
+            gameState = 'PLAYING';
+            startNewWave();
+        }
+
+        async function requestTacticalAdvice() {
+            const box = document.getElementById('ai-response-box');
+            const loader = document.getElementById('ai-loading');
+            loader.classList.remove('hidden');
+
+            const sysInst = "You are NEXUS-9 advisor. Give short 2-line strategy in Korean.";
+            const prompt = `Stats - HP: ${player.hp}/${player.maxHp}, Wave: ${wave}, Credits: ${credits}. Recommend upgrade!`;
+
+            const res = await fetchGeminiText(prompt, sysInst);
+            loader.classList.add('hidden');
+
+            box.insertAdjacentHTML('beforeend', `
+                <div class="p-3 bg-purple-950/60 border border-purple-500/40 rounded-lg">
+                    <p class="font-bold text-xs text-purple-300 font-orbitron mb-1"><i class="fa-solid fa-chart-line mr-1"></i> 전술 제안</p>
+                    <p class="text-xs text-slate-200">${res.text}</p>
+                </div>
+            `);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function requestIntelSearch() {
+            const box = document.getElementById('ai-response-box');
+            const loader = document.getElementById('ai-loading');
+            loader.classList.remove('hidden');
+
+            const sysInst = "Summarize modern cybersecurity trends in Korean.";
+            const prompt = "Explain cyber defense concepts in 1-2 sentences.";
+
+            const res = await fetchGeminiText(prompt, sysInst, true);
+            loader.classList.add('hidden');
+
+            box.insertAdjacentHTML('beforeend', `
+                <div class="p-3 bg-cyan-950/60 border border-cyan-500/40 rounded-lg">
+                    <p class="font-bold text-xs text-cyan-300 font-orbitron mb-1"><i class="fa-solid fa-globe mr-1"></i> 보안 스캔</p>
+                    <p class="text-xs text-slate-200">${res.text}</p>
+                </div>
+            `);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendUserQueryToAI() {
+            const input = document.getElementById('ai-user-prompt');
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = '';
+            const box = document.getElementById('ai-response-box');
+            box.insertAdjacentHTML('beforeend', `<div class="p-2 bg-slate-800 text-xs text-right rounded-lg font-bold">${query}</div>`);
+
+            const loader = document.getElementById('ai-loading');
+            loader.classList.remove('hidden');
+
+            const res = await fetchGeminiText(query, "Answer briefly in Korean.");
+            loader.classList.add('hidden');
+
+            box.insertAdjacentHTML('beforeend', `<div class="p-3 bg-purple-950/60 border border-purple-500/40 rounded-lg text-xs text-slate-200">${res.text}</div>`);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function generateVictoryBadge() {
+            const btn = document.getElementById('btn-gen-badge');
+            const container = document.getElementById('badge-container');
+            const img = document.getElementById('badge-img');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 생성 중...';
+
+            const prompt = `A futuristic glowing cyberpunk victory military badge logo for Stage ${currentLevel}, 3d render.`;
+            const imgData = await generateGeminiImage(prompt);
+
+            if (imgData) {
+                img.src = imgData;
+                container.classList.remove('hidden');
+                btn.classList.add('hidden');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '재시도';
+            }
+        }
+
+        // Initialize Loop
+        window.onload = () => {
+            initCanvas();
+            document.getElementById('start-lvl-num').innerText = currentLevel;
+
+            function gameLoop() {
+                updateGame();
+                drawGame();
+                requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
