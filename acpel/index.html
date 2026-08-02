@@ -1,1 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acapella Studio - Multi-Track Responsive Mixer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                screens: {
+                    'xs': '475px',
+                    'sm': '640px',
+                    'md': '768px',
+                    'lg': '1024px',
+                    'xl': '1280px',
+                },
+                extend: {
+                    colors: {
+                        vocal: {
+                            lead: '#3b82f6',
+                            soprano: '#ec4899',
+                            alto: '#8b5cf6',
+                            bass: '#10b981',
+                            beat: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+            touch-action: manipulation;
+        }
+        /* Custom touch-friendly sliders */
+        input[type=range] {
+            accent-color: #6366f1;
+            touch-action: pan-x;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .recording-pulse {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0">
+            <div class="flex items-center justify-between sm:justify-start space-x-3">
+                <div class="flex items-center space-x-2.5 sm:space-x-3">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+                        <i class="fa-solid fa-sliders text-lg sm:text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-200 to-indigo-400 leading-tight">
+                            Acapella Studio <span class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold ml-1">MIXER</span>
+                        </h1>
+                        <p class="text-[10px] sm:text-xs text-slate-400">다중 보컬 트랙 믹서 &amp; 하모나이저</p>
+                    </div>
+                </div>
+
+                <button id="resetMixerBtnMobile" class="sm:hidden p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 active:scale-95 transition" title="믹서 초기화">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 sm:space-x-3">
+                <button id="combineTracksBtn" class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition flex items-center justify-center space-x-1.5 min-h-[38px] sm:min-h-0">
+                    <i class="fa-solid fa-object-group text-xs"></i>
+                    <span class="text-[11px] sm:text-xs">트랙 합치기</span>
+                </button>
+                <button id="exportMixBtn" disabled class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 active:scale-95 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition flex items-center justify-center space-x-1.5 min-h-[38px] sm:min-h-0">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span class="text-[11px] sm:text-xs">WAV 추출</span>
+                </button>
+                <button id="resetMixerBtn" class="hidden sm:flex p-2 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition items-center justify-center" title="믹서 초기화">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+
+        <!-- Master Transport & Visualizer Deck -->
+        <div class="glass-panel rounded-2xl p-3.5 sm:p-5 border border-slate-800 shadow-xl space-y-3.5 sm:space-y-4">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+                
+                <!-- Master Playback Controls -->
+                <div class="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-3">
+                    <div class="flex items-center space-x-2">
+                        <button id="playBtn" disabled class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 transition shrink-0">
+                            <i id="playIcon" class="fa-solid fa-play text-base sm:text-lg"></i>
+                        </button>
+                        <button id="stopBtn" disabled class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 active:scale-95 text-slate-300 flex items-center justify-center transition shrink-0">
+                            <i class="fa-solid fa-square text-xs sm:text-sm"></i>
+                        </button>
+                        <button id="loopBtn" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 active:scale-95 flex items-center justify-center transition shrink-0" title="반복 재생 (Loop)">
+                            <i class="fa-solid fa-repeat text-xs sm:text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Audio Source Badge & Overdub Toggle -->
+                    <div class="flex flex-wrap items-center justify-end sm:justify-start gap-2">
+                        <span id="audioSourceBadge" class="text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 font-mono truncate max-w-[120px] xs:max-w-none">
+                            음원 대기 중
+                        </span>
+                        <label class="inline-flex items-center space-x-1.5 cursor-pointer text-[11px] sm:text-xs text-slate-400 select-none bg-slate-900/60 sm:bg-transparent px-2 py-1 rounded-lg border border-slate-800/80 sm:border-none">
+                            <input type="checkbox" id="overdubToggle" class="sr-only peer" checked>
+                            <div class="w-7 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                            <span class="whitespace-nowrap">오버더빙</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Master Volume Slider -->
+                <div class="flex items-center space-x-2.5 sm:space-x-3 w-full md:w-64 bg-slate-900/50 p-2 sm:p-0 rounded-xl border border-slate-800/50 sm:border-none">
+                    <i class="fa-solid fa-volume-low text-xs text-slate-500 pl-1 sm:pl-0"></i>
+                    <div class="flex-1 space-y-1">
+                        <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-400">
+                            <span>마스터 볼륨</span>
+                            <span id="masterVolVal" class="font-mono">80%</span>
+                        </div>
+                        <input id="masterVolSlider" type="range" min="0" max="100" value="80" class="w-full h-2 sm:h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                    </div>
+                    <i class="fa-solid fa-volume-high text-xs text-slate-500 pr-1 sm:pr-0"></i>
+                </div>
+            </div>
+
+            <!-- Canvas Visualizer -->
+            <div class="relative bg-slate-950/90 rounded-xl h-24 sm:h-28 border border-slate-800/80 overflow-hidden flex items-center justify-center">
+                <canvas id="visualizerCanvas" class="w-full h-full block"></canvas>
+                <div id="canvasOverlay" class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs px-4 text-center gap-2">
+                    <i class="fa-solid fa-wave-square text-indigo-400 shrink-0"></i>
+                    <span>각 트랙에서 녹음 버튼을 눌러 소리를 채워보세요.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-Track Interactive Mixer Grid -->
+        <div id="tracksContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            
+            <!-- Track 1: Lead Vocal -->
+            <div class="track-card glass-panel rounded-xl p-3.5 sm:p-4 border border-vocal-lead/40 flex flex-col justify-between space-y-3 relative overflow-hidden" data-track="0">
+                <div class="absolute top-0 left-0 w-1 h-full bg-vocal-lead"></div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">1</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">메인 리드 보컬</h4>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="track-mute-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-white active:scale-95 transition">M</button>
+                            <button class="track-solo-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-amber-400 active:scale-95 transition">S</button>
+                        </div>
+                    </div>
+
+                    <!-- Per Track Record Action -->
+                    <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <span class="track-status text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중
+                        </span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button class="track-rec-btn text-[11px] sm:text-[10px] px-2.5 sm:px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white active:scale-95 transition flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-microphone text-[10px] sm:text-[9px]"></i> <span>녹음</span>
+                            </button>
+                            <button class="track-clear-btn hidden text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 active:scale-95 transition" title="삭제">
+                                <i class="fa-solid fa-trash-can text-[10px] sm:text-[9px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>음높이 (Pitch)</span>
+                            <span class="pitch-val font-mono text-blue-400">0 semitones</span>
+                        </div>
+                        <input type="range" min="-12" max="12" value="0" step="1" class="track-pitch w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>볼륨 (Volume)</span>
+                            <span class="vol-val font-mono text-slate-300">100%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="100" class="track-vol w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>좌우 정위 (Pan)</span>
+                            <span class="pan-val font-mono text-slate-300">Center</span>
+                        </div>
+                        <input type="range" min="-100" max="100" value="0" class="track-pan w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>울림 (Reverb)</span>
+                            <span class="reverb-val font-mono text-slate-300">30%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="30" class="track-reverb w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track 2: Soprano -->
+            <div class="track-card glass-panel rounded-xl p-3.5 sm:p-4 border border-vocal-soprano/40 flex flex-col justify-between space-y-3 relative overflow-hidden" data-track="1">
+                <div class="absolute top-0 left-0 w-1 h-full bg-vocal-soprano"></div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-md bg-pink-500/20 text-pink-400 flex items-center justify-center text-xs font-bold">2</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">하이 소프라노</h4>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="track-mute-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-white active:scale-95 transition">M</button>
+                            <button class="track-solo-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-amber-400 active:scale-95 transition">S</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <span class="track-status text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중
+                        </span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button class="track-rec-btn text-[11px] sm:text-[10px] px-2.5 sm:px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white active:scale-95 transition flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-microphone text-[10px] sm:text-[9px]"></i> <span>녹음</span>
+                            </button>
+                            <button class="track-clear-btn hidden text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 active:scale-95 transition" title="삭제">
+                                <i class="fa-solid fa-trash-can text-[10px] sm:text-[9px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>음높이 (Pitch)</span>
+                            <span class="pitch-val font-mono text-pink-400">+7 semitones</span>
+                        </div>
+                        <input type="range" min="-12" max="12" value="7" step="1" class="track-pitch w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>볼륨 (Volume)</span>
+                            <span class="vol-val font-mono text-slate-300">80%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="80" class="track-vol w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>좌우 정위 (Pan)</span>
+                            <span class="pan-val font-mono text-slate-300">L30</span>
+                        </div>
+                        <input type="range" min="-100" max="100" value="-30" class="track-pan w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>울림 (Reverb)</span>
+                            <span class="reverb-val font-mono text-slate-300">40%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="40" class="track-reverb w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track 3: Alto/Tenor -->
+            <div class="track-card glass-panel rounded-xl p-3.5 sm:p-4 border border-vocal-alto/40 flex flex-col justify-between space-y-3 relative overflow-hidden" data-track="2">
+                <div class="absolute top-0 left-0 w-1 h-full bg-vocal-alto"></div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">3</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">미드 알토/테너</h4>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="track-mute-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-white active:scale-95 transition">M</button>
+                            <button class="track-solo-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-amber-400 active:scale-95 transition">S</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <span class="track-status text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중
+                        </span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button class="track-rec-btn text-[11px] sm:text-[10px] px-2.5 sm:px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white active:scale-95 transition flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-microphone text-[10px] sm:text-[9px]"></i> <span>녹음</span>
+                            </button>
+                            <button class="track-clear-btn hidden text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 active:scale-95 transition" title="삭제">
+                                <i class="fa-solid fa-trash-can text-[10px] sm:text-[9px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>음높이 (Pitch)</span>
+                            <span class="pitch-val font-mono text-purple-400">+4 semitones</span>
+                        </div>
+                        <input type="range" min="-12" max="12" value="4" step="1" class="track-pitch w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>볼륨 (Volume)</span>
+                            <span class="vol-val font-mono text-slate-300">85%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="85" class="track-vol w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>좌우 정위 (Pan)</span>
+                            <span class="pan-val font-mono text-slate-300">R30</span>
+                        </div>
+                        <input type="range" min="-100" max="100" value="30" class="track-pan w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>울림 (Reverb)</span>
+                            <span class="reverb-val font-mono text-slate-300">35%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="35" class="track-reverb w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track 4: Bass -->
+            <div class="track-card glass-panel rounded-xl p-3.5 sm:p-4 border border-vocal-bass/40 flex flex-col justify-between space-y-3 relative overflow-hidden" data-track="3">
+                <div class="absolute top-0 left-0 w-1 h-full bg-vocal-bass"></div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">4</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">딥 보컬 베이스</h4>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="track-mute-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-white active:scale-95 transition">M</button>
+                            <button class="track-solo-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-amber-400 active:scale-95 transition">S</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <span class="track-status text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중
+                        </span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button class="track-rec-btn text-[11px] sm:text-[10px] px-2.5 sm:px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white active:scale-95 transition flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-microphone text-[10px] sm:text-[9px]"></i> <span>녹음</span>
+                            </button>
+                            <button class="track-clear-btn hidden text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 active:scale-95 transition" title="삭제">
+                                <i class="fa-solid fa-trash-can text-[10px] sm:text-[9px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>음높이 (Pitch)</span>
+                            <span class="pitch-val font-mono text-emerald-400">-12 semitones</span>
+                        </div>
+                        <input type="range" min="-12" max="12" value="-12" step="1" class="track-pitch w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>볼륨 (Volume)</span>
+                            <span class="vol-val font-mono text-slate-300">90%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="90" class="track-vol w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>좌우 정위 (Pan)</span>
+                            <span class="pan-val font-mono text-slate-300">Center</span>
+                        </div>
+                        <input type="range" min="-100" max="100" value="0" class="track-pan w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>울림 (Reverb)</span>
+                            <span class="reverb-val font-mono text-slate-300">20%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="20" class="track-reverb w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track 5: Beatbox -->
+            <div class="track-card glass-panel rounded-xl p-3.5 sm:p-4 border border-vocal-beat/40 flex flex-col justify-between space-y-3 relative overflow-hidden" data-track="4">
+                <div class="absolute top-0 left-0 w-1 h-full bg-vocal-beat"></div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-6 h-6 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">5</span>
+                            <h4 class="text-xs font-bold text-slate-200 truncate">보컬 비트박스</h4>
+                        </div>
+                        <div class="flex space-x-1">
+                            <button class="track-mute-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-white active:scale-95 transition">M</button>
+                            <button class="track-solo-btn min-w-[28px] h-7 sm:w-6 sm:h-6 rounded text-[11px] sm:text-[10px] font-bold bg-slate-800 text-slate-400 hover:text-amber-400 active:scale-95 transition">S</button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                        <span class="track-status text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                            <i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중
+                        </span>
+                        <div class="flex items-center space-x-1 shrink-0">
+                            <button class="track-rec-btn text-[11px] sm:text-[10px] px-2.5 sm:px-2 py-1 rounded bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white active:scale-95 transition flex items-center gap-1 font-medium">
+                                <i class="fa-solid fa-microphone text-[10px] sm:text-[9px]"></i> <span>녹음</span>
+                            </button>
+                            <button class="track-clear-btn hidden text-[11px] sm:text-[10px] px-2 sm:px-1.5 py-1 rounded bg-slate-800 text-slate-400 hover:text-red-400 active:scale-95 transition" title="삭제">
+                                <i class="fa-solid fa-trash-can text-[10px] sm:text-[9px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>음높이 (Pitch)</span>
+                            <span class="pitch-val font-mono text-amber-400">-5 semitones</span>
+                        </div>
+                        <input type="range" min="-12" max="12" value="-5" step="1" class="track-pitch w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>볼륨 (Volume)</span>
+                            <span class="vol-val font-mono text-slate-300">70%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="70" class="track-vol w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>좌우 정위 (Pan)</span>
+                            <span class="pan-val font-mono text-slate-300">Center</span>
+                        </div>
+                        <input type="range" min="-100" max="100" value="0" class="track-pan w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+
+                    <div class="space-y-0.5">
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>울림 (Reverb)</span>
+                            <span class="reverb-val font-mono text-slate-300">15%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="15" class="track-reverb w-full h-2 sm:h-1 bg-slate-800 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 left-4 sm:left-auto z-50 flex flex-col space-y-2 pointer-events-none sm:max-w-xs"></div>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-4 text-center text-[11px] sm:text-xs text-slate-500">
+        <p>Acapella Studio &copy; 2026. Web Audio API Track Mixer.</p>
+    </footer>
+
+    <script>
+        // Global Mixer State
+        const state = {
+            audioCtx: null,
+            masterAudioBuffer: null,
+            isPlaying: false,
+            isLooping: false,
+            recordingTrackIdx: null,
+            mediaRecorder: null,
+            audioChunks: [],
+            
+            // 5 Track Audio States
+            tracks: [
+                { name: 'Lead Vocal', pitch: 0, vol: 1.0, pan: 0, reverb: 0.3, mute: false, solo: false, audioBuffer: null, blob: null },
+                { name: 'High Soprano', pitch: 7, vol: 0.8, pan: -0.3, reverb: 0.4, mute: false, solo: false, audioBuffer: null, blob: null },
+                { name: 'Mid Alto', pitch: 4, vol: 0.85, pan: 0.3, reverb: 0.35, mute: false, solo: false, audioBuffer: null, blob: null },
+                { name: 'Deep Bass', pitch: -12, vol: 0.9, pan: 0, reverb: 0.2, mute: false, solo: false, audioBuffer: null, blob: null },
+                { name: 'Vocal Beatbox', pitch: -5, vol: 0.7, pan: 0, reverb: 0.15, mute: false, solo: false, audioBuffer: null, blob: null }
+            ],
+
+            // Audio Nodes
+            sourceNodes: [],
+            gainNodes: [],
+            pannerNodes: [],
+            convolverNode: null,
+            masterGain: null,
+            analyserNode: null,
+            animationFrame: null
+        };
+
+        // DOM Elements
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        const stopBtn = document.getElementById('stopBtn');
+        const loopBtn = document.getElementById('loopBtn');
+        const exportMixBtn = document.getElementById('exportMixBtn');
+        const combineTracksBtn = document.getElementById('combineTracksBtn');
+        const resetMixerBtn = document.getElementById('resetMixerBtn');
+        const resetMixerBtnMobile = document.getElementById('resetMixerBtnMobile');
+        const audioSourceBadge = document.getElementById('audioSourceBadge');
+        const canvasOverlay = document.getElementById('canvasOverlay');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const masterVolSlider = document.getElementById('masterVolSlider');
+        const masterVolVal = document.getElementById('masterVolVal');
+        const overdubToggle = document.getElementById('overdubToggle');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Initialize Audio Context and Nodes
+        function initAudioContext() {
+            if (state.audioCtx) return;
+
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            state.audioCtx = new AudioContext();
+
+            // Master Gain
+            state.masterGain = state.audioCtx.createGain();
+            state.masterGain.gain.value = masterVolSlider.value / 100;
+
+            // Analyser Node for Visualizer
+            state.analyserNode = state.audioCtx.createAnalyser();
+            state.analyserNode.fftSize = 128;
+
+            // Reverb Impulse Convolver Node
+            state.convolverNode = state.audioCtx.createConvolver();
+            createReverbImpulseResponse();
+
+            // Route: Master Gain -> Analyser -> Destination
+            state.masterGain.connect(state.analyserNode);
+            state.analyserNode.connect(state.audioCtx.destination);
+            state.convolverNode.connect(state.masterGain);
+        }
+
+        // Generate synthetic Impulse Response for Reverb
+        function createReverbImpulseResponse() {
+            const sampleRate = state.audioCtx.sampleRate;
+            const length = sampleRate * 1.8; // 1.8 second tail
+            const impulse = state.audioCtx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                const decay = Math.exp(-i / (sampleRate * 0.4));
+                left[i] = (Math.random() * 2 - 1) * decay;
+                right[i] = (Math.random() * 2 - 1) * decay;
+            }
+            state.convolverNode.buffer = impulse;
+        }
+
+        // Toast Notifications
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-indigo-600';
+            toast.className = `${bgClass} text-white text-xs px-3.5 py-2.5 rounded-xl shadow-lg flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-sm shrink-0"></i><span>${msg}</span>`;
+            
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Toggle Recording on Specific Track
+        async function toggleTrackRecord(trackIdx, btnElement) {
+            initAudioContext();
+            if (state.audioCtx.state === 'suspended') {
+                await state.audioCtx.resume();
+            }
+
+            if (state.recordingTrackIdx !== null) {
+                // Stop Recording
+                if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+                    state.mediaRecorder.stop();
+                }
+                return;
+            }
+
+            // Start Recording
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                state.recordingTrackIdx = trackIdx;
+                state.audioChunks = [];
+
+                btnElement.classList.add('recording-pulse', 'bg-red-600', 'text-white');
+                btnElement.querySelector('span').innerText = '중지';
+
+                // Play other existing tracks during recording if overdub enabled
+                if (overdubToggle.checked && hasAnyAudioToPlay()) {
+                    playMixerTracks();
+                }
+
+                state.mediaRecorder = new MediaRecorder(stream);
+                state.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) state.audioChunks.push(e.data);
+                };
+
+                state.mediaRecorder.onstop = async () => {
+                    if (state.isPlaying) stopPlayback();
+
+                    const audioBlob = new Blob(state.audioChunks, { type: 'audio/wav' });
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    const decodedBuffer = await state.audioCtx.decodeAudioData(arrayBuffer);
+
+                    state.tracks[trackIdx].blob = audioBlob;
+                    state.tracks[trackIdx].audioBuffer = decodedBuffer;
+
+                    state.recordingTrackIdx = null;
+                    btnElement.classList.remove('recording-pulse', 'bg-red-600', 'text-white');
+                    btnElement.querySelector('span').innerText = '녹음';
+
+                    updateTrackUI(trackIdx);
+                    audioSourceBadge.innerText = `트랙 ${trackIdx + 1} 녹음 완료`;
+                    audioSourceBadge.className = 'text-[10px] sm:text-xs px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold font-mono truncate max-w-[120px] xs:max-w-none';
+                    
+                    canvasOverlay.style.display = 'none';
+                    playBtn.disabled = false;
+                    exportMixBtn.disabled = false;
+
+                    showToast(`트랙 ${trackIdx + 1} (${state.tracks[trackIdx].name}) 녹음 완료!`, 'success');
+                    drawStaticWaveform();
+
+                    stream.getTracks().forEach(t => t.stop());
+                };
+
+                state.mediaRecorder.start();
+
+            } catch (err) {
+                console.error(err);
+                showToast('마이크 접근 권한이 필요합니다.', 'error');
+                state.recordingTrackIdx = null;
+            }
+        }
+
+        function hasAnyAudioToPlay() {
+            if (state.masterAudioBuffer) return true;
+            return state.tracks.some(t => t.audioBuffer !== null);
+        }
+
+        // Update Track UI Status
+        function updateTrackUI(idx) {
+            const card = document.querySelector(`.track-card[data-track="${idx}"]`);
+            if (!card) return;
+
+            const track = state.tracks[idx];
+            const statusElem = card.querySelector('.track-status');
+            const clearBtn = card.querySelector('.track-clear-btn');
+
+            if (track.audioBuffer) {
+                statusElem.innerHTML = `<i class="fa-solid fa-circle text-[6px] text-emerald-400"></i> 녹음됨 🎙️`;
+                statusElem.className = 'track-status text-[10px] text-emerald-300 font-semibold flex items-center gap-1 truncate';
+                clearBtn.classList.remove('hidden');
+            } else {
+                statusElem.innerHTML = `<i class="fa-solid fa-circle text-[6px] text-slate-600"></i> 대기 중`;
+                statusElem.className = 'track-status text-[10px] text-slate-400 flex items-center gap-1 truncate';
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        // Play Multi-Track Mixer Audio
+        function playMixerTracks() {
+            if (!hasAnyAudioToPlay()) return;
+            initAudioContext();
+            stopPlayback();
+
+            const ctx = state.audioCtx;
+            state.sourceNodes = [];
+            state.gainNodes = [];
+
+            const hasSolo = state.tracks.some(t => t.solo);
+
+            state.tracks.forEach((track) => {
+                if (track.mute || (hasSolo && !track.solo)) return;
+
+                const targetBuffer = track.audioBuffer || state.masterAudioBuffer;
+                if (!targetBuffer) return;
+
+                const source = ctx.createBufferSource();
+                source.buffer = targetBuffer;
+
+                // Pitch ratio
+                source.playbackRate.value = Math.pow(2, track.pitch / 12);
+
+                const gainNode = ctx.createGain();
+                gainNode.gain.value = track.vol;
+
+                const pannerNode = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createPanner();
+                if (pannerNode.pan) pannerNode.pan.value = track.pan;
+
+                const reverbGain = ctx.createGain();
+                reverbGain.gain.value = track.reverb;
+
+                source.connect(gainNode);
+                gainNode.connect(pannerNode);
+                pannerNode.connect(state.masterGain);
+
+                gainNode.connect(reverbGain);
+                reverbGain.connect(state.convolverNode);
+
+                source.loop = state.isLooping;
+                source.start(0);
+
+                state.sourceNodes.push(source);
+                state.gainNodes.push(gainNode);
+            });
+
+            state.isPlaying = true;
+            playIcon.className = 'fa-solid fa-pause text-base sm:text-lg';
+            stopBtn.disabled = false;
+            startVisualizerAnimation();
+        }
+
+        // Stop Audio Playback
+        function stopPlayback() {
+            state.sourceNodes.forEach(node => {
+                try { node.stop(); } catch (e) {}
+            });
+            state.sourceNodes = [];
+            state.gainNodes = [];
+            state.isPlaying = false;
+            playIcon.className = 'fa-solid fa-play text-base sm:text-lg';
+            if (state.animationFrame) cancelAnimationFrame(state.animationFrame);
+            drawStaticWaveform();
+        }
+
+        // Helper to resize canvas accurately on responsive layout/retina screens
+        function resizeCanvas() {
+            const canvas = visualizerCanvas;
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            if (!state.isPlaying) {
+                drawStaticWaveform();
+            }
+        }
+
+        // Real-Time Canvas Visualizer Animation
+        function startVisualizerAnimation() {
+            const canvas = visualizerCanvas;
+            const canvasCtx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            const bufferLength = state.analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function render() {
+                if (!state.isPlaying) return;
+                state.animationFrame = requestAnimationFrame(render);
+
+                state.analyserNode.getByteFrequencyData(dataArray);
+
+                canvasCtx.fillStyle = 'rgba(2, 6, 23, 0.3)';
+                canvasCtx.fillRect(0, 0, width, height);
+
+                const barWidth = (width / bufferLength) * 2.5;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * height;
+
+                    const gradient = canvasCtx.createLinearGradient(0, height, 0, 0);
+                    gradient.addColorStop(0, '#4f46e5');
+                    gradient.addColorStop(0.5, '#ec4899');
+                    gradient.addColorStop(1, '#f59e0b');
+
+                    canvasCtx.fillStyle = gradient;
+                    canvasCtx.fillRect(x, height - barHeight, barWidth - 1, barHeight);
+
+                    x += barWidth;
+                }
+            }
+            render();
+        }
+
+        // Draw Static Waveform when idle
+        function drawStaticWaveform() {
+            const canvas = visualizerCanvas;
+            const canvasCtx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            canvasCtx.fillStyle = '#020617';
+            canvasCtx.fillRect(0, 0, width, height);
+
+            canvasCtx.strokeStyle = '#334155';
+            canvasCtx.lineWidth = 2;
+            canvasCtx.beginPath();
+            const middle = height / 2;
+            canvasCtx.moveTo(0, middle);
+
+            for (let x = 0; x < width; x += 8) {
+                const amplitude = (Math.sin(x * 0.05) + Math.cos(x * 0.02)) * (height * 0.12);
+                canvasCtx.lineTo(x, middle + amplitude);
+            }
+            canvasCtx.stroke();
+        }
+
+        // Combine All Tracks into Master Audio Buffer
+        combineTracksBtn.addEventListener('click', async () => {
+            if (!hasAnyAudioToPlay()) {
+                showToast('합칠 녹음 데이터가 없습니다. 트랙에서 녹음해 주세요.', 'error');
+                return;
+            }
+
+            showToast('트랙 데이터를 하나로 합치는 중...', 'info');
+            initAudioContext();
+
+            let maxDuration = 3.0;
+            state.tracks.forEach(t => {
+                if (t.audioBuffer) maxDuration = Math.max(maxDuration, t.audioBuffer.duration);
+            });
+
+            const offlineCtx = new OfflineAudioContext(2, Math.ceil(maxDuration * state.audioCtx.sampleRate), state.audioCtx.sampleRate);
+            const hasSolo = state.tracks.some(t => t.solo);
+
+            state.tracks.forEach(track => {
+                if (track.mute || (hasSolo && !track.solo)) return;
+
+                const targetBuffer = track.audioBuffer || state.masterAudioBuffer;
+                if (!targetBuffer) return;
+
+                const source = offlineCtx.createBufferSource();
+                source.buffer = targetBuffer;
+                source.playbackRate.value = Math.pow(2, track.pitch / 12);
+
+                const gainNode = offlineCtx.createGain();
+                gainNode.gain.value = track.vol;
+
+                const pannerNode = offlineCtx.createStereoPanner ? offlineCtx.createStereoPanner() : offlineCtx.createPanner();
+                if (pannerNode.pan) pannerNode.pan.value = track.pan;
+
+                source.connect(gainNode);
+                gainNode.connect(pannerNode);
+                pannerNode.connect(offlineCtx.destination);
+
+                source.start(0);
+            });
+
+            const mergedBuffer = await offlineCtx.startRendering();
+            state.masterAudioBuffer = mergedBuffer;
+
+            audioSourceBadge.innerText = '통합 음원 생성됨';
+            audioSourceBadge.className = 'text-[10px] sm:text-xs px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold font-mono truncate max-w-[120px] xs:max-w-none';
+            showToast('모든 트랙이 통합 되었습니다!', 'success');
+            playBtn.disabled = false;
+            exportMixBtn.disabled = false;
+        });
+
+        // Export Mixed Audio to WAV
+        exportMixBtn.addEventListener('click', async () => {
+            if (!hasAnyAudioToPlay()) return;
+
+            showToast('WAV 음원 추출 중...', 'info');
+            initAudioContext();
+
+            let maxDuration = 3.0;
+            state.tracks.forEach(t => {
+                if (t.audioBuffer) maxDuration = Math.max(maxDuration, t.audioBuffer.duration);
+            });
+            if (state.masterAudioBuffer) maxDuration = Math.max(maxDuration, state.masterAudioBuffer.duration);
+
+            const sampleRate = state.audioCtx.sampleRate;
+            const offlineCtx = new OfflineAudioContext(2, Math.ceil(maxDuration * sampleRate), sampleRate);
+            const hasSolo = state.tracks.some(t => t.solo);
+
+            state.tracks.forEach(track => {
+                if (track.mute || (hasSolo && !track.solo)) return;
+
+                const targetBuffer = track.audioBuffer || state.masterAudioBuffer;
+                if (!targetBuffer) return;
+
+                const source = offlineCtx.createBufferSource();
+                source.buffer = targetBuffer;
+                source.playbackRate.value = Math.pow(2, track.pitch / 12);
+
+                const gainNode = offlineCtx.createGain();
+                gainNode.gain.value = track.vol;
+
+                const pannerNode = offlineCtx.createStereoPanner ? offlineCtx.createStereoPanner() : offlineCtx.createPanner();
+                if (pannerNode.pan) pannerNode.pan.value = track.pan;
+
+                source.connect(gainNode);
+                gainNode.connect(pannerNode);
+                pannerNode.connect(offlineCtx.destination);
+
+                source.start(0);
+            });
+
+            const renderedBuffer = await offlineCtx.startRendering();
+            const wavBlob = audioBufferToWavBlob(renderedBuffer);
+
+            const url = URL.createObjectURL(wavBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `AcapellaStudio_Mix_${Date.now()}.wav`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+
+            showToast('아카펠라 음원이 성공적으로 다운로드 되었습니다!', 'success');
+        });
+
+        // Convert AudioBuffer to WAV File Blob
+        function audioBufferToWavBlob(buffer) {
+            const numOfChan = buffer.numberOfChannels;
+            const length = buffer.length * numOfChan * 2 + 44;
+            const out = new DataView(new ArrayBuffer(length));
+            let channels = [], sample, offset = 0, pos = 0;
+
+            function writeString(str) {
+                for (let i = 0; i < str.length; i++) {
+                    out.setUint8(pos++, str.charCodeAt(i));
+                }
+            }
+
+            function setUint16(data) {
+                out.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                out.setUint32(pos, data, true);
+                pos += 4;
+            }
+
+            writeString('RIFF');
+            setUint32(length - 8);
+            writeString('WAVE');
+            writeString('fmt ');
+            setUint32(16);
+            setUint16(1);
+            setUint16(numOfChan);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2);
+            setUint16(16);
+            writeString('data');
+            setUint32(length - pos - 4);
+
+            for (let i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+
+            while (offset < buffer.length) {
+                for (let i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                    out.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([out], { type: 'audio/wav' });
+        }
+
+        // Attach Event Listeners to Track Cards
+        document.querySelectorAll('.track-card').forEach(card => {
+            const idx = parseInt(card.dataset.track);
+            const track = state.tracks[idx];
+
+            const recBtn = card.querySelector('.track-rec-btn');
+            const clearBtn = card.querySelector('.track-clear-btn');
+            const pitchInput = card.querySelector('.track-pitch');
+            const pitchVal = card.querySelector('.pitch-val');
+            const volInput = card.querySelector('.track-vol');
+            const volVal = card.querySelector('.vol-val');
+            const panInput = card.querySelector('.track-pan');
+            const panVal = card.querySelector('.pan-val');
+            const reverbInput = card.querySelector('.track-reverb');
+            const reverbVal = card.querySelector('.reverb-val');
+            const muteBtn = card.querySelector('.track-mute-btn');
+            const soloBtn = card.querySelector('.track-solo-btn');
+
+            recBtn.addEventListener('click', () => toggleTrackRecord(idx, recBtn));
+
+            clearBtn.addEventListener('click', () => {
+                track.audioBuffer = null;
+                track.blob = null;
+                updateTrackUI(idx);
+                showToast(`트랙 ${idx + 1} 녹음 삭제됨.`, 'info');
+            });
+
+            pitchInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                track.pitch = val;
+                pitchVal.innerText = (val >= 0 ? '+' + val : val) + ' semitones';
+            });
+
+            volInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                track.vol = val / 100;
+                volVal.innerText = val + '%';
+            });
+
+            panInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                track.pan = val / 100;
+                panVal.innerText = val === 0 ? 'Center' : val < 0 ? `L${Math.abs(val)}` : `R${val}`;
+            });
+
+            reverbInput.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                track.reverb = val / 100;
+                reverbVal.innerText = val + '%';
+            });
+
+            muteBtn.addEventListener('click', () => {
+                track.mute = !track.mute;
+                muteBtn.classList.toggle('bg-red-600', track.mute);
+                muteBtn.classList.toggle('text-white', track.mute);
+            });
+
+            soloBtn.addEventListener('click', () => {
+                track.solo = !track.solo;
+                soloBtn.classList.toggle('bg-amber-500', track.solo);
+                soloBtn.classList.toggle('text-slate-950', track.solo);
+            });
+        });
+
+        // Transport Listeners
+        playBtn.addEventListener('click', () => {
+            if (state.isPlaying) stopPlayback();
+            else playMixerTracks();
+        });
+
+        stopBtn.addEventListener('click', stopPlayback);
+
+        loopBtn.addEventListener('click', () => {
+            state.isLooping = !state.isLooping;
+            loopBtn.classList.toggle('bg-indigo-600', state.isLooping);
+            loopBtn.classList.toggle('text-white', state.isLooping);
+            showToast(state.isLooping ? '반복 재생 켜짐' : '반복 재생 꺼짐', 'info');
+        });
+
+        masterVolSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            masterVolVal.innerText = val + '%';
+            if (state.masterGain) state.masterGain.gain.value = val / 100;
+        });
+
+        function resetMixer() {
+            stopPlayback();
+            state.tracks.forEach((t, i) => {
+                t.audioBuffer = null;
+                t.blob = null;
+                t.mute = false;
+                t.solo = false;
+                updateTrackUI(i);
+            });
+            state.masterAudioBuffer = null;
+            playBtn.disabled = true;
+            exportMixBtn.disabled = true;
+            audioSourceBadge.innerText = '음원 대기 중';
+            audioSourceBadge.className = 'text-[10px] sm:text-xs px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 font-mono truncate max-w-[120px] xs:max-w-none';
+            canvasOverlay.style.display = 'flex';
+            drawStaticWaveform();
+            showToast('믹서가 초기화 되었습니다.', 'info');
+        }
+
+        resetMixerBtn.addEventListener('click', resetMixer);
+        resetMixerBtnMobile.addEventListener('click', resetMixer);
+
+        // Responsive resize listener
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+        window.onload = () => {
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
