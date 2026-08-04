@@ -66,6 +66,15 @@
             overflow: hidden;
         }
 
+        /* Screen Responsive Wrapper for A4 Preview */
+        .a4-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+        }
+
         /* Print Specific Styles for precise 1-Page A4 PDF Generation */
         @media print {
             @page {
@@ -82,6 +91,11 @@
                 display: none !important;
             }
             .print-only {
+                display: block !important;
+            }
+            .a4-wrapper {
+                overflow: visible !important;
+                padding: 0 !important;
                 display: block !important;
             }
             .a4-page {
@@ -1169,6 +1183,8 @@
                 const ctx = canvas.getContext('2d');
                 ctx.lineWidth = 3;
                 ctx.strokeStyle = '#000000';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
             }, []);
 
             const clearSignature = () => {
@@ -1176,6 +1192,49 @@
                 if (!canvas) return;
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            const getCoordinates = (e) => {
+                const canvas = canvasRef.current;
+                if (!canvas) return { x: 0, y: 0 };
+                const rect = canvas.getBoundingClientRect();
+                if (e.touches && e.touches.length > 0) {
+                    return {
+                        x: e.touches[0].clientX - rect.left,
+                        y: e.touches[0].clientY - rect.top
+                    };
+                }
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            };
+
+            const startSigning = (e) => {
+                setIsSigning(true);
+                const { x, y } = getCoordinates(e);
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+
+            const drawSigning = (e) => {
+                if (!isSigning) return;
+                if (e.cancelable && e.type.startsWith('touch')) {
+                    e.preventDefault();
+                }
+                const { x, y } = getCoordinates(e);
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            };
+
+            const stopSigning = () => {
+                setIsSigning(false);
             };
 
             return (
@@ -1251,17 +1310,14 @@
                                     ref={canvasRef}
                                     width={280}
                                     height={100}
-                                    className="bg-white rounded-xl cursor-crosshair shadow-inner"
-                                    onMouseDown={() => setIsSigning(true)}
-                                    onMouseUp={() => setIsSigning(false)}
-                                    onMouseMove={(e) => {
-                                        if (!isSigning) return;
-                                        const canvas = canvasRef.current;
-                                        const ctx = canvas.getContext('2d');
-                                        const rect = canvas.getBoundingClientRect();
-                                        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-                                        ctx.stroke();
-                                    }}
+                                    className="bg-white rounded-xl cursor-crosshair shadow-inner touch-none"
+                                    onMouseDown={startSigning}
+                                    onMouseMove={drawSigning}
+                                    onMouseUp={stopSigning}
+                                    onMouseLeave={stopSigning}
+                                    onTouchStart={startSigning}
+                                    onTouchMove={drawSigning}
+                                    onTouchEnd={stopSigning}
                                 />
                             </div>
                         </div>
@@ -1399,236 +1455,242 @@
                     <div className="space-y-8 hwp-font text-black">
                         {/* 1. 근무상황부 (1 Page Bounds) */}
                         {showDuty && (
-                            <div className="a4-page">
-                                <table className="w-full border-collapse mb-1" style={{ border: 'none' }}>
-                                    <tbody>
-                                        <tr>
-                                            <td className="text-center" style={{ border: 'none' }}>
-                                                <h1 className="text-xl font-extrabold tracking-tight m-0">방과후학교 프로그램</h1>
-                                                <h2 className="text-base font-bold mt-1 mb-1">({selectedClass.name})부 근무상황부</h2>
-                                            </td>
-                                            <td style={{ border: 'none', width: '160px' }}>
-                                                <table className="w-40 text-[10px] border-collapse border border-black text-center float-right">
-                                                    <tbody>
-                                                        <tr className="bg-slate-100">
-                                                            <th rowSpan="2" className="border border-black bg-slate-100 w-7 font-bold leading-tight">결<br/>재</th>
-                                                            <th className="border border-black p-0.5 font-bold w-11">담당자</th>
-                                                            <th className="border border-black p-0.5 font-bold w-11">교감</th>
-                                                            <th className="border border-black p-0.5 font-bold w-11">교장</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="border border-black h-8"></td>
-                                                            <td className="border border-black h-8"></td>
-                                                            <td className="border border-black h-8"></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="a4-wrapper">
+                                <div className="a4-page">
+                                    <table className="w-full border-collapse mb-1" style={{ border: 'none' }}>
+                                        <tbody>
+                                            <tr>
+                                                <td className="text-center" style={{ border: 'none' }}>
+                                                    <h1 className="text-xl font-extrabold tracking-tight m-0">방과후학교 프로그램</h1>
+                                                    <h2 className="text-base font-bold mt-1 mb-1">({selectedClass.name})부 근무상황부</h2>
+                                                </td>
+                                                <td style={{ border: 'none', width: '160px' }}>
+                                                    <table className="w-40 text-[10px] border-collapse border border-black text-center float-right">
+                                                        <tbody>
+                                                            <tr className="bg-slate-100">
+                                                                <th rowSpan="2" className="border border-black bg-slate-100 w-7 font-bold leading-tight">결<br/>재</th>
+                                                                <th className="border border-black p-0.5 font-bold w-11">담당자</th>
+                                                                <th className="border border-black p-0.5 font-bold w-11">교감</th>
+                                                                <th className="border border-black p-0.5 font-bold w-11">교장</th>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="border border-black h-8"></td>
+                                                                <td className="border border-black h-8"></td>
+                                                                <td className="border border-black h-8"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                                <div className="text-[11px] font-bold mb-0.5">{year}학년도</div>
-                                <div className="text-[10px] font-bold mb-1.5">(기간 : {periodStr})</div>
+                                    <div className="text-[11px] font-bold mb-0.5">{year}학년도</div>
+                                    <div className="text-[10px] font-bold mb-1.5">(기간 : {periodStr})</div>
 
-                                <table className="w-full text-[10px] border-collapse border border-black text-center">
-                                    <thead>
-                                        <tr className="bg-slate-100">
-                                            <th className="border border-black p-1.5 w-1/5 font-bold">날짜(요일)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => {
-                                                const l = monthLogs[i];
-                                                return <th key={i} className="border border-black p-1.5 w-1/5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
-                                            })}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i]?.checkStatus || 'Ο'}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i]?.workingHours || selectedClass.workingHoursText || '14:10~15:40\n(2시간)'}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
-                                        </tr>
+                                    <table className="w-full text-[10px] border-collapse border border-black text-center">
+                                        <thead>
+                                            <tr className="bg-slate-100">
+                                                <th className="border border-black p-1.5 w-1/5 font-bold">날짜(요일)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => {
+                                                    const l = monthLogs[i];
+                                                    return <th key={i} className="border border-black p-1.5 w-1/5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
+                                                })}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i]?.checkStatus || 'Ο'}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i]?.workingHours || selectedClass.workingHoursText || '14:10~15:40\n(2시간)'}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            </tr>
 
-                                        <tr className="bg-slate-100">
-                                            <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => {
-                                                const l = monthLogs[i + 4];
-                                                return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
-                                            })}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 4]?.checkStatus || ''}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 4]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 4] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
-                                        </tr>
+                                            <tr className="bg-slate-100">
+                                                <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => {
+                                                    const l = monthLogs[i + 4];
+                                                    return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
+                                                })}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 4]?.checkStatus || ''}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 4]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 4] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            </tr>
 
-                                        <tr className="bg-slate-100">
-                                            <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => {
-                                                const l = monthLogs[i + 8];
-                                                return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
-                                            })}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 8]?.checkStatus || ''}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 8]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
-                                        </tr>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 8] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            <tr className="bg-slate-100">
+                                                <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => {
+                                                    const l = monthLogs[i + 8];
+                                                    return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
+                                                })}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 8]?.checkStatus || ''}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 8]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                                {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 8] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                                <table className="w-full text-[10px] border-collapse border border-black text-center mt-2">
-                                    <tbody>
-                                        <tr>
-                                            <th className="border border-black p-1.5 bg-slate-100 w-1/4 font-bold">누적 차시 관리</th>
-                                            <td className="border border-black p-1.5 text-left font-bold pl-5">
-                                                총 누적 차시 (계): &nbsp;&nbsp;{monthLogs.length || 1}&nbsp;&nbsp; 차시
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    <table className="w-full text-[10px] border-collapse border border-black text-center mt-2">
+                                        <tbody>
+                                            <tr>
+                                                <th className="border border-black p-1.5 bg-slate-100 w-1/4 font-bold">누적 차시 관리</th>
+                                                <td className="border border-black p-1.5 text-left font-bold pl-5">
+                                                    총 누적 차시 (계): &nbsp;&nbsp;{monthLogs.length || 1}&nbsp;&nbsp; 차시
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
                         {/* 2. 출석부 (1 Page Bounds for 15 Students) */}
                         {showAttendance && (
-                            <div className="a4-page">
-                                <div className="flex justify-between items-end mb-1 text-[10px] leading-tight">
-                                    <div>
-                                        <div className="font-extrabold text-[10.5px]">기간: {periodStr}</div>
-                                        <div className="text-[9px] text-slate-800">※ 출석: 학생이 참석한 수업시간 (1부, 2부로 기록)</div>
-                                        <div className="text-[9px] text-slate-800">※ 종료: 1부, 2부 중 출석한 경우 귀가, 방과후, 돌봄 중 기재</div>
+                            <div className="a4-wrapper">
+                                <div className="a4-page">
+                                    <div className="flex justify-between items-end mb-1 text-[10px] leading-tight">
+                                        <div>
+                                            <div className="font-extrabold text-[10.5px]">기간: {periodStr}</div>
+                                            <div className="text-[9px] text-slate-800">※ 출석: 학생이 참석한 수업시간 (1부, 2부로 기록)</div>
+                                            <div className="text-[9px] text-slate-800">※ 종료: 1부, 2부 중 출석한 경우 귀가, 방과후, 돌봄 중 기재</div>
+                                        </div>
+                                        <div className="text-center font-extrabold text-base tracking-wider pb-1">출 석 부</div>
+                                        <table className="w-36 text-center border-collapse border border-black shrink-0 text-[9px]">
+                                            <tbody>
+                                                <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">지도강사</th><th className="border border-black p-0.5 font-bold">담당자</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
+                                                <tr><td className="border border-black h-7 font-semibold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <div className="text-center font-extrabold text-base tracking-wider pb-1">출 석 부</div>
-                                    <table className="w-36 text-center border-collapse border border-black shrink-0 text-[9px]">
+
+                                    <table className="w-full text-[9px] border-collapse border border-black text-center">
+                                        <thead>
+                                            <tr className="bg-slate-100">
+                                                <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">연번</th>
+                                                <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">학년</th>
+                                                <th rowSpan="2" className="border border-black p-0.5 w-11 font-bold">이름</th>
+                                                <th rowSpan="2" className="border border-black p-0.5 w-20 font-bold">연락처<br/>(보호자/학생)</th>
+                                                <th className="border border-black p-0.5 w-7 font-bold">구분</th>
+                                                {Array.from({ length: 10 }).map((_, i) => <th key={i} className="border border-black p-0.5 font-bold">{i + 1}</th>)}
+                                                <th rowSpan="2" className="border border-black p-0.5 w-9 font-bold">총 출석일수</th>
+                                            </tr>
+                                            <tr className="bg-slate-100">
+                                                <th className="border border-black p-0.5 font-bold">차시</th>
+                                                {Array.from({ length: 10 }).map((_, i) => {
+                                                    const l = monthLogs[i];
+                                                    return <th key={i} className="border border-black p-0.5 font-medium text-[8px]">{l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>;
+                                                })}
+                                            </tr>
+                                        </thead>
                                         <tbody>
-                                            <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">지도강사</th><th className="border border-black p-0.5 font-bold">담당자</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
-                                            <tr><td className="border border-black h-7 font-semibold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                                            {Array.from({ length: 15 }).map((_, idx) => {
+                                                const st = students[idx];
+                                                return (
+                                                    <React.Fragment key={idx}>
+                                                        <tr>
+                                                            <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? (st.num || idx + 1) : idx + 1}</td>
+                                                            <td rowSpan="2" className="border border-black p-0.5">{st ? st.grade : ''}</td>
+                                                            <td rowSpan="2" className="border border-black p-0.5 font-extrabold">{st ? st.name : ''}</td>
+                                                            <td rowSpan="2" className="border border-black p-0.5 text-[7.5px] leading-tight">
+                                                                <div>{st ? st.parentPhone : ''}</div>
+                                                                <div>{st ? st.studentPhone : ''}</div>
+                                                            </td>
+                                                            <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">출석</th>
+                                                            {Array.from({ length: 10 }).map((_, i) => {
+                                                                const l = monthLogs[i];
+                                                                const att = st ? l?.attendance?.[st.id] : null;
+                                                                return <td key={i} className="border border-black p-0.5 font-semibold text-[8px]">{att?.p1 || (st && l ? '/' : '')}</td>;
+                                                            })}
+                                                            <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? '1' : ''}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">종료</th>
+                                                            {Array.from({ length: 10 }).map((_, i) => {
+                                                                const l = monthLogs[i];
+                                                                const att = st ? l?.attendance?.[st.id] : null;
+                                                                return <td key={i} className="border border-black p-0.5 text-[7.5px]">{att?.exitStatus || (st && l ? '귀가' : '')}</td>;
+                                                            })}
+                                                        </tr>
+                                                    </React.Fragment>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
-
-                                <table className="w-full text-[9px] border-collapse border border-black text-center">
-                                    <thead>
-                                        <tr className="bg-slate-100">
-                                            <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">연번</th>
-                                            <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">학년</th>
-                                            <th rowSpan="2" className="border border-black p-0.5 w-11 font-bold">이름</th>
-                                            <th rowSpan="2" className="border border-black p-0.5 w-20 font-bold">연락처<br/>(보호자/학생)</th>
-                                            <th className="border border-black p-0.5 w-7 font-bold">구분</th>
-                                            {Array.from({ length: 10 }).map((_, i) => <th key={i} className="border border-black p-0.5 font-bold">{i + 1}</th>)}
-                                            <th rowSpan="2" className="border border-black p-0.5 w-9 font-bold">총 출석일수</th>
-                                        </tr>
-                                        <tr className="bg-slate-100">
-                                            <th className="border border-black p-0.5 font-bold">차시</th>
-                                            {Array.from({ length: 10 }).map((_, i) => {
-                                                const l = monthLogs[i];
-                                                return <th key={i} className="border border-black p-0.5 font-medium text-[8px]">{l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>;
-                                            })}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {Array.from({ length: 15 }).map((_, idx) => {
-                                            const st = students[idx];
-                                            return (
-                                                <React.Fragment key={idx}>
-                                                    <tr>
-                                                        <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? (st.num || idx + 1) : idx + 1}</td>
-                                                        <td rowSpan="2" className="border border-black p-0.5">{st ? st.grade : ''}</td>
-                                                        <td rowSpan="2" className="border border-black p-0.5 font-extrabold">{st ? st.name : ''}</td>
-                                                        <td rowSpan="2" className="border border-black p-0.5 text-[7.5px] leading-tight">
-                                                            <div>{st ? st.parentPhone : ''}</div>
-                                                            <div>{st ? st.studentPhone : ''}</div>
-                                                        </td>
-                                                        <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">출석</th>
-                                                        {Array.from({ length: 10 }).map((_, i) => {
-                                                            const l = monthLogs[i];
-                                                            const att = st ? l?.attendance?.[st.id] : null;
-                                                            return <td key={i} className="border border-black p-0.5 font-semibold text-[8px]">{att?.p1 || (st && l ? '/' : '')}</td>;
-                                                        })}
-                                                        <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? '1' : ''}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">종료</th>
-                                                        {Array.from({ length: 10 }).map((_, i) => {
-                                                            const l = monthLogs[i];
-                                                            const att = st ? l?.attendance?.[st.id] : null;
-                                                            return <td key={i} className="border border-black p-0.5 text-[7.5px]">{att?.exitStatus || (st && l ? '귀가' : '')}</td>;
-                                                        })}
-                                                    </tr>
-                                                </React.Fragment>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
                             </div>
                         )}
 
                         {/* 3. 차시별 활동일지 (1 Page Bounds for 4 Blocks) */}
                         {showJournal && (
-                            <div className="a4-page">
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <h2 className="text-sm font-extrabold tracking-tight">방과후 학교({selectedClass.name}) 차시별 활동일지</h2>
-                                    <table className="w-36 text-[10px] text-center border-collapse border border-black shrink-0">
-                                        <tbody>
-                                            <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">강사</th><th className="border border-black p-0.5 font-bold">담당</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
-                                            <tr><td className="border border-black h-7 font-bold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div className="a4-wrapper">
+                                <div className="a4-page">
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <h2 className="text-sm font-extrabold tracking-tight">방과후 학교({selectedClass.name}) 차시별 활동일지</h2>
+                                        <table className="w-36 text-[10px] text-center border-collapse border border-black shrink-0">
+                                            <tbody>
+                                                <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">강사</th><th className="border border-black p-0.5 font-bold">담당</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
+                                                <tr><td className="border border-black h-7 font-bold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
 
-                                <div className="space-y-2">
-                                    {fourJournalBlocks.map((l, lIdx) => {
-                                        const hasData = l.date && !l.date.endsWith('-00-00');
-                                        const dateStr = hasData ? `${year}년 ${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일 (${l.dayOfWeek})` : `${year}년 월 일(   )`;
-                                        return (
-                                            <table key={lIdx} className="w-full text-[10px] border-collapse border border-black text-center">
-                                                <tbody>
-                                                    <tr>
-                                                        <th className="border border-black p-1 bg-slate-100 w-1/4 font-bold">{dateStr}</th>
-                                                        <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 장소</th>
-                                                        <td className="border border-black p-1 w-1/5 font-medium">{hasData ? (l.room || selectedClass.room) : '장소 입력'}</td>
-                                                        <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 시간</th>
-                                                        <td className="border border-black p-1 font-medium">{hasData ? (l.workingHours ? l.workingHours.split('\n')[0] : '14:10~15:40') : ':~:'}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th className="border border-black p-1 bg-slate-100 font-bold">지도 내용</th>
-                                                        <td colSpan="4" className="border border-black p-1.5 text-left whitespace-pre-wrap align-top h-[40px] font-medium leading-tight">{l.topicContent || '지도 내용을 입력하세요'}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th className="border border-black p-1 bg-slate-100 font-bold">특기 사항</th>
-                                                        <td colSpan="4" className="border border-black p-1 text-left font-medium">{l.specialNote || '특기 사항 입력 (선택)'}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th className="border border-black p-1 bg-slate-100 font-bold">지도 차시</th>
-                                                        <td colSpan="2" className="border border-black p-1 font-semibold">({l.currentLesson || '~'})차시</td>
-                                                        <th className="border border-black p-1 bg-slate-100 font-bold">누계</th>
-                                                        <td className="border border-black p-1 font-semibold">({l.totalLesson || ''})차시</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        );
-                                    })}
+                                    <div className="space-y-2">
+                                        {fourJournalBlocks.map((l, lIdx) => {
+                                            const hasData = l.date && !l.date.endsWith('-00-00');
+                                            const dateStr = hasData ? `${year}년 ${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일 (${l.dayOfWeek})` : `${year}년 월 일(   )`;
+                                            return (
+                                                <table key={lIdx} className="w-full text-[10px] border-collapse border border-black text-center">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th className="border border-black p-1 bg-slate-100 w-1/4 font-bold">{dateStr}</th>
+                                                            <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 장소</th>
+                                                            <td className="border border-black p-1 w-1/5 font-medium">{hasData ? (l.room || selectedClass.room) : '장소 입력'}</td>
+                                                            <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 시간</th>
+                                                            <td className="border border-black p-1 font-medium">{hasData ? (l.workingHours ? l.workingHours.split('\n')[0] : '14:10~15:40') : ':~:'}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th className="border border-black p-1 bg-slate-100 font-bold">지도 내용</th>
+                                                            <td colSpan="4" className="border border-black p-1.5 text-left whitespace-pre-wrap align-top h-[40px] font-medium leading-tight">{l.topicContent || '지도 내용을 입력하세요'}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th className="border border-black p-1 bg-slate-100 font-bold">특기 사항</th>
+                                                            <td colSpan="4" className="border border-black p-1 text-left font-medium">{l.specialNote || '특기 사항 입력 (선택)'}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th className="border border-black p-1 bg-slate-100 font-bold">지도 차시</th>
+                                                            <td colSpan="2" className="border border-black p-1 font-semibold">({l.currentLesson || '~'})차시</td>
+                                                            <th className="border border-black p-1 bg-slate-100 font-bold">누계</th>
+                                                            <td className="border border-black p-1 font-semibold">({l.totalLesson || ''})차시</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         )}
