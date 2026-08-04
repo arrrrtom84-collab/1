@@ -50,21 +50,23 @@
             font-family: 'Batang', 'Gowun Batang', 'Malgun Gothic', serif, sans-serif;
         }
         
-        /* A4 Page Simulation for Screen */
+        /* Fixed A4 Page Simulation (Exact 210mm x 297mm 1-page bounds) */
         .a4-page {
-            width: 100%;
+            width: 210mm;
+            height: 297mm;
             max-width: 210mm;
-            min-height: 297mm;
-            padding: 12mm 15mm;
-            margin: 0 auto;
+            max-height: 297mm;
+            padding: 8mm 10mm;
+            margin: 0 auto 20px auto;
             background: #ffffff;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
             box-sizing: border-box;
             position: relative;
+            overflow: hidden;
         }
 
-        /* Print Specific Styles for precise A4 PDF Generation */
+        /* Print Specific Styles for precise 1-Page A4 PDF Generation */
         @media print {
             @page {
                 size: A4 portrait;
@@ -86,13 +88,14 @@
                 width: 210mm !important;
                 height: 297mm !important;
                 max-width: 210mm !important;
-                min-height: 297mm !important;
-                padding: 12mm 15mm !important;
+                max-height: 297mm !important;
+                padding: 8mm 10mm !important;
                 margin: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
                 page-break-after: always !important;
                 page-break-inside: avoid !important;
+                overflow: hidden !important;
             }
             .a4-page:last-child {
                 page-break-after: auto !important;
@@ -134,7 +137,7 @@
                 schedule: '목요일 14:10 ~ 15:40',
                 room: '후관3층음악실',
                 instructor: '최정임 강사님',
-                workingHoursText: '14:10 ~ 15:40\n( 2 시간 )'
+                workingHoursText: '14:10~15:40\n(2시간)'
             },
             {
                 id: 'c2',
@@ -145,14 +148,14 @@
                 schedule: '화, 목 15:00 ~ 16:30',
                 room: '제2과학실',
                 instructor: '최정임 강사님',
-                workingHoursText: '15:00 ~ 16:30\n( 2 시간 )'
+                workingHoursText: '15:00~16:30\n(2시간)'
             }
         ];
 
         const DEFAULT_STUDENTS = {
             'c1': [
                 { id: 's101', num: 1, grade: 1, name: '박시율', parentPhone: '010-2878-5786', studentPhone: '010-2890-5786' },
-                { id: 's102', num: 2, grade: 1, name: '이민호', parentPhone: '010-8426-2879', studentPhone: '010-8312-7644' },
+                { id: 's102', num: 2, grade: 1, name: '이민호', parentPhone: '010-8426-2879', studentPhone: '010-8312-7644(부)' },
                 { id: 's103', num: 3, grade: 4, name: '김은호', parentPhone: '010-3281-2302', studentPhone: '010-3916-2307' },
                 { id: 's104', num: 4, grade: 4, name: '정성훈', parentPhone: '010-9331-4309', studentPhone: '010-6334-1903' },
                 { id: 's105', num: 5, grade: 4, name: '정혜성', parentPhone: '010-4795-4411', studentPhone: '010-6543-7150' },
@@ -170,22 +173,22 @@
                     classId: 'c1',
                     date: '2026-05-07',
                     dayOfWeek: '목',
-                    checkStatus: 'o',
-                    workingHours: '14:10 ~ 15:40\n( 2 시간 )',
+                    checkStatus: 'Ο',
+                    workingHours: '14:10~15:40\n(2시간)',
                     instructor: '최정임',
                     room: '후관3층음악실',
-                    topicContent: '사자성어 복습하기 , 名山大川 알아보기\n기출문제 풀이 후 답 정정하기\n복습한자카드로 가족에 관한 한자 단어 만들기',
-                    specialNote: '학생 안전지도 이상 없음',
+                    topicContent: '사자성어 복습하기, 名山大川 알아보기\n기출문제 풀이 후 오답 정정하기\n복습한자 카드로 가족에 관한 한자 단어 만들기',
+                    specialNote: '특기 사항 입력 (선택)',
                     currentLesson: '36~37',
                     totalLesson: '37',
                     checklists: { clean: true, equipment: true, safety: true },
                     attendance: {
-                        's101': { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '화요일만' },
-                        's102': { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '화요일만' },
-                        's103': { p1: '출석', p2: '결석', p3: '선택안함', exitStatus: '연계형' },
-                        's104': { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '연계형' },
-                        's105': { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '귀가' },
-                        's106': { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '연계형' }
+                        's101': { p1: '/', p2: '/', p3: '선택안함', exitStatus: '화요일민' },
+                        's102': { p1: '/', p2: '/', p3: '선택안함', exitStatus: '화요일민' },
+                        's103': { p1: '1', p2: '/', p3: '선택안함', exitStatus: '연계형' },
+                        's104': { p1: '2', p2: '/', p3: '선택안함', exitStatus: '연계형' },
+                        's105': { p1: '/', p2: '/', p3: '선택안함', exitStatus: '귀가' },
+                        's106': { p1: '2', p2: '/', p3: '선택안함', exitStatus: '연계형' }
                     }
                 }
             };
@@ -207,7 +210,7 @@
                 return saved ? JSON.parse(saved) : generateInitialLogs();
             });
 
-            const [activeTab, setActiveTab] = useState('report');
+            const [activeTab, setActiveTab] = useState('dashboard');
             const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || 'c1');
             const [editingClassId, setEditingClassId] = useState(null);
             const [selectedDate, setSelectedDate] = useState('2026-05-07');
@@ -238,12 +241,12 @@
                 classId: selectedClassId,
                 date: selectedDate,
                 dayOfWeek: new Date(selectedDate).toLocaleDateString('ko-KR', { weekday: 'short' }),
-                checkStatus: 'o',
-                workingHours: selectedClass?.workingHoursText || '14:10 ~ 15:40\n( 2 시간 )',
+                checkStatus: 'Ο',
+                workingHours: selectedClass?.workingHoursText || '14:10~15:40\n(2시간)',
                 instructor: selectedClass?.instructor?.replace(' 강사님', '') || '최정임',
                 room: selectedClass?.room || '후관3층음악실',
                 topicContent: '',
-                specialNote: '',
+                specialNote: '특기 사항 입력 (선택)',
                 currentLesson: '1~2',
                 totalLesson: '2',
                 checklists: { clean: true, equipment: true, safety: true },
@@ -313,7 +316,23 @@
 
                 const classSts = students[targetClass.id] || [];
                 const lastDay = new Date(year, month, 0).getDate();
-                const periodStr = `${year} . ${parseInt(month)} . 1 . ~ ${year} . ${parseInt(month)} . ${lastDay} .`;
+                const periodStr = `${year}. ${parseInt(month)}. 1. ~ ${year}. ${parseInt(month)}. ${lastDay}.`;
+
+                const fourJournalBlocks = Array.from({ length: 4 }).map((_, i) => {
+                    const l = monthLogs[i];
+                    if (l) return l;
+                    if (i === 0) return currentLog;
+                    return {
+                        date: `${year}-00-00`,
+                        dayOfWeek: ' ',
+                        room: '장소 입력',
+                        workingHours: ':~:',
+                        topicContent: '지도 내용을 입력하세요',
+                        specialNote: '특기 사항 입력 (선택)',
+                        currentLesson: '~',
+                        totalLesson: ''
+                    };
+                });
 
                 return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -321,32 +340,31 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>${targetClass.name}_방과후일지_${targetMonth}</title>
 <style>
-    @page { size: A4 portrait; margin: 12mm; }
-    body { font-family: 'Batang', 'Gowun Batang', '맑은 고딕', serif; font-size: 10pt; line-height: 1.4; color: #000; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-    th, td { border: 1px solid #000; text-align: center; font-size: 9.5pt; word-break: break-all; }
+    @page { size: A4 portrait; margin: 8mm; }
+    body { font-family: 'Batang', 'Gowun Batang', '맑은 고딕', serif; font-size: 8.5pt; line-height: 1.2; color: #000; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+    th, td { border: 1px solid #000; text-align: center; font-size: 8pt; word-break: break-all; padding: 2px 3px; }
 </style>
 </head>
 <body>
-    <div style="page-break-after: always;">
-        <table style="border: none; margin-bottom: 10px;">
+    <!-- 1. 근무상황부 -->
+    <div style="page-break-after: always; height: 280mm; box-sizing: border-box; overflow: hidden;">
+        <table style="border: none; margin-bottom: 6px;">
             <tr>
                 <td style="border: none; text-align: center;">
-                    <h1 style="font-size: 18pt; margin: 0;">방과후학교 프로그램</h1>
-                    <h2 style="font-size: 16pt; margin: 6px 0;">( ${targetClass.name} )부 근무상황부</h2>
+                    <h1 style="font-size: 16pt; margin: 0; font-weight: bold;">방과후학교 프로그램</h1>
+                    <h2 style="font-size: 14pt; margin: 2px 0; font-weight: bold;">(${targetClass.name})부 근무상황부</h2>
                 </td>
-                <td style="border: none; width: 220px;">
-                    <table style="width: 210px; text-align: center; float: right;">
+                <td style="border: none; width: 170px;">
+                    <table style="width: 160px; text-align: center; float: right;">
                         <tr style="background: #f1f5f9;">
-                            <th rowspan="2" style="width: 30px;">결<br>재</th>
-                            <th style="width: 45px;">담당</th>
-                            <th style="width: 45px;">부장</th>
-                            <th style="width: 45px;">교감</th>
-                            <th style="width: 45px;">교장</th>
+                            <th rowspan="2" style="width: 25px; font-size: 8pt;">결<br>재</th>
+                            <th style="width: 45px; font-size: 8pt;">담당자</th>
+                            <th style="width: 45px; font-size: 8pt;">교감</th>
+                            <th style="width: 45px; font-size: 8pt;">교장</th>
                         </tr>
                         <tr>
-                            <td style="height: 45px;"></td>
-                            <td></td>
+                            <td style="height: 32px;"></td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -354,27 +372,27 @@
                 </td>
             </tr>
         </table>
-        <div style="font-size: 11pt; font-weight: bold;">${year}학년도</div>
-        <div style="font-size: 10pt; margin-bottom: 10px;">(기간 : ${periodStr})</div>
+        <div style="font-size: 10pt; font-weight: bold;">${year}학년도</div>
+        <div style="font-size: 9pt; margin-bottom: 6px;">(기간: ${periodStr})</div>
         <table>
             <thead>
                 <tr style="background: #eee;">
                     <th style="width: 20%;">날짜(요일)</th>
                     ${Array.from({ length: 4 }).map((_, i) => {
                         const l = monthLogs[i];
-                        return `<th style="width: 20%;">${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>`;
+                        return `<th style="width: 20%;">${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
-                <tr><th>관리 사항 점검 내용</th>${Array.from({ length: 4 }).map((_, i) => `<td>${monthLogs[i]?.checkStatus || 'o'}</td>`).join('')}</tr>
-                <tr><th>근무시간</th>${Array.from({ length: 4 }).map((_, i) => `<td style="white-space: pre-line;">${monthLogs[i]?.workingHours || targetClass.workingHoursText || '14:10 ~ 15:40\n( 2 시간 )'}</td>`).join('')}</tr>
+                <tr><th>관리 사항 점검 내용</th>${Array.from({ length: 4 }).map((_, i) => `<td>${monthLogs[i]?.checkStatus || 'Ο'}</td>`).join('')}</tr>
+                <tr><th>근무시간</th>${Array.from({ length: 4 }).map((_, i) => `<td style="white-space: pre-line;">${monthLogs[i]?.workingHours || targetClass.workingHoursText || '14:10~15:40\n(2시간)'}</td>`).join('')}</tr>
                 <tr><th>지도강사(서명)</th>${Array.from({ length: 4 }).map((_, i) => `<td>${monthLogs[i] ? targetClass.instructor?.replace(' 강사님','') : ''}</td>`).join('')}</tr>
                 <tr style="background: #eee;">
                     <th>날짜(요일)</th>
                     ${Array.from({ length: 4 }).map((_, i) => {
                         const l = monthLogs[i + 4];
-                        return `<th>${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>`;
+                        return `<th>${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>`;
                     }).join('')}
                 </tr>
                 <tr><th>관리 사항 점검 내용</th>${Array.from({ length: 4 }).map((_, i) => `<td>${monthLogs[i + 4]?.checkStatus || ''}</td>`).join('')}</tr>
@@ -384,7 +402,7 @@
                     <th>날짜(요일)</th>
                     ${Array.from({ length: 4 }).map((_, i) => {
                         const l = monthLogs[i + 8];
-                        return `<th>${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>`;
+                        return `<th>${l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>`;
                     }).join('')}
                 </tr>
                 <tr><th>관리 사항 점검 내용</th>${Array.from({ length: 4 }).map((_, i) => `<td>${monthLogs[i + 8]?.checkStatus || ''}</td>`).join('')}</tr>
@@ -394,20 +412,26 @@
         </table>
         <table>
             <tr>
-                <th style="background: #eee; width: 20%;">금월 누적 차시</th>
-                <td style="text-align: left; padding-left: 20px; font-weight: bold;">총 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 차시</td>
+                <th style="background: #eee; width: 25%;">누적 차시 관리</th>
+                <td style="text-align: left; padding-left: 15px; font-weight: bold;">총 누적 차시 (계): &nbsp;&nbsp;${monthLogs.length || 1}&nbsp;&nbsp; 차시</td>
             </tr>
         </table>
     </div>
 
-    <div style="page-break-after: always;">
-        <table style="border: none; margin-bottom: 6px;">
+    <!-- 2. 출석부 -->
+    <div style="page-break-after: always; height: 280mm; box-sizing: border-box; overflow: hidden;">
+        <table style="border: none; margin-bottom: 3px;">
             <tr>
-                <td style="border: none; text-align: left; font-weight: bold;">기간: ${periodStr}</td>
-                <td style="border: none; width: 160px;">
-                    <table style="width: 150px; text-align: center; float: right;">
-                        <tr><th style="background: #eee;">지도강사</th><th style="background: #eee;">담당</th></tr>
-                        <tr><td style="height: 35px;">${targetClass.instructor?.replace(' 강사님','')}</td><td></td></tr>
+                <td style="border: none; text-align: left; font-size: 7.5pt; line-height: 1.1;">
+                    <div><b>기간: ${periodStr}</b></div>
+                    <div>※ 출석: 학생이 참석한 수업시간 (1부, 2부로 기록)</div>
+                    <div>※ 종료: 1부, 2부 중 출석한 경우 귀가, 방과후, 돌봄 중 기재</div>
+                </td>
+                <td style="border: none; text-align: center;"><h2 style="font-size: 15pt; margin: 0; font-weight: bold;">출 석 부</h2></td>
+                <td style="border: none; width: 150px;">
+                    <table style="width: 140px; text-align: center; float: right; font-size: 7.5pt;">
+                        <tr style="background: #eee;"><th>지도강사</th><th>담당자</th><th>교감</th></tr>
+                        <tr><td style="height: 28px;">${targetClass.instructor?.replace(' 강사님','')}</td><td></td><td></td></tr>
                     </table>
                 </td>
             </tr>
@@ -415,85 +439,97 @@
         <table>
             <thead>
                 <tr style="background: #eee;">
-                    <th rowspan="2" style="width: 30px;">연번</th>
-                    <th rowspan="2" style="width: 30px;">학년</th>
-                    <th rowspan="2" style="width: 60px;">이름</th>
-                    <th rowspan="2" style="width: 110px;">연락처<br>(보호자, 학생)</th>
-                    <th style="width: 40px;">차시</th>
-                    ${Array.from({ length: 10 }).map((_, i) => `<th style="width: 30px;">${i + 1}</th>`).join('')}
+                    <th rowspan="2" style="width: 20px;">연번</th>
+                    <th rowspan="2" style="width: 20px;">학년</th>
+                    <th rowspan="2" style="width: 45px;">이름</th>
+                    <th rowspan="2" style="width: 90px;">연락처<br>(보호자/학생)</th>
+                    <th style="width: 30px;">구분</th>
+                    ${Array.from({ length: 10 }).map((_, i) => `<th style="width: 25px;">${i + 1}</th>`).join('')}
+                    <th rowspan="2" style="width: 35px;">총 출석일수</th>
                 </tr>
                 <tr style="background: #eee;">
-                    <th>일자</th>
+                    <th>차시</th>
                     ${Array.from({ length: 10 }).map((_, i) => {
                         const l = monthLogs[i];
-                        return `<th>${l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>`;
+                        return `<th style="font-size: 7pt;">${l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>`;
                     }).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${classSts.map((st, idx) => `
-                    <tr>
-                        <td rowspan="2">${st.num || idx + 1}</td>
-                        <td rowspan="2">${st.grade}</td>
-                        <td rowspan="2"><b>${st.name}</b></td>
-                        <td rowspan="2" style="font-size: 8pt;"><div>${st.parentPhone || '-'}</div><div>${st.studentPhone || '-'}</div></td>
-                        <th style="background: #fafafa;">출석</th>
-                        ${Array.from({ length: 10 }).map((_, i) => {
-                            const l = monthLogs[i];
-                            const att = l?.attendance?.[st.id];
-                            return `<td>${att?.p1 || (l ? '출석' : '')}</td>`;
-                        }).join('')}
-                    </tr>
-                    <tr>
-                        <th style="background: #fafafa;">종료</th>
-                        ${Array.from({ length: 10 }).map((_, i) => {
-                            const l = monthLogs[i];
-                            const att = l?.attendance?.[st.id];
-                            return `<td style="font-size: 8pt;">${att?.exitStatus || (l ? '귀가' : '')}</td>`;
-                        }).join('')}
-                    </tr>
-                `).join('')}
+                ${Array.from({ length: 15 }).map((_, idx) => {
+                    const st = classSts[idx];
+                    return `
+                        <tr>
+                            <td rowspan="2">${st ? (st.num || idx + 1) : idx + 1}</td>
+                            <td rowspan="2">${st ? st.grade : ''}</td>
+                            <td rowspan="2"><b>${st ? st.name : ''}</b></td>
+                            <td rowspan="2" style="font-size: 7pt; line-height: 1.0;">
+                                <div>${st ? st.parentPhone : ''}</div>
+                                <div>${st ? st.studentPhone : ''}</div>
+                            </td>
+                            <th style="background: #fafafa; font-size: 7pt; padding: 1px;">출석</th>
+                            ${Array.from({ length: 10 }).map((_, i) => {
+                                const l = monthLogs[i];
+                                const att = st ? l?.attendance?.[st.id] : null;
+                                return `<td style="padding: 1px;">${att?.p1 || (st && l ? '/' : '')}</td>`;
+                            }).join('')}
+                            <td rowspan="2">${st ? '1' : ''}</td>
+                        </tr>
+                        <tr>
+                            <th style="background: #fafafa; font-size: 7pt; padding: 1px;">종료</th>
+                            ${Array.from({ length: 10 }).map((_, i) => {
+                                const l = monthLogs[i];
+                                const att = st ? l?.attendance?.[st.id] : null;
+                                return `<td style="font-size: 6.5pt; padding: 1px;">${att?.exitStatus || (st && l ? '귀가' : '')}</td>`;
+                            }).join('')}
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     </div>
 
-    <div>
-        <table style="border: none; margin-bottom: 10px;">
+    <!-- 3. 차시별 활동일지 -->
+    <div style="height: 280mm; box-sizing: border-box; overflow: hidden;">
+        <table style="border: none; margin-bottom: 6px;">
             <tr>
-                <td style="border: none; text-align: center;"><h2 style="font-size: 15pt; margin: 0;">방과후학교 프로그램 ( ${targetClass.name} 부 ) 차시별 활동일지</h2></td>
-                <td style="border: none; width: 180px;">
-                    <table style="width: 170px; text-align: center; float: right;">
-                        <tr><th style="background: #eee;">강사</th><th style="background: #eee;">담당</th><th style="background: #eee;">교감</th></tr>
-                        <tr><td style="height: 38px;">${targetClass.instructor?.replace(' 강사님','')}</td><td></td><td></td></tr>
+                <td style="border: none; text-align: center;"><h2 style="font-size: 14pt; margin: 0; font-weight: bold;">방과후 학교(${targetClass.name}) 차시별 활동일지</h2></td>
+                <td style="border: none; width: 150px;">
+                    <table style="width: 140px; text-align: center; float: right; font-size: 7.5pt;">
+                        <tr style="background: #eee;"><th>강사</th><th>담당</th><th>교감</th></tr>
+                        <tr><td style="height: 28px;">${targetClass.instructor?.replace(' 강사님','')}</td><td></td><td></td></tr>
                     </table>
                 </td>
             </tr>
         </table>
-        ${monthLogs.map(l => `
-            <table>
+        ${fourJournalBlocks.map(l => {
+            const hasData = l.date && !l.date.endsWith('-00-00');
+            const dateStr = hasData ? `${year}년 ${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일 (${l.dayOfWeek})` : `${year}년 월 일(   )`;
+            return `
+            <table style="margin-bottom: 6px;">
                 <tr>
-                    <th style="background: #eee; width: 25%;">${year}년 ${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일 ( ${l.dayOfWeek}요일 )</th>
-                    <th style="background: #eee; width: 15%;">지도 장소</th>
-                    <td style="width: 20%;">${l.room || targetClass.room}</td>
-                    <th style="background: #eee; width: 15%;">지도 시간</th>
-                    <td>${l.workingHours ? l.workingHours.split('\n')[0] : '14:10 ~ 15:40'}</td>
+                    <th style="background: #eee; width: 22%; font-size: 8pt;">${dateStr}</th>
+                    <th style="background: #eee; width: 14%; font-size: 8pt;">지도 장소</th>
+                    <td style="width: 22%; font-size: 8pt;">${hasData ? (l.room || targetClass.room) : '장소 입력'}</td>
+                    <th style="background: #eee; width: 14%; font-size: 8pt;">지도 시간</th>
+                    <td style="font-size: 8pt;">${hasData ? (l.workingHours ? l.workingHours.split('\n')[0] : '14:10~15:40') : ':~:'}</td>
                 </tr>
                 <tr>
-                    <th style="background: #eee;">지도 내용</th>
-                    <td colSpan="4" style="text-align: left; padding: 10px; white-space: pre-wrap; height: 80px; vertical-align: top;">${l.topicContent || ''}</td>
+                    <th style="background: #eee; font-size: 8pt;">지도 내용</th>
+                    <td colSpan="4" style="text-align: left; padding: 4px; white-space: pre-wrap; height: 42px; vertical-align: top; font-size: 8pt;">${l.topicContent || '지도 내용을 입력하세요'}</td>
                 </tr>
                 <tr>
-                    <th style="background: #eee;">특기 사항</th>
-                    <td colSpan="4" style="text-align: left; padding: 6px;">${l.specialNote || ''}</td>
+                    <th style="background: #eee; font-size: 8pt;">특기 사항</th>
+                    <td colSpan="4" style="text-align: left; padding: 3px; font-size: 8pt;">${l.specialNote || '특기 사항 입력 (선택)'}</td>
                 </tr>
                 <tr>
-                    <th style="background: #eee;">지도 차시</th>
-                    <td colSpan="2">( ${l.currentLesson || '1~2'} )차시</td>
-                    <th style="background: #eee;">누계</th>
-                    <td>( ${l.totalLesson || '2'} )차시</td>
+                    <th style="background: #eee; font-size: 8pt;">지도 차시</th>
+                    <td colSpan="2" style="font-size: 8pt;">(${l.currentLesson || '~'})차시</td>
+                    <th style="background: #eee; font-size: 8pt;">누계</th>
+                    <td style="font-size: 8pt;">(${l.totalLesson || ''})차시</td>
                 </tr>
             </table>
-        `).join('')}
+        `}).join('')}
     </div>
 </body>
 </html>`;
@@ -540,7 +576,7 @@
                         </button>
                     </header>
 
-                    {/* Universal Top Banner across all subpages */}
+                    {/* Universal Top Banner across subpages */}
                     {activeTab !== 'dashboard' && activeTab !== 'addSchool' && (
                         <div className="px-4 pt-4 no-print">
                             <div className="stitch-card p-4 bg-white border-l-4 border-l-stitch-brand flex justify-between items-center shadow-sm">
@@ -622,6 +658,7 @@
                                 logs={logs}
                                 students={currentClassStudents}
                                 handleExportHwp={handleExportHwp}
+                                currentLog={currentLog}
                             />
                         )}
 
@@ -855,7 +892,7 @@
 
                     <div className="space-y-3">
                         {students.map((st, idx) => {
-                            const att = currentLog.attendance?.[st.id] || { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '귀가' };
+                            const att = currentLog.attendance?.[st.id] || { p1: '/', p2: '/', p3: '선택안함', exitStatus: '귀가' };
 
                             return (
                                 <div key={st.id} className="stitch-card p-4 space-y-3 relative">
@@ -886,19 +923,19 @@
 
                                     <div className="grid grid-cols-3 gap-2 text-xs font-bold">
                                         {['p1', 'p2', 'p3'].map((part, pIdx) => {
-                                            const status = att[part] || '출석';
+                                            const status = att[part] || '/';
                                             return (
                                                 <button
                                                     key={part}
                                                     type="button"
-                                                    onClick={() => handleAttendanceChange(st.id, part, status === '출석' ? '결석' : status === '결석' ? '선택안함' : '출석')}
+                                                    onClick={() => handleAttendanceChange(st.id, part, status === '/' ? '1' : status === '1' ? '2' : status === '2' ? '결석' : '/')}
                                                     className={`py-2 rounded-xl border transition-all text-center flex flex-col items-center justify-center ${
-                                                        status === '출석' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
+                                                        status === '/' || status === '1' || status === '2' ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
                                                         status === '결석' ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-slate-100 border-slate-200 text-slate-400'
                                                     }`}
                                                 >
                                                     <span className="text-[10px] text-slate-400">{pIdx + 1}부</span>
-                                                    <span>{status === '출석' ? '✔ 출석' : status === '결석' ? '✖ 결석' : '- 미선택'}</span>
+                                                    <span>{status === '결석' ? '✖ 결석' : `✔ 출석 (${status})`}</span>
                                                 </button>
                                             );
                                         })}
@@ -910,7 +947,7 @@
                                             type="text"
                                             value={att.exitStatus || '귀가'}
                                             onChange={(e) => handleAttendanceChange(st.id, 'exitStatus', e.target.value)}
-                                            placeholder="귀가, 화요일만, 연계형, 방과후 등"
+                                            placeholder="귀가, 화요일민, 연계형, 방과후 등"
                                             className="w-full text-xs font-bold bg-white border border-slate-200 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-stitch-brand"
                                         />
                                     </div>
@@ -926,72 +963,6 @@
                         <span>💾</span>
                         <span>출결 내역 저장하기</span>
                     </button>
-
-                    {/* Live Preview Table of Attendance Register */}
-                    <div className="space-y-2 pt-2">
-                        <div className="flex justify-between items-center px-1">
-                            <h3 className="text-sm font-extrabold text-slate-800 flex items-center space-x-1.5">
-                                <span>📄</span>
-                                <span>출석 및 종료 기록부 문서 양식 표 (실시간 반영)</span>
-                            </h3>
-                            <span className="text-[11px] font-bold text-stitch-brand bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-full">
-                                A4 한글 서식
-                            </span>
-                        </div>
-
-                        <div className="stitch-card p-4 bg-white hwp-font overflow-x-auto shadow-md">
-                            <div className="flex justify-between items-end mb-2 text-xs">
-                                <span className="font-extrabold text-xs">일자: {yearStr}. {monthStr}. {dayStr}.</span>
-                                <table className="w-36 text-center border-collapse border border-black text-[10px] shrink-0">
-                                    <tbody>
-                                        <tr className="bg-slate-100"><th className="border border-black p-1 font-bold">지도강사</th><th className="border border-black p-1 font-bold">담당</th></tr>
-                                        <tr><td className="border border-black h-7 font-bold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <table className="w-full text-xs border-collapse border border-black text-center">
-                                <thead>
-                                    <tr className="bg-slate-100">
-                                        <th rowSpan="2" className="border border-black p-1 w-7 font-bold">연번</th>
-                                        <th rowSpan="2" className="border border-black p-1 w-7 font-bold">학년</th>
-                                        <th rowSpan="2" className="border border-black p-1 w-14 font-bold">이름</th>
-                                        <th rowSpan="2" className="border border-black p-1 w-24 font-bold">연락처<br/>(보호자/학생)</th>
-                                        <th className="border border-black p-1 w-10 font-bold">차시</th>
-                                        <th className="border border-black p-1 w-12 font-bold">오늘일자</th>
-                                    </tr>
-                                    <tr className="bg-slate-100">
-                                        <th className="border border-black p-1 font-bold">구분</th>
-                                        <th className="border border-black p-1 font-bold">{monthStr}/{dayStr}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {students.map((st, idx) => {
-                                        const att = currentLog.attendance?.[st.id] || { p1: '출석', p2: '출석', p3: '선택안함', exitStatus: '귀가' };
-                                        return (
-                                            <React.Fragment key={st.id}>
-                                                <tr>
-                                                    <td rowSpan="2" className="border border-black p-1 font-bold">{st.num || idx + 1}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 font-medium">{st.grade}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 font-extrabold">{st.name}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 text-[9px] leading-tight font-medium">
-                                                        <div>{st.parentPhone || '-'}</div>
-                                                        <div>{st.studentPhone || '-'}</div>
-                                                    </td>
-                                                    <th className="border border-black p-1 bg-slate-50 font-bold text-[10px]">출석</th>
-                                                    <td className="border border-black p-1 font-extrabold text-emerald-700">{att.p1 || '출석'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th className="border border-black p-1 bg-slate-50 font-bold text-[10px]">종료</th>
-                                                    <td className="border border-black p-1 text-[10px] font-bold text-slate-700">{att.exitStatus || '귀가'}</td>
-                                                </tr>
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                 </div>
             );
         }
@@ -1019,7 +990,7 @@
                         <div className="flex justify-between items-center pt-1">
                             <span className="text-xs font-bold text-slate-600">결재 (Approval)</span>
                             <div className="flex space-x-2 text-[10px] text-slate-500 font-bold">
-                                <div className="border border-slate-200 rounded-xl p-2 w-16 text-center bg-slate-50">지도강사<br/><span className="text-slate-800 font-extrabold">{currentLog.instructor || '최정임'}</span></div>
+                                <div className="border border-slate-200 rounded-xl p-2 w-16 text-center bg-slate-50">강사<br/><span className="text-slate-800 font-extrabold">{currentLog.instructor || '최정임'}</span></div>
                                 <div className="border border-slate-200 rounded-xl p-2 w-16 text-center bg-slate-50">담당자<br/><span className="text-slate-300">(서명)</span></div>
                                 <div className="border border-slate-200 rounded-xl p-2 w-16 text-center bg-slate-50">교감<br/><span className="text-slate-300">(서명)</span></div>
                             </div>
@@ -1047,8 +1018,8 @@
                                 <label className="block text-[11px] font-bold text-slate-500 mb-1">지도시간 (Time)</label>
                                 <input
                                     type="text"
-                                    value={currentLog.workingHours?.split('\n')[0] || '14:10 ~ 15:40'}
-                                    onChange={(e) => handleLogChange('workingHours', e.target.value + '\n( 2 시간 )')}
+                                    value={currentLog.workingHours?.split('\n')[0] || '14:10~15:40'}
+                                    onChange={(e) => handleLogChange('workingHours', e.target.value + '\n(2시간)')}
                                     className="w-full font-bold border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-stitch-brand"
                                 />
                             </div>
@@ -1059,7 +1030,7 @@
                                 <label className="block text-[11px] font-bold text-slate-500 mb-1">지도차시</label>
                                 <input
                                     type="text"
-                                    value={currentLog.currentLesson || '1~2'}
+                                    value={currentLog.currentLesson || '36~37'}
                                     onChange={(e) => handleLogChange('currentLesson', e.target.value)}
                                     placeholder="예: 36~37"
                                     className="w-full font-bold border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-stitch-brand"
@@ -1067,10 +1038,10 @@
                             </div>
 
                             <div>
-                                <label className="block text-[11px] font-bold text-slate-500 mb-1">누적차시</label>
+                                <label className="block text-[11px] font-bold text-slate-500 mb-1">누계</label>
                                 <input
                                     type="text"
-                                    value={currentLog.totalLesson || '2'}
+                                    value={currentLog.totalLesson || '37'}
                                     onChange={(e) => handleLogChange('totalLesson', e.target.value)}
                                     placeholder="예: 37"
                                     className="w-full font-bold border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-stitch-brand"
@@ -1091,7 +1062,7 @@
                                 rows="4"
                                 value={currentLog.topicContent || ''}
                                 onChange={(e) => handleLogChange('topicContent', e.target.value)}
-                                placeholder="오늘 진행한 수업 내용, 주요 활동, 학생 반응 등을 입력해주세요..."
+                                placeholder="오늘 진행한 수업 내용, 주요 활동 등을 입력하세요..."
                                 className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-stitch-brand"
                             />
                         </div>
@@ -1100,9 +1071,9 @@
                             <label className="block text-[11px] font-bold text-slate-500 mb-1">특기사항 (Special Notes)</label>
                             <input
                                 type="text"
-                                value={currentLog.specialNote || ''}
+                                value={currentLog.specialNote || '특기 사항 입력 (선택)'}
                                 onChange={(e) => handleLogChange('specialNote', e.target.value)}
-                                placeholder="학생 특이사항, 안전 사고, 건의사항 등..."
+                                placeholder="특기 사항 입력 (선택)"
                                 className="w-full text-xs font-medium border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-stitch-brand"
                             />
                         </div>
@@ -1116,6 +1087,7 @@
                         <span>수업일지 저장하기</span>
                     </button>
 
+                    {/* 활동일지.pdf Form Preview Box */}
                     <div className="space-y-2 pt-2">
                         <div className="flex justify-between items-center px-1">
                             <h3 className="text-sm font-extrabold text-slate-800 flex items-center space-x-1.5">
@@ -1123,24 +1095,24 @@
                                 <span>차시별 활동일지 문서 양식 표 (실시간 반영)</span>
                             </h3>
                             <span className="text-[11px] font-bold text-stitch-brand bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-full">
-                                A4 한글 서식
+                                활동일지.pdf 양식
                             </span>
                         </div>
 
                         <div className="stitch-card p-4 bg-white hwp-font overflow-x-auto shadow-md">
-                            <div className="flex justify-between items-center mb-3 text-xs">
-                                <h4 className="text-sm font-extrabold tracking-tight">
-                                    방과후학교 프로그램 ( {selectedClass.name} 부 ) 차시별 활동일지
+                            <div className="flex justify-between items-center mb-2 text-xs">
+                                <h4 className="text-xs font-extrabold tracking-tight">
+                                    방과후 학교({selectedClass.name}) 차시별 활동일지
                                 </h4>
-                                <table className="w-36 text-center border-collapse border border-black text-[10px] shrink-0">
+                                <table className="w-32 text-center border-collapse border border-black text-[9px] shrink-0">
                                     <tbody>
                                         <tr className="bg-slate-100">
-                                            <th className="border border-black p-1 font-bold">강사</th>
-                                            <th className="border border-black p-1 font-bold">담당</th>
-                                            <th className="border border-black p-1 font-bold">교감</th>
+                                            <th className="border border-black p-0.5 font-bold">강사</th>
+                                            <th className="border border-black p-0.5 font-bold">담당</th>
+                                            <th className="border border-black p-0.5 font-bold">교감</th>
                                         </tr>
                                         <tr>
-                                            <td className="border border-black h-8 font-extrabold">{selectedClass.instructor?.replace(' 강사님','')}</td>
+                                            <td className="border border-black h-7 font-extrabold">{selectedClass.instructor?.replace(' 강사님','')}</td>
                                             <td className="border border-black"></td>
                                             <td className="border border-black"></td>
                                         </tr>
@@ -1148,36 +1120,36 @@
                                 </table>
                             </div>
 
-                            <table className="w-full text-xs border-collapse border border-black text-center">
+                            <table className="w-full text-[11px] border-collapse border border-black text-center">
                                 <tbody>
                                     <tr>
-                                        <th className="border border-black p-2 bg-slate-100 w-1/4 font-bold">
-                                            {yearStr}년 {monthStr}월 {dayStr}일 ( {dayOfWeekStr}요일 )
+                                        <th className="border border-black p-1.5 bg-slate-100 w-1/4 font-bold">
+                                            {yearStr}년 {monthStr}월 {dayStr}일 ({dayOfWeekStr})
                                         </th>
-                                        <th className="border border-black p-2 bg-slate-100 w-1/6 font-bold">지도 장소</th>
-                                        <td className="border border-black p-2 w-1/5 font-semibold">{currentLog.room || selectedClass.room}</td>
-                                        <th className="border border-black p-2 bg-slate-100 w-1/6 font-bold">지도 시간</th>
-                                        <td className="border border-black p-2 font-semibold">
-                                            {currentLog.workingHours ? currentLog.workingHours.split('\n')[0] : '14:10 ~ 15:40'}
+                                        <th className="border border-black p-1.5 bg-slate-100 w-1/6 font-bold">지도 장소</th>
+                                        <td className="border border-black p-1.5 w-1/5 font-semibold">{currentLog.room || selectedClass.room}</td>
+                                        <th className="border border-black p-1.5 bg-slate-100 w-1/6 font-bold">지도 시간</th>
+                                        <td className="border border-black p-1.5 font-semibold">
+                                            {currentLog.workingHours ? currentLog.workingHours.split('\n')[0] : '14:10~15:40'}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border border-black p-2 bg-slate-100 font-bold">지도 내용</th>
-                                        <td colSpan="4" className="border border-black p-3 text-left whitespace-pre-wrap align-top min-h-[90px] font-medium leading-relaxed">
-                                            {currentLog.topicContent || <span className="text-slate-300 font-sans italic">지도 내용이 작성되지 않았습니다.</span>}
+                                        <th className="border border-black p-1.5 bg-slate-100 font-bold">지도 내용</th>
+                                        <td colSpan="4" className="border border-black p-2 text-left whitespace-pre-wrap align-top min-h-[42px] font-medium leading-normal">
+                                            {currentLog.topicContent || '사자성어 복습하기, 名山大川 알아보기\n기출문제 풀이 후 오답 정정하기\n복습한자 카드로 가족에 관한 한자 단어 만들기'}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border border-black p-2 bg-slate-100 font-bold">특기 사항</th>
-                                        <td colSpan="4" className="border border-black p-2 text-left font-medium">
-                                            {currentLog.specialNote || <span className="text-slate-300 font-sans italic">특기사항 없음</span>}
+                                        <th className="border border-black p-1.5 bg-slate-100 font-bold">특기 사항</th>
+                                        <td colSpan="4" className="border border-black p-1.5 text-left font-medium">
+                                            {currentLog.specialNote || '특기 사항 입력 (선택)'}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th className="border border-black p-2 bg-slate-100 font-bold">지도 차시</th>
-                                        <td colSpan="2" className="border border-black p-2 font-bold">( {currentLog.currentLesson || '1~2'} )차시</td>
-                                        <th className="border border-black p-2 bg-slate-100 font-bold">누계</th>
-                                        <td colSpan="1" className="border border-black p-2 font-bold">( {currentLog.totalLesson || '2'} )차시</td>
+                                        <th className="border border-black p-1.5 bg-slate-100 font-bold">지도 차시</th>
+                                        <td colSpan="2" className="border border-black p-1.5 font-bold">({currentLog.currentLesson || '36~37'})차시</td>
+                                        <th className="border border-black p-1.5 bg-slate-100 font-bold">누계</th>
+                                        <td colSpan="1" className="border border-black p-1.5 font-bold">({currentLog.totalLesson || '37'})차시</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1306,7 +1278,7 @@
             );
         }
 
-        function MonthlyReportView({ selectedClass, selectedMonth, setSelectedMonth, logs, students, handleExportHwp }) {
+        function MonthlyReportView({ selectedClass, selectedMonth, setSelectedMonth, logs, students, handleExportHwp, currentLog }) {
             const [showDuty, setShowDuty] = useState(true);
             const [showAttendance, setShowAttendance] = useState(true);
             const [showJournal, setShowJournal] = useState(true);
@@ -1317,7 +1289,23 @@
             ).sort((a, b) => a.date.localeCompare(b.date));
 
             const lastDay = new Date(year, month, 0).getDate();
-            const periodStr = `${year} . ${parseInt(month)} . 1 . ~ ${year} . ${parseInt(month)} . ${lastDay} .`;
+            const periodStr = `${year}. ${parseInt(month)}. 1. ~ ${year}. ${parseInt(month)}. ${lastDay}.`;
+
+            const fourJournalBlocks = Array.from({ length: 4 }).map((_, i) => {
+                const l = monthLogs[i];
+                if (l) return l;
+                if (i === 0) return currentLog;
+                return {
+                    date: `${year}-00-00`,
+                    dayOfWeek: ' ',
+                    room: '장소 입력',
+                    workingHours: ':~:',
+                    topicContent: '지도 내용을 입력하세요',
+                    specialNote: '특기 사항 입력 (선택)',
+                    currentLesson: '~',
+                    totalLesson: ''
+                };
+            });
 
             const handleTriggerPrint = () => {
                 window.print();
@@ -1325,16 +1313,16 @@
 
             return (
                 <div className="space-y-5">
-                    {/* Top Action Control Panel */}
+                    {/* Control Panel */}
                     <div className="stitch-card p-5 space-y-4 no-print bg-white border border-slate-200">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
                             <div>
                                 <h2 className="text-base font-extrabold text-slate-800 flex items-center space-x-2">
                                     <span>🖨️</span>
-                                    <span>월말 리포트 (PDF / HWP 내보내기)</span>
+                                    <span>월말 출력 & PDF / HWP 내보내기 센터</span>
                                 </h2>
                                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                                    A4 규격(210x297mm) 1장씩 맞춤 자동 서식 적용
+                                    A4 1장씩 딱 맞추어 작성된 표준 서식 (폰트 및 여백 최적화)
                                 </p>
                             </div>
                             <input
@@ -1387,7 +1375,7 @@
                             </div>
                         </div>
 
-                        {/* Primary PDF Save & HWP Action Buttons */}
+                        {/* Export & Print Action Buttons */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <button
                                 onClick={handleTriggerPrint}
@@ -1405,44 +1393,33 @@
                                 <span>한글(HWP) 파일 다운로드</span>
                             </button>
                         </div>
-
-                        {/* PDF Print Tip Box */}
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 flex items-start space-x-2 font-medium">
-                            <span className="text-sm">💡</span>
-                            <div>
-                                <strong>PDF 저장 안내:</strong> [PDF로 저장하기] 버튼을 누르면 인쇄 창이 열립니다. 프린터 대상을 <strong>[PDF로 저장]</strong>으로 선택하고 <strong>[배경 그래픽 포함]</strong>을 체크하여 저장하세요.
-                            </div>
-                        </div>
                     </div>
 
                     {/* Printable A4 Canvas Container */}
                     <div className="space-y-8 hwp-font text-black">
-                        {/* 1. 근무상황부 (Duty Status Page) */}
+                        {/* 1. 근무상황부 (1 Page Bounds) */}
                         {showDuty && (
                             <div className="a4-page">
-                                <table className="w-full border-collapse mb-2" style={{ border: 'none' }}>
+                                <table className="w-full border-collapse mb-1" style={{ border: 'none' }}>
                                     <tbody>
                                         <tr>
                                             <td className="text-center" style={{ border: 'none' }}>
-                                                <h1 className="text-2xl font-extrabold tracking-wide m-0">방과후학교 프로그램</h1>
-                                                <h2 className="text-xl font-bold mt-2 mb-1">( {selectedClass.name} )부 근무상황부</h2>
+                                                <h1 className="text-xl font-extrabold tracking-tight m-0">방과후학교 프로그램</h1>
+                                                <h2 className="text-base font-bold mt-1 mb-1">({selectedClass.name})부 근무상황부</h2>
                                             </td>
-                                            <td style={{ border: 'none', width: '220px' }}>
-                                                {/* 5-Column Approval Box */}
-                                                <table className="w-52 text-xs border-collapse border border-black text-center float-right">
+                                            <td style={{ border: 'none', width: '160px' }}>
+                                                <table className="w-40 text-[10px] border-collapse border border-black text-center float-right">
                                                     <tbody>
                                                         <tr className="bg-slate-100">
-                                                            <th rowSpan="2" className="border border-black bg-slate-100 w-6 font-bold leading-tight">결<br/>재</th>
-                                                            <th className="border border-black p-1 font-bold w-10">담당</th>
-                                                            <th className="border border-black p-1 font-bold w-10">부장</th>
-                                                            <th className="border border-black p-1 font-bold w-10">교감</th>
-                                                            <th className="border border-black p-1 font-bold w-10">교장</th>
+                                                            <th rowSpan="2" className="border border-black bg-slate-100 w-7 font-bold leading-tight">결<br/>재</th>
+                                                            <th className="border border-black p-0.5 font-bold w-11">담당자</th>
+                                                            <th className="border border-black p-0.5 font-bold w-11">교감</th>
+                                                            <th className="border border-black p-0.5 font-bold w-11">교장</th>
                                                         </tr>
                                                         <tr>
-                                                            <td className="border border-black h-10"></td>
-                                                            <td className="border border-black h-10"></td>
-                                                            <td className="border border-black h-10"></td>
-                                                            <td className="border border-black h-10"></td>
+                                                            <td className="border border-black h-8"></td>
+                                                            <td className="border border-black h-8"></td>
+                                                            <td className="border border-black h-8"></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -1451,83 +1428,81 @@
                                     </tbody>
                                 </table>
 
-                                <div className="text-xs font-bold mb-1">{year}학년도</div>
-                                <div className="text-xs font-bold mb-3">(기간 : {periodStr})</div>
+                                <div className="text-[11px] font-bold mb-0.5">{year}학년도</div>
+                                <div className="text-[10px] font-bold mb-1.5">(기간 : {periodStr})</div>
 
-                                {/* 3-Tier Date Grid */}
-                                <table className="w-full text-xs border-collapse border border-black text-center">
+                                <table className="w-full text-[10px] border-collapse border border-black text-center">
                                     <thead>
                                         <tr className="bg-slate-100">
-                                            <th className="border border-black p-2.5 w-1/5 font-bold">날짜(요일)</th>
+                                            <th className="border border-black p-1.5 w-1/5 font-bold">날짜(요일)</th>
                                             {Array.from({ length: 4 }).map((_, i) => {
                                                 const l = monthLogs[i];
-                                                return <th key={i} className="border border-black p-2.5 w-1/5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>;
+                                                return <th key={i} className="border border-black p-1.5 w-1/5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
                                             })}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-medium">{monthLogs[i]?.checkStatus || 'o'}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i]?.checkStatus || 'Ο'}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 whitespace-pre-line font-medium">{monthLogs[i]?.workingHours || selectedClass.workingHoursText || '14:10 ~ 15:40\n( 2 시간 )'}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i]?.workingHours || selectedClass.workingHoursText || '14:10~15:40\n(2시간)'}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-semibold">{monthLogs[i] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
                                         </tr>
 
                                         <tr className="bg-slate-100">
-                                            <th className="border border-black p-2.5 font-bold">날짜(요일)</th>
+                                            <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
                                             {Array.from({ length: 4 }).map((_, i) => {
                                                 const l = monthLogs[i + 4];
-                                                return <th key={i} className="border border-black p-2.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>;
+                                                return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
                                             })}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-medium">{monthLogs[i + 4]?.checkStatus || ''}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 4]?.checkStatus || ''}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 whitespace-pre-line font-medium">{monthLogs[i + 4]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 4]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-semibold">{monthLogs[i + 4] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 4] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
                                         </tr>
 
                                         <tr className="bg-slate-100">
-                                            <th className="border border-black p-2.5 font-bold">날짜(요일)</th>
+                                            <th className="border border-black p-1.5 font-bold">날짜(요일)</th>
                                             {Array.from({ length: 4 }).map((_, i) => {
                                                 const l = monthLogs[i + 8];
-                                                return <th key={i} className="border border-black p-2.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일( ${l.dayOfWeek} )` : '월 일( )'}</th>;
+                                                return <th key={i} className="border border-black p-1.5 font-bold">{l ? `${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일(${l.dayOfWeek})` : '월 일( )'}</th>;
                                             })}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">관리 사항 점검 내용</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-medium">{monthLogs[i + 8]?.checkStatus || ''}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">관리 사항 점검 내용</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-medium">{monthLogs[i + 8]?.checkStatus || ''}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">근무시간</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 whitespace-pre-line font-medium">{monthLogs[i + 8]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">근무시간</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 whitespace-pre-line font-medium text-[9.5px]">{monthLogs[i + 8]?.workingHours || ': ~ :\n( 시간 )'}</td>)}
                                         </tr>
                                         <tr>
-                                            <th className="border border-black p-2 bg-slate-50 font-bold">지도강사(서명)</th>
-                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-2 font-semibold">{monthLogs[i + 8] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
+                                            <th className="border border-black p-1.5 bg-slate-50 font-bold">지도강사(서명)</th>
+                                            {Array.from({ length: 4 }).map((_, i) => <td key={i} className="border border-black p-1.5 font-semibold">{monthLogs[i + 8] ? selectedClass.instructor?.replace(' 강사님','') : ''}</td>)}
                                         </tr>
                                     </tbody>
                                 </table>
 
-                                {/* Bottom Row for Cumulative Hours */}
-                                <table className="w-full text-xs border-collapse border border-black text-center mt-3">
+                                <table className="w-full text-[10px] border-collapse border border-black text-center mt-2">
                                     <tbody>
                                         <tr>
-                                            <th className="border border-black p-2.5 bg-slate-100 w-1/5 font-bold">금월 누적 차시</th>
-                                            <td className="border border-black p-2.5 text-left font-bold pl-8">
-                                                총 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 차시
+                                            <th className="border border-black p-1.5 bg-slate-100 w-1/4 font-bold">누적 차시 관리</th>
+                                            <td className="border border-black p-1.5 text-left font-bold pl-5">
+                                                총 누적 차시 (계): &nbsp;&nbsp;{monthLogs.length || 1}&nbsp;&nbsp; 차시
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1535,111 +1510,125 @@
                             </div>
                         )}
 
-                        {/* 2. 출석 및 종료 기록부 (Attendance Page) */}
+                        {/* 2. 출석부 (1 Page Bounds for 15 Students) */}
                         {showAttendance && (
                             <div className="a4-page">
-                                <div className="flex justify-between items-end mb-2 text-xs">
-                                    <span className="font-extrabold text-sm">기간: {periodStr}</span>
-                                    <table className="w-40 text-center border-collapse border border-black shrink-0">
+                                <div className="flex justify-between items-end mb-1 text-[10px] leading-tight">
+                                    <div>
+                                        <div className="font-extrabold text-[10.5px]">기간: {periodStr}</div>
+                                        <div className="text-[9px] text-slate-800">※ 출석: 학생이 참석한 수업시간 (1부, 2부로 기록)</div>
+                                        <div className="text-[9px] text-slate-800">※ 종료: 1부, 2부 중 출석한 경우 귀가, 방과후, 돌봄 중 기재</div>
+                                    </div>
+                                    <div className="text-center font-extrabold text-base tracking-wider pb-1">출 석 부</div>
+                                    <table className="w-36 text-center border-collapse border border-black shrink-0 text-[9px]">
                                         <tbody>
-                                            <tr className="bg-slate-100"><th className="border border-black p-1 font-bold">지도강사</th><th className="border border-black p-1 font-bold">담당</th></tr>
-                                            <tr><td className="border border-black h-9 font-semibold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td></tr>
+                                            <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">지도강사</th><th className="border border-black p-0.5 font-bold">담당자</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
+                                            <tr><td className="border border-black h-7 font-semibold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <table className="w-full text-xs border-collapse border border-black text-center">
+                                <table className="w-full text-[9px] border-collapse border border-black text-center">
                                     <thead>
                                         <tr className="bg-slate-100">
-                                            <th rowSpan="2" className="border border-black p-1 w-8 font-bold">연번</th>
-                                            <th rowSpan="2" className="border border-black p-1 w-8 font-bold">학년</th>
-                                            <th rowSpan="2" className="border border-black p-1 w-16 font-bold">이름</th>
-                                            <th rowSpan="2" className="border border-black p-1 w-28 font-bold">연락처<br/>(보호자, 학생)</th>
-                                            <th className="border border-black p-1 w-10 font-bold">차시</th>
-                                            {Array.from({ length: 10 }).map((_, i) => <th key={i} className="border border-black p-1 font-bold">{i + 1}</th>)}
+                                            <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">연번</th>
+                                            <th rowSpan="2" className="border border-black p-0.5 w-5 font-bold">학년</th>
+                                            <th rowSpan="2" className="border border-black p-0.5 w-11 font-bold">이름</th>
+                                            <th rowSpan="2" className="border border-black p-0.5 w-20 font-bold">연락처<br/>(보호자/학생)</th>
+                                            <th className="border border-black p-0.5 w-7 font-bold">구분</th>
+                                            {Array.from({ length: 10 }).map((_, i) => <th key={i} className="border border-black p-0.5 font-bold">{i + 1}</th>)}
+                                            <th rowSpan="2" className="border border-black p-0.5 w-9 font-bold">총 출석일수</th>
                                         </tr>
                                         <tr className="bg-slate-100">
-                                            <th className="border border-black p-1 font-bold">일자</th>
+                                            <th className="border border-black p-0.5 font-bold">차시</th>
                                             {Array.from({ length: 10 }).map((_, i) => {
                                                 const l = monthLogs[i];
-                                                return <th key={i} className="border border-black p-1 font-semibold">{l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>;
+                                                return <th key={i} className="border border-black p-0.5 font-medium text-[8px]">{l ? `${parseInt(l.date.slice(5,7))}/${parseInt(l.date.slice(8))}` : '/'}</th>;
                                             })}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {students.map((st, idx) => (
-                                            <React.Fragment key={st.id}>
-                                                <tr>
-                                                    <td rowSpan="2" className="border border-black p-1 font-bold">{st.num || idx + 1}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 font-medium">{st.grade}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 font-extrabold">{st.name}</td>
-                                                    <td rowSpan="2" className="border border-black p-1 text-[10px] leading-tight font-medium">
-                                                        <div>{st.parentPhone || '-'}</div>
-                                                        <div>{st.studentPhone || '-'}</div>
-                                                    </td>
-                                                    <th className="border border-black p-1 bg-slate-50 font-bold">출석</th>
-                                                    {Array.from({ length: 10 }).map((_, i) => {
-                                                        const l = monthLogs[i];
-                                                        const att = l?.attendance?.[st.id];
-                                                        return <td key={i} className="border border-black p-1 font-semibold">{att?.p1 || (l ? '출석' : '')}</td>;
-                                                    })}
-                                                </tr>
-                                                <tr>
-                                                    <th className="border border-black p-1 bg-slate-50 font-bold">종료</th>
-                                                    {Array.from({ length: 10 }).map((_, i) => {
-                                                        const l = monthLogs[i];
-                                                        const att = l?.attendance?.[st.id];
-                                                        return <td key={i} className="border border-black p-1 text-[10px] font-medium">{att?.exitStatus || (l ? '귀가' : '')}</td>;
-                                                    })}
-                                                </tr>
-                                            </React.Fragment>
-                                        ))}
+                                        {Array.from({ length: 15 }).map((_, idx) => {
+                                            const st = students[idx];
+                                            return (
+                                                <React.Fragment key={idx}>
+                                                    <tr>
+                                                        <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? (st.num || idx + 1) : idx + 1}</td>
+                                                        <td rowSpan="2" className="border border-black p-0.5">{st ? st.grade : ''}</td>
+                                                        <td rowSpan="2" className="border border-black p-0.5 font-extrabold">{st ? st.name : ''}</td>
+                                                        <td rowSpan="2" className="border border-black p-0.5 text-[7.5px] leading-tight">
+                                                            <div>{st ? st.parentPhone : ''}</div>
+                                                            <div>{st ? st.studentPhone : ''}</div>
+                                                        </td>
+                                                        <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">출석</th>
+                                                        {Array.from({ length: 10 }).map((_, i) => {
+                                                            const l = monthLogs[i];
+                                                            const att = st ? l?.attendance?.[st.id] : null;
+                                                            return <td key={i} className="border border-black p-0.5 font-semibold text-[8px]">{att?.p1 || (st && l ? '/' : '')}</td>;
+                                                        })}
+                                                        <td rowSpan="2" className="border border-black p-0.5 font-bold">{st ? '1' : ''}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th className="border border-black p-0.5 bg-slate-50 font-bold text-[8px]">종료</th>
+                                                        {Array.from({ length: 10 }).map((_, i) => {
+                                                            const l = monthLogs[i];
+                                                            const att = st ? l?.attendance?.[st.id] : null;
+                                                            return <td key={i} className="border border-black p-0.5 text-[7.5px]">{att?.exitStatus || (st && l ? '귀가' : '')}</td>;
+                                                        })}
+                                                    </tr>
+                                                </React.Fragment>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
                         )}
 
-                        {/* 3. 차시별 활동일지 (Activity Journal Page) */}
+                        {/* 3. 차시별 활동일지 (1 Page Bounds for 4 Blocks) */}
                         {showJournal && (
                             <div className="a4-page">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-base font-extrabold">방과후학교 프로그램 ( {selectedClass.name} 부 ) 차시별 활동일지</h2>
-                                    <table className="w-44 text-xs text-center border-collapse border border-black shrink-0">
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <h2 className="text-sm font-extrabold tracking-tight">방과후 학교({selectedClass.name}) 차시별 활동일지</h2>
+                                    <table className="w-36 text-[10px] text-center border-collapse border border-black shrink-0">
                                         <tbody>
-                                            <tr className="bg-slate-100"><th className="border border-black p-1 font-bold">강사</th><th className="border border-black p-1 font-bold">담당</th><th className="border border-black p-1 font-bold">교감</th></tr>
-                                            <tr><td className="border border-black h-9 font-bold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
+                                            <tr className="bg-slate-100"><th className="border border-black p-0.5 font-bold">강사</th><th className="border border-black p-0.5 font-bold">담당</th><th className="border border-black p-0.5 font-bold">교감</th></tr>
+                                            <tr><td className="border border-black h-7 font-bold">{selectedClass.instructor?.replace(' 강사님','')}</td><td className="border border-black"></td><td className="border border-black"></td></tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <div className="space-y-4">
-                                    {monthLogs.map(l => (
-                                        <table key={l.date} className="w-full text-xs border-collapse border border-black text-center">
-                                            <tbody>
-                                                <tr>
-                                                    <th className="border border-black p-2 bg-slate-100 w-1/4 font-bold">{year}년 {parseInt(l.date.slice(5,7))}월 {parseInt(l.date.slice(8))}일 ( {l.dayOfWeek}요일 )</th>
-                                                    <th className="border border-black p-2 bg-slate-100 w-1/6 font-bold">지도 장소</th>
-                                                    <td className="border border-black p-2 w-1/5 font-medium">{l.room || selectedClass.room}</td>
-                                                    <th className="border border-black p-2 bg-slate-100 w-1/6 font-bold">지도 시간</th>
-                                                    <td className="border border-black p-2 font-medium">{l.workingHours ? l.workingHours.split('\n')[0] : '14:10 ~ 15:40'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th className="border border-black p-2 bg-slate-100 font-bold">지도 내용</th>
-                                                    <td colSpan="4" className="border border-black p-3 text-left whitespace-pre-wrap align-top h-24 font-medium">{l.topicContent || ''}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th className="border border-black p-2 bg-slate-100 font-bold">특기 사항</th>
-                                                    <td colSpan="4" className="border border-black p-2 text-left font-medium">{l.specialNote || ''}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th className="border border-black p-2 bg-slate-100 font-bold">지도 차시</th>
-                                                    <td colSpan="2" className="border border-black p-2 font-semibold">( {l.currentLesson || '1~2'} )차시</td>
-                                                    <th className="border border-black p-2 bg-slate-100 font-bold">누계</th>
-                                                    <td className="border border-black p-2 font-semibold">( {l.totalLesson || '2'} )차시</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    ))}
+                                <div className="space-y-2">
+                                    {fourJournalBlocks.map((l, lIdx) => {
+                                        const hasData = l.date && !l.date.endsWith('-00-00');
+                                        const dateStr = hasData ? `${year}년 ${parseInt(l.date.slice(5,7))}월 ${parseInt(l.date.slice(8))}일 (${l.dayOfWeek})` : `${year}년 월 일(   )`;
+                                        return (
+                                            <table key={lIdx} className="w-full text-[10px] border-collapse border border-black text-center">
+                                                <tbody>
+                                                    <tr>
+                                                        <th className="border border-black p-1 bg-slate-100 w-1/4 font-bold">{dateStr}</th>
+                                                        <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 장소</th>
+                                                        <td className="border border-black p-1 w-1/5 font-medium">{hasData ? (l.room || selectedClass.room) : '장소 입력'}</td>
+                                                        <th className="border border-black p-1 bg-slate-100 w-1/6 font-bold">지도 시간</th>
+                                                        <td className="border border-black p-1 font-medium">{hasData ? (l.workingHours ? l.workingHours.split('\n')[0] : '14:10~15:40') : ':~:'}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th className="border border-black p-1 bg-slate-100 font-bold">지도 내용</th>
+                                                        <td colSpan="4" className="border border-black p-1.5 text-left whitespace-pre-wrap align-top h-[40px] font-medium leading-tight">{l.topicContent || '지도 내용을 입력하세요'}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th className="border border-black p-1 bg-slate-100 font-bold">특기 사항</th>
+                                                        <td colSpan="4" className="border border-black p-1 text-left font-medium">{l.specialNote || '특기 사항 입력 (선택)'}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th className="border border-black p-1 bg-slate-100 font-bold">지도 차시</th>
+                                                        <td colSpan="2" className="border border-black p-1 font-semibold">({l.currentLesson || '~'})차시</td>
+                                                        <th className="border border-black p-1 bg-slate-100 font-bold">누계</th>
+                                                        <td className="border border-black p-1 font-semibold">({l.totalLesson || ''})차시</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -1659,7 +1648,7 @@
             const [schedule, setSchedule] = useState('');
             const [room, setRoom] = useState('');
             const [instructor, setInstructor] = useState('최정임 강사님');
-            const [workingHoursText, setWorkingHoursText] = useState('14:10 ~ 15:40\n( 2 시간 )');
+            const [workingHoursText, setWorkingHoursText] = useState('14:10~15:40\n(2시간)');
 
             const [studentList, setStudentList] = useState([
                 { num: 1, grade: 1, name: '', parentPhone: '', studentPhone: '' }
@@ -1696,7 +1685,7 @@
                     setSchedule('');
                     setRoom('');
                     setInstructor('최정임 강사님');
-                    setWorkingHoursText('14:10 ~ 15:40\n( 2 시간 )');
+                    setWorkingHoursText('14:10~15:40\n(2시간)');
                     setStudentList([{ num: 1, grade: 1, name: '', parentPhone: '', studentPhone: '' }]);
                 }
             }, [editingClassId]);
@@ -1748,7 +1737,7 @@
                         schedule: schedule.trim() || '목요일 14:10 ~ 15:40',
                         room: room.trim() || '과학실',
                         instructor: instructor.trim() || '담당 강사님',
-                        workingHoursText: workingHoursText || '14:10 ~ 15:40\n( 2 시간 )'
+                        workingHoursText: workingHoursText || '14:10~15:40\n(2시간)'
                     };
 
                     const validStudents = studentList
@@ -1782,7 +1771,7 @@
                         schedule: schedule.trim() || '목요일 14:10 ~ 15:40',
                         room: room.trim() || '과학실',
                         instructor: instructor.trim() || '담당 강사님',
-                        workingHoursText: workingHoursText || '14:10 ~ 15:40\n( 2 시간 )'
+                        workingHoursText: workingHoursText || '14:10~15:40\n(2시간)'
                     };
 
                     const validStudents = studentList
