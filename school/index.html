@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>나는 강사다 - 방과후 강사 출결 및 수업일지</title>
+    <title>나는 강사다 - 초등 방과후 강사 관리 시스템</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- html2pdf.js for exporting monthly report to PDF -->
+    <!-- html2pdf.js for exporting to PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
@@ -22,6 +20,7 @@
                             mintDark: '#059669',
                             mintLight: '#a7f3d0',
                             accent: '#40f0a8',
+                            purple: '#9333ea',
                             bg: '#f8fafc'
                         }
                     }
@@ -31,31 +30,90 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap');
+        
+        /* 1. Page Print Setup for A4 Portrait & Margins */
+        @page {
+            size: A4 portrait !important;
+            margin: 8mm !important;
+        }
+
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             background-color: #f1f5f9;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Print formatting for PDF and browser print */
+        /* 2. Print & PDF Export Media Queries - Strict A4 Portrait */
         @media print {
-            body {
-                background-color: white !important;
-                color: black !important;
+            *, ::before, ::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                box-sizing: border-box !important;
             }
+
+            html, body {
+                width: 210mm !important;
+                height: 297mm !important;
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                position: relative !important;
+            }
+
             .no-print {
                 display: none !important;
             }
+
             .print-only {
                 display: block !important;
             }
-            .page-break {
-                page-break-after: always;
-            }
-            #app-container {
+
+            #app-container, main {
+                width: 100% !important;
                 max-width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
                 padding: 0 !important;
                 box-shadow: none !important;
+                border: none !important;
+                background: #ffffff !important;
+                overflow: visible !important;
+                position: relative !important;
+            }
+
+            /* Table Layout Fixes & Prevent Truncation */
+            table, .a4-table {
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+                word-break: break-word !important;
+                white-space: normal !important;
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+
+            tr, td, th {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                word-break: break-word !important;
+                white-space: normal !important;
+            }
+
+            .a4-document {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                border: none !important;
+                background: #ffffff !important;
+                position: relative !important;
+                overflow: visible !important;
             }
         }
 
@@ -70,6 +128,32 @@
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 9999px;
+        }
+
+        /* Screen Preview A4 Document Styling (Exact 794px width for A4 at 96DPI) */
+        .a4-document {
+            width: 794px;
+            min-height: 1120px;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 30px 22px;
+            box-sizing: border-box;
+            margin: 0 auto;
+            font-family: 'Pretendard', sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .a4-table, .a4-table th, .a4-table td {
+            border: 1px solid #000000 !important;
+            table-layout: fixed;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        .a4-table tr, .a4-table td, .a4-table th {
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -87,17 +171,14 @@
                 <div>
                     <span id="headerTeacherNameDisplay" class="font-bold text-slate-800 text-sm block">김현경 강사님</span>
                     <span id="headerStatusBadge" class="text-[11px] text-slate-400 flex items-center gap-1">
-                        <i class="fa-solid fa-circle text-[8px] text-emerald-500"></i> 온라인
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 온라인
                     </span>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <button id="headerLoginBtn" onclick="handleHeaderLoginClick()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-sm">
-                    <i id="headerLoginBtnIcon" class="fa-solid fa-right-to-bracket text-xs text-blue-600"></i>
-                    <span id="headerLoginBtnText">로그인</span>
-                </button>
-                <button onclick="openTeacherProfileModal()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition" title="프로필 설정">
-                    <i class="fa-solid fa-qrcode text-sm"></i>
+                <button id="headerLoginBtn" onclick="handleHeaderLoginClick()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-sm">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    <span id="headerLoginBtnText">로그아웃</span>
                 </button>
             </div>
         </header>
@@ -106,16 +187,14 @@
         <main class="flex-1 overflow-y-auto px-4 py-5 space-y-6 pb-24">
 
             <!-- VIEW 1: HOME VIEW (홈) -->
-            <section id="view-home" class="space-y-6 animate-fade-in">
-                <!-- Center Hero / Logo Block (Exact Stitch Design) -->
+            <section id="view-home" class="space-y-6">
+                <!-- Center Hero / Logo Block -->
                 <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <div class="w-48 h-48 sm:w-56 sm:h-56 flex flex-col items-center justify-center relative">
-                        <!-- Custom Vector Logo "나는 강사다" matching screenshot -->
                         <div class="relative w-36 h-28 flex items-center justify-center">
                             <svg viewBox="0 0 100 80" class="w-full h-full text-brand-navy">
                                 <path d="M 10,25 Q 50,10 50,30 Q 50,10 90,25 L 90,65 Q 50,50 50,70 Q 50,50 10,65 Z" fill="none" stroke="#1e3a8a" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M 50,30 L 50,70" fill="none" stroke="#1e3a8a" stroke-width="3" stroke-linecap="round"/>
-                                <!-- Sparkle center icon -->
                                 <path d="M 50,22 L 53,30 L 61,33 L 53,36 L 50,44 L 47,36 L 39,33 L 47,30 Z" fill="#38bdf8"/>
                             </svg>
                         </div>
@@ -135,9 +214,9 @@
                     <p class="text-xs text-slate-500 mt-1">오늘도 즐거운 수업을 응원합니다!</p>
                 </div>
 
-                <!-- School Cards Grid (Matches Stitch UI) -->
+                <!-- School Cards Grid -->
                 <div id="schoolCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Cards will be dynamically populated here -->
+                    <!-- Cards populated dynamically -->
                 </div>
 
                 <!-- Quick Action Bar -->
@@ -145,15 +224,15 @@
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">빠른 업무</h3>
                     <div class="grid grid-cols-3 gap-2 text-center text-xs">
                         <button onclick="switchTab('attendance')" class="p-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition flex flex-col items-center gap-1.5 font-medium">
-                            <i class="fa-solid fa-calendar-check text-lg"></i>
-                            <span>오늘 출속체크</span>
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>오늘 출석체크</span>
                         </button>
                         <button onclick="switchTab('diary')" class="p-3 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition flex flex-col items-center gap-1.5 font-medium">
-                            <i class="fa-solid fa-book-open text-lg"></i>
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                             <span>수업일지 작성</span>
                         </button>
                         <button onclick="switchTab('monthly')" class="p-3 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition flex flex-col items-center gap-1.5 font-medium">
-                            <i class="fa-solid fa-file-pdf text-lg"></i>
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             <span>월말 PDF 저장</span>
                         </button>
                     </div>
@@ -161,12 +240,13 @@
             </section>
 
             <!-- VIEW 2: ATTENDANCE LOG (출석부) -->
-            <section id="view-attendance" class="space-y-4 hidden animate-fade-in">
+            <section id="view-attendance" class="space-y-4 hidden">
                 <!-- Top School & Date Selector Header -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-clipboard-user text-emerald-500"></i> 학생 출석부
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            학생 출석부
                         </h2>
                         <input type="date" id="attendanceDate" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400" onchange="renderAttendanceList()">
                     </div>
@@ -182,10 +262,12 @@
                     <span id="attendanceCountSummary" class="text-xs text-slate-500 font-medium">총 0명 등록됨</span>
                     <div class="flex gap-2">
                         <button onclick="openAddStudentModal()" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-1">
-                            <i class="fa-solid fa-user-plus text-[10px]"></i> 학생 추가
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            학생 추가
                         </button>
                         <button onclick="markAllAttendance('출석')" class="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-600 transition flex items-center gap-1">
-                            <i class="fa-solid fa-check-double text-[10px]"></i> 전원 출석
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            전원 출석
                         </button>
                     </div>
                 </div>
@@ -195,96 +277,111 @@
                     <!-- Populated dynamically -->
                 </div>
 
-                <!-- LIVE A4 REAL-TIME DOCUMENT PREVIEW (Matches Photo) -->
+                <!-- LIVE A4 REAL-TIME DOCUMENT PREVIEW -->
                 <div class="mt-8 pt-4 border-t border-slate-200">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-file-lines text-blue-600"></i> 실시간 출석부 문서 미리보기 (A4 양식)
-                        </h3>
-                        <button onclick="downloadAttendancePDF()" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm no-print">
-                            <i class="fa-solid fa-file-pdf"></i> PDF 출력/저장
-                        </button>
+                    <!-- Title & Action Buttons -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 mb-3 no-print">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                실시간 출석부 문서 미리보기 (A4 세로 양식)
+                            </h3>
+                        </div>
+
+                        <!-- Action Buttons (Purple PDF Save & Black Print) -->
+                        <div class="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
+                            <button onclick="downloadAttendancePDF()" class="flex-1 bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>PDF 저장 다운로드</span>
+                            </button>
+                            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>인쇄하기</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Printable A4 Document Sheet -->
-                    <div id="liveAttendanceDocument" class="bg-white p-5 sm:p-8 rounded-2xl shadow-md border border-slate-300 text-slate-900 overflow-x-auto">
-                        <div class="min-w-[720px] font-sans">
+                    <!-- Scrollable Container for Preview -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
+                        
+                        <!-- EXACT A4 PRINTABLE DOCUMENT CONTAINER (Optimized for Portrait Fit) -->
+                        <div id="liveAttendanceDocument" class="a4-document shadow-lg">
                             <!-- Document Header -->
-                            <div class="flex justify-between items-start mb-2">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1 text-center pt-2">
-                                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 underline underline-offset-4 decoration-1">
-                                        방과후학교 프로그램 ( <span id="docSubjectName" class="px-2">컴퓨터</span> )부 학생 출석부
+                                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black underline underline-offset-8 decoration-1">
+                                        방과후학교 프로그램 ( <span id="docSubjectName" class="px-1">컴퓨터</span> )부 학생 출석부
                                     </h1>
                                 </div>
                                 <!-- Approval Box (지도강사 | 담당 | 교감) -->
-                                <table class="border-collapse border border-slate-900 text-center text-xs w-48">
-                                    <tr class="bg-slate-50 font-semibold border-b border-slate-900">
-                                        <th class="border border-slate-900 py-1 w-1/3">지도강사</th>
-                                        <th class="border border-slate-900 py-1 w-1/3">담당</th>
-                                        <th class="border border-slate-900 py-1 w-1/3">교감</th>
+                                <table class="a4-table text-center text-xs w-44 border-collapse">
+                                    <tr class="bg-gray-100 font-semibold">
+                                        <th class="py-1 w-1/3">지도강사</th>
+                                        <th class="py-1 w-1/3">담당</th>
+                                        <th class="py-1 w-1/3">교감</th>
                                     </tr>
-                                    <tr class="h-10 text-slate-800">
-                                        <td class="border border-slate-900 align-middle font-bold text-sm" id="docTeacherStamp">김현경</td>
-                                        <td class="border border-slate-900"></td>
-                                        <td class="border border-slate-900"></td>
+                                    <tr class="h-10 text-black">
+                                        <td class="align-middle font-bold text-sm" id="docTeacherStamp">김현경</td>
+                                        <td></td>
+                                        <td></td>
                                     </tr>
                                 </table>
                             </div>
 
                             <!-- Date Range Sub-header -->
-                            <div class="text-xs font-bold text-slate-800 mb-2">
+                            <div class="text-xs font-bold text-black mb-2">
                                 기간: <span id="docDateRange">2026. 8. 1. ~ 2026. 8. 31.</span>
                             </div>
 
                             <!-- Guidelines Box -->
-                            <div class="text-[10px] text-slate-700 bg-slate-50 p-1.5 border border-slate-400 mb-2 space-y-0.5">
-                                <p>※ 출석: 학생이 참석한 수업시간 (1부, 2부로 기록)</p>
-                                <p>※ 종료: 1부, 2부 중 출석한 경우 귀가, 방과후, 돌봄 중 기재</p>
+                            <div class="text-[10px] text-black bg-gray-50 p-2 border border-black mb-3 space-y-0.5 font-medium leading-tight">
+                                <p>※ 출석: 학생이 참석한 수업시간 (1부, 2부, 3부로 기록)</p>
+                                <p>※ 종료: 출석한 경우 귀가, 방과후, 돌봄 또는 작성된 특이사항 메모 기재</p>
                             </div>
 
-                            <!-- Main Attendance Matrix Table -->
-                            <table class="w-full text-[11px] border-collapse border border-slate-900 text-center">
+                            <!-- Main Attendance Matrix Table (Exact Fit for A4 Portrait Width) -->
+                            <table class="a4-table w-full text-[10px] text-center border-collapse table-fixed">
                                 <thead>
-                                    <tr class="bg-slate-100 border-b border-slate-900 font-bold text-slate-900">
-                                        <th class="border border-slate-900 py-1 px-1 w-8" rowspan="2">연번</th>
-                                        <th class="border border-slate-900 py-1 px-1 w-10" rowspan="2">학년</th>
-                                        <th class="border border-slate-900 py-1 px-1 w-16" rowspan="2">이름</th>
-                                        <th class="border border-slate-900 py-1 px-1 w-28" rowspan="2">연락처<br><span class="text-[9px] font-normal">(보호자, 학생)</span></th>
-                                        <th class="border border-slate-900 py-0.5 px-1 w-10">차시</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">1</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">2</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">3</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">4</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">5</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">6</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">7</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">8</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">9</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 w-6">10</th>
-                                        <th class="border border-slate-900 py-1 px-1 w-12" rowspan="2">총 출석<br>일수</th>
-                                        <th class="border border-slate-900 py-1 px-1 w-16" rowspan="2">비고</th>
+                                    <tr class="bg-gray-100 font-bold text-black">
+                                        <th class="py-1 px-0.5 w-[5%]" rowspan="2">연번</th>
+                                        <th class="py-1 px-0.5 w-[5%]" rowspan="2">학년</th>
+                                        <th class="py-1 px-0.5 w-[11%]" rowspan="2">이름</th>
+                                        <th class="py-1 px-0.5 w-[22%]" rowspan="2">연락처<br><span class="text-[8px] font-normal">(보호자, 학생)</span></th>
+                                        <th class="py-0.5 px-0.5 w-[6%]">차시</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">1</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">2</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">3</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">4</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">5</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">6</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">7</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">8</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">9</th>
+                                        <th class="py-0.5 px-0.5 w-[4.3%]">10</th>
+                                        <th class="py-1 px-0.5 w-[7%]" rowspan="2">총 출석<br>일수</th>
+                                        <th class="py-1 px-0.5 w-[7%]" rowspan="2">비고</th>
                                     </tr>
-                                    <tr class="bg-slate-100 border-b border-slate-900 font-semibold text-slate-800">
-                                        <th class="border border-slate-900 py-0.5 px-1">일자</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate1">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate2">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate3">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate4">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate5">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate6">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate7">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate8">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate9">/</th>
-                                        <th class="border border-slate-900 py-0.5 px-0.5 text-[9px]" id="colDate10">/</th>
+                                    <tr class="bg-gray-100 font-semibold text-black">
+                                        <th class="py-0.5 px-0.5 text-[8px]">일자</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate1">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate2">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate3">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate4">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate5">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate6">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate7">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate8">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate9">/</th>
+                                        <th class="py-0.5 px-0.5 text-[8px]" id="colDate10">/</th>
                                     </tr>
                                 </thead>
                                 <tbody id="liveDocAttendanceBody">
-                                    <!-- Dynamic Rows per Student -->
+                                    <!-- Dynamic Rows -->
                                 </tbody>
                                 <tfoot>
-                                    <tr class="bg-slate-50 font-bold border-t border-slate-900">
-                                        <td class="border border-slate-900 py-1 text-center" colspan="3">계</td>
-                                        <td class="border border-slate-900 py-1 text-center" colspan="14">
+                                    <tr class="bg-gray-50 font-bold">
+                                        <td class="py-1 text-center" colspan="3">계</td>
+                                        <td class="py-1 text-center" colspan="14">
                                             <span id="liveDocTotalCount">0</span> 명
                                         </td>
                                     </tr>
@@ -292,100 +389,171 @@
                             </table>
 
                             <!-- Document Footer Instructions -->
-                            <div class="mt-3 text-[10px] text-slate-800 space-y-0.5 font-medium">
+                            <div class="mt-4 text-[9px] text-black space-y-0.5 font-medium leading-tight">
                                 <p>1) 매 시간 출석 상황을 확인하며 결석생이 있을 시는 담임과 가정에 연락하고 사유를 기록한다.</p>
                                 <p>2) 결석-/(종료란에 결석 사유 적어주세요), 지각-ⓣ, 조퇴-⠥</p>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </section>
 
-            <!-- VIEW 3: LESSON DIARY & VERIFICATION LOG (수업일지/확인사항) -->
-            <section id="view-diary" class="space-y-4 hidden animate-fade-in">
-                <!-- School & Date Selector -->
+            <!-- VIEW 3: LESSON DIARY (수업일지) -->
+            <section id="view-diary" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-book-journal-whills text-blue-600"></i> 수업일지 & 확인사항
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            수업일지 & 확인사항
                         </h2>
                         <input type="date" id="diaryDate" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="loadDiaryEntry()">
                     </div>
 
-                    <div id="diarySchoolChips" class="flex gap-2 overflow-x-auto pb-1">
-                        <!-- Chips -->
-                    </div>
+                    <div id="diarySchoolChips" class="flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
                 <!-- Lesson Entry Form Card -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">지도 장소</label>
+                            <input type="text" id="diaryLocation" oninput="updateLiveDiaryPreview()" placeholder="예: 컴퓨터실" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">지도 시간</label>
+                            <input type="text" id="diaryTime" oninput="updateLiveDiaryPreview()" placeholder="예: 14:00 ~ 15:30" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">지도 차시</label>
+                            <input type="text" id="diarySession" oninput="updateLiveDiaryPreview()" placeholder="예: 77-78" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">누계 차시</label>
+                            <input type="text" id="diaryCumulative" oninput="updateLiveDiaryPreview()" placeholder="예: 78" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">단원 / 수업 주제</label>
-                        <input type="text" id="diaryTopic" placeholder="예: [컴퓨터 기초] 타자 연습 및 문서 작성 기초" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="diaryTopic" oninput="updateLiveDiaryPreview()" placeholder="예: [컴퓨터 기초] 타자 연습 및 문서 작성 기초" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">수업 내용 및 지도 활동</label>
-                        <textarea id="diaryContent" rows="4" placeholder="수업 진행 과정, 실습 내용, 주요 학습 활동을 상세히 기록하세요." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        <textarea id="diaryContent" oninput="updateLiveDiaryPreview()" rows="3" placeholder="수업 진행 과정, 실습 내용, 주요 학습 활동을 상세히 기록하세요." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">준비물 및 교수자료</label>
-                            <input type="text" id="diaryMaterials" placeholder="교재, 피지컬 교구, 학습지 등" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="diaryMaterials" oninput="updateLiveDiaryPreview()" placeholder="교재, 피지컬 교구, 학습지 등" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">특이사항 / 학생 확인사항</label>
-                            <input type="text" id="diaryCheckItems" placeholder="예: 결석생 과제 안내, 시설 점검 등" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">특기사항 / 학생 확인사항</label>
+                            <input type="text" id="diaryCheckItems" oninput="updateLiveDiaryPreview()" placeholder="예: 결석생 과제 안내, 시설 점검 등" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
                     <div class="pt-2 flex justify-end">
                         <button onclick="saveDiaryEntry()" class="w-full sm:w-auto bg-blue-600 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center justify-center gap-2 text-sm">
-                            <i class="fa-solid fa-floppy-disk"></i> 수업일지 저장하기
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                            수업일지 저장하기
                         </button>
                     </div>
                 </div>
 
-                <!-- Recent Saved Entries Timeline -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">이달의 작성된 일지 목록</h3>
-                    <div id="diarySavedList" class="space-y-2">
-                        <!-- Populated -->
+                <!-- LIVE A4 REAL-TIME LESSON DIARY DOCUMENT PREVIEW -->
+                <div class="mt-8 pt-4 border-t border-slate-200">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 mb-3 no-print">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                실시간 차시별 활동일지 문서 미리보기 (A4 양식)
+                            </h3>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
+                            <button onclick="downloadDiaryPDF()" class="flex-1 bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>PDF 저장 다운로드</span>
+                            </button>
+                            <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>인쇄하기</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Container for Preview -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
+                        
+                        <!-- EXACT A4 PRINTABLE ACTIVITY LOG CONTAINER -->
+                        <div id="liveDiaryDocument" class="a4-document shadow-lg">
+                            <!-- Document Header -->
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1 text-center pt-3">
+                                    <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black">
+                                        방과후학교 프로그램 ( <span id="diaryDocSubjectName" class="px-2">컴퓨터</span> 부 ) 차시별 활동일지
+                                    </h1>
+                                </div>
+                                <!-- Approval Box (강사 | 담당 | 교감) -->
+                                <table class="a4-table text-center text-xs w-44 border-collapse">
+                                    <tr class="bg-gray-100 font-semibold">
+                                        <th class="py-1 w-1/3">강사</th>
+                                        <th class="py-1 w-1/3">담당</th>
+                                        <th class="py-1 w-1/3">교감</th>
+                                    </tr>
+                                    <tr class="h-10 text-black">
+                                        <td class="align-middle font-bold text-sm" id="diaryDocTeacherStamp">김현경</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- 3 Session Activity Blocks Container -->
+                            <div id="diaryBlocksContainer" class="space-y-4">
+                                <!-- Dynamic 3 Activity Log Blocks -->
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </section>
 
-            <!-- VIEW 4: MONTHLY PDF REPORT & PRINT (근무상황부/월말정산) -->
-            <section id="view-monthly" class="space-y-4 hidden animate-fade-in">
-                <!-- Controller Box -->
+            <!-- VIEW 4: MONTHLY REPORT (근무상황부) -->
+            <section id="view-monthly" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 no-print">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-file-invoice text-purple-600"></i> 월말 누적 일지 & PDF 출력
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            월말 누적 일지 & PDF 출력
                         </h2>
                         <div class="flex items-center gap-2 w-full sm:w-auto">
                             <input type="month" id="monthlyReportMonth" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500" onchange="renderMonthlyPDFPreview()">
-                            <select id="monthlySchoolSelect" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1" onchange="renderMonthlyPDFPreview()">
-                                <!-- Dynamic Options -->
-                            </select>
+                            <select id="monthlySchoolSelect" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex-1" onchange="renderMonthlyPDFPreview()"></select>
                         </div>
                     </div>
 
                     <div class="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
-                        <button onclick="downloadPDF()" class="flex-1 bg-purple-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:bg-purple-700 transition shadow flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-file-pdf text-sm"></i> PDF 저장 다운로드
+                        <button onclick="downloadPDF()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            <span>PDF 저장 다운로드</span>
                         </button>
-                        <button onclick="window.print()" class="flex-1 bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:bg-slate-700 transition shadow flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-print text-sm"></i> 인쇄하기
+                        <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>인쇄하기</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Printable Document Sheet Preview (Official Korean School Template) -->
                 <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 text-slate-900 overflow-x-auto" id="printableReportDoc">
                     <div class="min-w-[650px]">
-                        <!-- Official Document Header -->
                         <div class="text-center pb-4 mb-4 border-b-2 border-slate-800">
                             <h1 id="docTitle" class="text-xl font-extrabold tracking-tight text-slate-900 mb-2">방과후학교 강사 수업일지 및 출결상황부</h1>
                             <div class="flex justify-between items-end text-xs text-slate-600 font-medium">
@@ -395,11 +563,8 @@
                             </div>
                         </div>
 
-                        <!-- 1. Attendance Summary Table -->
                         <div class="mb-6">
-                            <h2 class="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                                ■ 학생 출석 집계표
-                            </h2>
+                            <h2 class="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">■ 학생 출석 집계표</h2>
                             <table class="w-full text-[11px] border-collapse border border-slate-400 text-center">
                                 <thead>
                                     <tr class="bg-slate-100 border-b border-slate-400 font-semibold text-slate-800">
@@ -411,17 +576,12 @@
                                         <th class="border border-slate-400 py-1 px-2 w-12">결석</th>
                                     </tr>
                                 </thead>
-                                <tbody id="docAttendanceBody">
-                                    <!-- Dynamic rows -->
-                                </tbody>
+                                <tbody id="docAttendanceBody"></tbody>
                             </table>
                         </div>
 
-                        <!-- 2. Accumulated Lesson Diary & Verification Log Table -->
                         <div>
-                            <h2 class="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                                ■ 월간 수업일지 및 지도 확인사항
-                            </h2>
+                            <h2 class="text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">■ 월간 수업일지 및 지도 확인사항</h2>
                             <table class="w-full text-[11px] border-collapse border border-slate-400 text-left">
                                 <thead>
                                     <tr class="bg-slate-100 border-b border-slate-400 font-semibold text-slate-800 text-center">
@@ -431,13 +591,10 @@
                                         <th class="border border-slate-400 py-1.5 px-2 w-1/4">특이사항 / 확인사항</th>
                                     </tr>
                                 </thead>
-                                <tbody id="docDiaryBody">
-                                    <!-- Dynamic rows -->
-                                </tbody>
+                                <tbody id="docDiaryBody"></tbody>
                             </table>
                         </div>
 
-                        <!-- Confirmation Footer Sign Box -->
                         <div class="mt-8 pt-4 border-t border-slate-300 flex justify-between items-center text-xs text-slate-600">
                             <div>
                                 <p>위와 같이 방과후학교 수업 일지 및 출결 사항을 제출합니다.</p>
@@ -452,11 +609,11 @@
                 </div>
             </section>
 
-            <!-- VIEW 5: LOGIN PAGE (로그인) -->
-            <section id="view-login" class="space-y-6 hidden animate-fade-in py-4">
+            <!-- VIEW 5: LOGIN PAGE -->
+            <section id="view-login" class="space-y-6 hidden py-4">
                 <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center">
                     <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-brand-navy mb-4 shadow-inner">
-                        <i class="fa-solid fa-graduation-cap text-3xl"></i>
+                        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
                     </div>
                     <h2 class="text-2xl font-extrabold text-slate-900">로그인</h2>
                     <p class="text-xs text-slate-500 mt-1 mb-6">나는 강사다 서비스에 접속합니다.</p>
@@ -484,7 +641,7 @@
 
                     <div class="w-full space-y-2">
                         <button onclick="demoLogin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl transition text-xs shadow flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-bolt"></i> 체험 계정으로 바로 시작하기
+                            체험 계정으로 바로 시작하기
                         </button>
                     </div>
                 </div>
@@ -492,40 +649,33 @@
 
         </main>
 
-        <!-- Bottom Navigation Bar (Matching Stitch Design Exactly) -->
+        <!-- Bottom Navigation Bar -->
         <nav class="no-print bg-white border-t border-slate-200 px-3 py-2 fixed bottom-0 left-0 right-0 max-w-md md:max-w-2xl lg:max-w-4xl mx-auto z-30 flex justify-around items-center">
-            <!-- Tab 1: Home -->
             <button id="nav-home" onclick="switchTab('home')" class="nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-700 bg-brand-accent">
-                <i class="fa-solid fa-house text-lg mb-0.5"></i>
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span class="text-[11px] font-bold">홈</span>
             </button>
-
-            <!-- Tab 2: Attendance -->
             <button id="nav-attendance" onclick="switchTab('attendance')" class="nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-400 hover:text-slate-700">
-                <i class="fa-regular fa-calendar-check text-lg mb-0.5"></i>
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span class="text-[11px] font-medium">출석부</span>
             </button>
-
-            <!-- Tab 3: Lesson Diary -->
             <button id="nav-diary" onclick="switchTab('diary')" class="nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-400 hover:text-slate-700">
-                <i class="fa-solid fa-user-check text-lg mb-0.5"></i>
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 <span class="text-[11px] font-medium">수업일지</span>
             </button>
-
-            <!-- Tab 4: Monthly Export / Settings -->
             <button id="nav-monthly" onclick="switchTab('monthly')" class="nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-400 hover:text-slate-700">
-                <i class="fa-solid fa-gear text-lg mb-0.5"></i>
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span class="text-[11px] font-medium">근무상황부</span>
             </button>
         </nav>
 
-        <!-- MODAL 1: Add/Edit School Modal -->
+        <!-- MODAL 1: Add School Modal -->
         <div id="schoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 animate-scale-up">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                     <h3 id="schoolModalTitle" class="font-bold text-slate-800 text-base">학교 및 과목 추가</h3>
                     <button onclick="closeSchoolModal()" class="text-slate-400 hover:text-slate-600">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
@@ -601,7 +751,7 @@
             </div>
         </div>
 
-        <!-- MODAL 3: Teacher Profile Settings Modal -->
+        <!-- MODAL 3: Teacher Profile Modal -->
         <div id="profileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -613,12 +763,12 @@
 
                 <form onsubmit="saveTeacherProfile(event)" class="space-y-3.5">
                     <div class="text-center text-sm text-slate-600 py-2">
-                        프로필 변경 사항을 저장하시겠습니까?
+                        프로필 설정을 업데이트합니다.
                     </div>
 
                     <div class="pt-3 flex gap-2">
                         <button type="button" onclick="closeTeacherProfileModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
-                        <button type="submit" class="flex-1 bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-600 transition shadow">수정완료</button>
+                        <button type="submit" class="flex-1 bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-600 transition shadow">저장</button>
                     </div>
                 </form>
             </div>
@@ -650,14 +800,28 @@
                 { id: 'sch-2', name: '목포초등학교', subject: '코딩', color: 'emerald' }
             ],
             students: [
-                { id: 'st-1', schoolId: 'sch-1', name: '김민준', grade: '3학년 1반' },
-                { id: 'st-2', schoolId: 'sch-1', name: '이서연', grade: '3학년 2반' },
-                { id: 'st-3', schoolId: 'sch-1', name: '박도윤', grade: '4학년 1반' },
-                { id: 'st-4', schoolId: 'sch-2', name: '최지우', grade: '2학년 1반' },
-                { id: 'st-5', schoolId: 'sch-2', name: '정예준', grade: '2학년 3반' }
+                { id: 'st-1', schoolId: 'sch-1', name: '김민준', grade: '3학년 1반', part: '1부' },
+                { id: 'st-2', schoolId: 'sch-1', name: '이서연', grade: '3학년 2반', part: '1부' },
+                { id: 'st-3', schoolId: 'sch-1', name: '박도윤', grade: '4학년 1반', part: '2부' },
+                { id: 'st-4', schoolId: 'sch-2', name: '최지우', grade: '2학년 1반', part: '1부' },
+                { id: 'st-5', schoolId: 'sch-2', name: '정예준', grade: '2학년 3반', part: '2부' }
             ],
             attendance: [],
-            journals: []
+            journals: [
+                {
+                    id: 'j-sample-1',
+                    schoolId: 'sch-1',
+                    date: '2026-08-05',
+                    location: '컴퓨터실',
+                    time: '14:00 ~ 15:30',
+                    session: '77-78',
+                    cumulative: '78',
+                    topic: '[컴퓨터 기초] 문서 작성 및 한글 타자 연습',
+                    content: '한글 2020 기본 기능 익히기 및 애국가 타자 연습 진행. 타자 속도 향상을 위한 개별 지도 실시.',
+                    materials: '교재, PC',
+                    checkItems: '다음 차시 과제 안내 및 인쇄물 배부 완료.'
+                }
+            ]
         };
 
         let appData = loadState();
@@ -677,20 +841,17 @@
 
         function updateAuthUI() {
             const loginBtnText = document.getElementById('headerLoginBtnText');
-            const loginBtnIcon = document.getElementById('headerLoginBtnIcon');
             const statusBadge = document.getElementById('headerStatusBadge');
 
             if (appData.isLoggedIn) {
                 if (loginBtnText) loginBtnText.innerText = '로그아웃';
-                if (loginBtnIcon) loginBtnIcon.className = 'fa-solid fa-right-from-bracket text-xs text-rose-500';
                 if (statusBadge) {
-                    statusBadge.innerHTML = '<i class="fa-solid fa-circle text-[8px] text-emerald-500"></i> 온라인';
+                    statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> 온라인';
                 }
             } else {
                 if (loginBtnText) loginBtnText.innerText = '로그인';
-                if (loginBtnIcon) loginBtnIcon.className = 'fa-solid fa-right-to-bracket text-xs text-blue-600';
                 if (statusBadge) {
-                    statusBadge.innerHTML = '<i class="fa-solid fa-circle text-[8px] text-slate-300"></i> 오프라인';
+                    statusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-300 inline-block"></span> 오프라인';
                 }
             }
         }
@@ -726,28 +887,23 @@
         }
 
         function switchTab(tabKey) {
-            // Views hiding
             ['home', 'attendance', 'diary', 'monthly', 'login'].forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 if (el) el.classList.add('hidden');
             });
 
-            // Nav buttons reset
             document.querySelectorAll('.nav-item').forEach(btn => {
                 btn.className = 'nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-400 hover:text-slate-700';
             });
 
-            // Show selected view
             const targetView = document.getElementById(`view-${tabKey}`);
             if (targetView) targetView.classList.remove('hidden');
 
-            // Highlight active nav item
             const targetNav = document.getElementById(`nav-${tabKey}`);
             if (targetNav) {
                 targetNav.className = 'nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-700 bg-brand-accent font-bold';
             }
 
-            // Trigger view updates
             if (tabKey === 'home') renderHomeView();
             if (tabKey === 'attendance') renderAttendanceView();
             if (tabKey === 'diary') renderDiaryView();
@@ -765,19 +921,18 @@
             appData.schools.forEach(school => {
                 const isBlue = school.color === 'blue';
                 const isPurple = school.color === 'purple';
-                
                 const iconBgClass = isBlue ? 'bg-blue-600' : (isPurple ? 'bg-purple-600' : 'bg-emerald-400');
 
                 const cardHtml = `
                     <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 relative group flex flex-col items-center justify-center text-center transition hover:shadow-md cursor-pointer" onclick="selectSchoolAndNavigate('${school.id}')">
                         <div class="absolute top-4 right-4 flex items-center gap-2 z-10" onclick="event.stopPropagation()">
-                            <button onclick="deleteSchool('${school.id}')" class="text-slate-400 hover:text-red-500 p-1">
-                                <i class="fa-regular fa-trash-can text-xs"></i>
+                            <button onclick="deleteSchool('${school.id}')" class="text-slate-400 hover:text-red-500 p-1" title="학교 삭제">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
                         </div>
 
-                        <div class="w-14 h-14 ${iconBgClass} rounded-2xl flex items-center justify-center text-white text-xl shadow-inner mb-3 relative">
-                            <i class="fa-solid fa-clipboard-check"></i>
+                        <div class="w-14 h-14 ${iconBgClass} rounded-2xl flex items-center justify-center text-white text-xl shadow-inner mb-3">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                         </div>
 
                         <h3 class="font-extrabold text-slate-900 text-base tracking-tight mb-0.5">${school.name}</h3>
@@ -790,7 +945,7 @@
             const addCardHtml = `
                 <div onclick="openAddSchoolModal()" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition min-h-[140px]">
                     <div class="w-11 h-11 rounded-xl bg-slate-200 flex items-center justify-center text-slate-700 text-lg">
-                        <i class="fa-solid fa-plus"></i>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     </div>
                     <span class="font-bold text-slate-800 text-sm">학교 추가</span>
                 </div>
@@ -837,7 +992,7 @@
             if (students.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">
-                        <i class="fa-regular fa-folder-open text-2xl mb-2"></i>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2-2L5 8v11z"/></svg>
                         <p class="text-xs">등록된 학생이 없습니다. [학생 추가] 버튼을 눌러주세요.</p>
                     </div>
                 `;
@@ -880,12 +1035,12 @@
                             </div>
                             <div class="flex items-center gap-1">
                                 ${statusBtns}
-                                <button onclick="deleteStudent('${student.id}')" class="ml-1 text-slate-300 hover:text-rose-500 text-xs p-1">
-                                    <i class="fa-solid fa-trash-can"></i>
+                                <button onclick="deleteStudent('${student.id}')" class="ml-1 text-slate-300 hover:text-rose-500 text-xs p-1" title="학생 삭제">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </div>
-                        <input type="text" placeholder="특이사항 메모 (선택)" value="${record.note || ''}" 
+                        <input type="text" placeholder="특이사항 / 종료 메모 입력 (예: 귀가, 돌봄, 병결 등)" value="${record.note || ''}" 
                             oninput="setStudentAttendanceNote('${student.id}', this.value)" 
                             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400">
                     </div>
@@ -900,9 +1055,8 @@
         function renderLiveAttendanceDocument() {
             const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '서울초등학교', subject: '컴퓨터' };
             const selectedDate = document.getElementById('attendanceDate')?.value || getTodayString();
-            const targetMonth = selectedDate.substring(0, 7); // e.g. "2026-08"
+            const targetMonth = selectedDate.substring(0, 7);
 
-            // Header elements
             document.getElementById('docSubjectName').innerText = school.subject || school.name;
             document.getElementById('docTeacherStamp').innerText = appData.teacherName || '김현경';
 
@@ -913,11 +1067,9 @@
             const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
             document.getElementById('liveDocTotalCount').innerText = students.length;
 
-            // Collect unique dates in this month recorded in attendance
             const monthRecords = appData.attendance.filter(a => a.schoolId === currentSelectedSchoolId && a.date.startsWith(targetMonth));
             const activeDates = Array.from(new Set(monthRecords.map(a => a.date))).sort();
 
-            // Fill header dates (up to 10 slots)
             for (let i = 1; i <= 10; i++) {
                 const dateEl = document.getElementById(`colDate${i}`);
                 if (dateEl) {
@@ -942,11 +1094,9 @@
                 const gradeOnly = st.grade.replace(/[^0-9]/g, '').substring(0, 1) || st.grade;
                 const partLabel = st.part || '1부';
                 
-                // Get records for this student in target month
                 const stMonthRecords = appData.attendance.filter(a => a.schoolId === currentSelectedSchoolId && a.studentId === st.id && a.date.startsWith(targetMonth));
                 const totalAtt = stMonthRecords.filter(r => r.status === '출석').length;
 
-                // Build 10 columns for attendance and dismissal
                 let attCells = '';
                 let dismissalCells = '';
 
@@ -957,19 +1107,17 @@
                         if (rec) {
                             const noteText = rec.note ? rec.note : '';
                             if (rec.status === '출석') {
-                                // 출석일 때 선택된 부수(1부/2부/3부)가 들어가고, 종료칸에는 특이사항 메모
-                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-emerald-700">${partLabel}</td>`;
-                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[9px] text-slate-700">${noteText || '귀가'}</td>`;
+                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 font-bold text-emerald-800">${partLabel}</td>`;
+                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-black">${noteText || '귀가'}</td>`;
                             } else if (rec.status === '결석') {
-                                // 결석일 때 '/' 표가 들어가고, 종료칸에는 특이사항 메모
-                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-rose-600">/</td>`;
-                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[9px] text-slate-700">${noteText || '결석'}</td>`;
+                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 font-bold text-red-600">/</td>`;
+                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-black">${noteText || '결석'}</td>`;
                             } else if (rec.status === '지각') {
-                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-amber-600">ⓣ</td>`;
-                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[9px] text-slate-700">${noteText || '지각'}</td>`;
+                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 font-bold text-amber-600">ⓣ</td>`;
+                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-black">${noteText || '지각'}</td>`;
                             } else if (rec.status === '조퇴') {
-                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-blue-600">⠥</td>`;
-                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[9px] text-slate-700">${noteText || '조퇴'}</td>`;
+                                attCells += `<td class="border border-slate-900 py-0.5 px-0.5 font-bold text-blue-600">⠥</td>`;
+                                dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-black">${noteText || '조퇴'}</td>`;
                             } else {
                                 attCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
                                 dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
@@ -984,21 +1132,20 @@
                     }
                 }
 
-                // Row 1: Attendance row
                 tbody.innerHTML += `
                     <tr class="border-t border-slate-900">
                         <td class="border border-slate-900 py-1" rowspan="2">${idx + 1}</td>
                         <td class="border border-slate-900 py-1" rowspan="2">${gradeOnly}</td>
-                        <td class="border border-slate-900 py-1 font-bold text-slate-900" rowspan="2">${st.name}</td>
-                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-slate-700">010-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}</td>
-                        <td class="border border-slate-900 py-0.5 px-0.5 bg-slate-50 font-semibold text-[9px]">출석</td>
+                        <td class="border border-slate-900 py-1 font-bold text-black" rowspan="2">${st.name}</td>
+                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-black">010-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}</td>
+                        <td class="border border-slate-900 py-0.5 px-0.5 bg-gray-50 font-semibold">출석</td>
                         ${attCells}
-                        <td class="border border-slate-900 py-1 font-bold text-slate-900" rowspan="2">${totalAtt}</td>
-                        <td class="border border-slate-900 py-1 text-[9px] text-slate-600" rowspan="2"></td>
+                        <td class="border border-slate-900 py-1 font-bold text-black" rowspan="2">${totalAtt}</td>
+                        <td class="border border-slate-900 py-1 text-[9px] text-black" rowspan="2"></td>
                     </tr>
                     <tr>
-                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-slate-500">보호자</td>
-                        <td class="border border-slate-900 py-0.5 px-0.5 bg-slate-50 text-[9px]">종료</td>
+                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-slate-600">보호자</td>
+                        <td class="border border-slate-900 py-0.5 px-0.5 bg-gray-50">종료</td>
                         ${dismissalCells}
                     </tr>
                 `;
@@ -1043,143 +1190,6 @@
             }
             saveState();
             renderLiveAttendanceDocument();
-        }
-
-        /* REAL-TIME A4 DOCUMENT RENDERER (Photo Replica) */
-        function renderLiveAttendanceDocument() {
-            const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '서울초등학교', subject: '컴퓨터' };
-            const selectedDate = document.getElementById('attendanceDate')?.value || getTodayString();
-            const targetMonth = selectedDate.substring(0, 7); // e.g. "2026-08"
-
-            // Header elements
-            document.getElementById('docSubjectName').innerText = school.subject || school.name;
-            document.getElementById('docTeacherStamp').innerText = appData.teacherName || '김현경';
-
-            const [year, month] = targetMonth.split('-');
-            const lastDay = new Date(year, month, 0).getDate();
-            document.getElementById('docDateRange').innerText = `${year}. ${parseInt(month, 10)}. 1. ~ ${year}. ${parseInt(month, 10)}. ${lastDay}.`;
-
-            const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
-            document.getElementById('liveDocTotalCount').innerText = students.length;
-
-            // Collect unique dates in this month recorded in attendance
-            const monthRecords = appData.attendance.filter(a => a.schoolId === currentSelectedSchoolId && a.date.startsWith(targetMonth));
-            const activeDates = Array.from(new Set(monthRecords.map(a => a.date))).sort();
-
-            // Fill header dates (up to 10 slots)
-            for (let i = 1; i <= 10; i++) {
-                const dateEl = document.getElementById(`colDate${i}`);
-                if (dateEl) {
-                    if (activeDates[i - 1]) {
-                        const dStr = activeDates[i - 1].split('-')[2];
-                        dateEl.innerText = `${parseInt(month, 10)}/${parseInt(dStr, 10)}`;
-                    } else {
-                        dateEl.innerText = '/';
-                    }
-                }
-            }
-
-            const tbody = document.getElementById('liveDocAttendanceBody');
-            tbody.innerHTML = '';
-
-            if (students.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="17" class="py-6 text-slate-400 text-xs">등록된 학생이 없습니다. [학생 추가] 버튼을 이용해 등록해 주세요.</td></tr>`;
-                return;
-            }
-
-            students.forEach((st, idx) => {
-                const gradeOnly = st.grade.replace(/[^0-9]/g, '').substring(0, 1) || st.grade;
-                const partLabel = st.part || '1부';
-                
-                // Get records for this student in target month
-                const stMonthRecords = appData.attendance.filter(a => a.schoolId === currentSelectedSchoolId && a.studentId === st.id && a.date.startsWith(targetMonth));
-                const totalAtt = stMonthRecords.filter(r => r.status === '출석').length;
-
-                // Build 10 columns for attendance and dismissal
-                let attCells = '';
-                let dismissalCells = '';
-
-                for (let i = 0; i < 10; i++) {
-                    const slotDate = activeDates[i];
-                    if (slotDate) {
-                        const rec = stMonthRecords.find(r => r.date === slotDate);
-                        if (rec) {
-                            if (rec.status === '출석') attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-emerald-700">${partLabel}</td>`;
-                            else if (rec.status === '지각') attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-amber-600">ⓣ</td>`;
-                            else if (rec.status === '조퇴') attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-blue-600">⠥</td>`;
-                            else if (rec.status === '결석') attCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[10px] font-bold text-rose-600">/</td>`;
-                            else attCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
-
-                            // Dismissal status
-                            dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5 text-[9px] text-slate-600">${rec.note || (rec.status === '결석' ? '결석' : '귀가')}</td>`;
-                        } else {
-                            attCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
-                            dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
-                        }
-                    } else {
-                        attCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
-                        dismissalCells += `<td class="border border-slate-900 py-0.5 px-0.5"></td>`;
-                    }
-                }
-
-                // Row 1: Attendance row
-                tbody.innerHTML += `
-                    <tr class="border-t border-slate-900">
-                        <td class="border border-slate-900 py-1" rowspan="2">${idx + 1}</td>
-                        <td class="border border-slate-900 py-1" rowspan="2">${gradeOnly}</td>
-                        <td class="border border-slate-900 py-1 font-bold text-slate-900" rowspan="2">${st.name}</td>
-                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-slate-700">010-${Math.floor(1000 + Math.random()*9000)}-${Math.floor(1000 + Math.random()*9000)}</td>
-                        <td class="border border-slate-900 py-0.5 px-0.5 bg-slate-50 font-semibold text-[9px]">출석</td>
-                        ${attCells}
-                        <td class="border border-slate-900 py-1 font-bold text-slate-900" rowspan="2">${totalAtt}</td>
-                        <td class="border border-slate-900 py-1 text-[9px] text-slate-600" rowspan="2"></td>
-                    </tr>
-                    <tr>
-                        <td class="border border-slate-900 py-0.5 px-1 text-[9px] text-slate-500">보호자</td>
-                        <td class="border border-slate-900 py-0.5 px-0.5 bg-slate-50 text-[9px]">종료</td>
-                        ${dismissalCells}
-                    </tr>
-                `;
-            });
-        }
-
-        function setStudentAttendanceStatus(studentId, status) {
-            const date = document.getElementById('attendanceDate').value;
-            let record = appData.attendance.find(a => a.schoolId === currentSelectedSchoolId && a.date === date && a.studentId === studentId);
-
-            if (record) {
-                record.status = status;
-            } else {
-                appData.attendance.push({
-                    id: 'att-' + Date.now() + Math.random().toString(36).substr(2, 4),
-                    schoolId: currentSelectedSchoolId,
-                    date: date,
-                    studentId: studentId,
-                    status: status,
-                    note: ''
-                });
-            }
-            saveState();
-            renderAttendanceList();
-        }
-
-        function setStudentAttendanceNote(studentId, note) {
-            const date = document.getElementById('attendanceDate').value;
-            let record = appData.attendance.find(a => a.schoolId === currentSelectedSchoolId && a.date === date && a.studentId === studentId);
-
-            if (record) {
-                record.note = note;
-            } else {
-                appData.attendance.push({
-                    id: 'att-' + Date.now() + Math.random().toString(36).substr(2, 4),
-                    schoolId: currentSelectedSchoolId,
-                    date: date,
-                    studentId: studentId,
-                    status: '출석',
-                    note: note
-                });
-            }
-            saveState();
         }
 
         function markAllAttendance(status) {
@@ -1205,7 +1215,7 @@
             renderAttendanceList();
         }
 
-        /* LESSON DIARY SECTION LOGIC */
+        /* LESSON DIARY LOGIC */
         function renderDiaryView() {
             const dateInput = document.getElementById('diaryDate');
             if (!dateInput.value) dateInput.value = getTodayString();
@@ -1223,7 +1233,6 @@
             });
 
             loadDiaryEntry();
-            renderSavedDiaryList();
         }
 
         function changeDiarySchool(schoolId) {
@@ -1236,31 +1245,50 @@
             const entry = appData.journals.find(j => j.schoolId === currentSelectedSchoolId && j.date === date);
 
             if (entry) {
+                document.getElementById('diaryLocation').value = entry.location || '';
+                document.getElementById('diaryTime').value = entry.time || '';
+                document.getElementById('diarySession').value = entry.session || '';
+                document.getElementById('diaryCumulative').value = entry.cumulative || '';
                 document.getElementById('diaryTopic').value = entry.topic || '';
                 document.getElementById('diaryContent').value = entry.content || '';
                 document.getElementById('diaryMaterials').value = entry.materials || '';
                 document.getElementById('diaryCheckItems').value = entry.checkItems || '';
             } else {
+                document.getElementById('diaryLocation').value = '컴퓨터실';
+                document.getElementById('diaryTime').value = '14:00 ~ 15:30';
+                document.getElementById('diarySession').value = '';
+                document.getElementById('diaryCumulative').value = '';
                 document.getElementById('diaryTopic').value = '';
                 document.getElementById('diaryContent').value = '';
                 document.getElementById('diaryMaterials').value = '';
                 document.getElementById('diaryCheckItems').value = '';
             }
+
+            updateLiveDiaryPreview();
         }
 
         function saveDiaryEntry() {
             const date = document.getElementById('diaryDate').value;
+            const location = document.getElementById('diaryLocation').value.trim();
+            const time = document.getElementById('diaryTime').value.trim();
+            const session = document.getElementById('diarySession').value.trim();
+            const cumulative = document.getElementById('diaryCumulative').value.trim();
             const topic = document.getElementById('diaryTopic').value.trim();
             const content = document.getElementById('diaryContent').value.trim();
             const materials = document.getElementById('diaryMaterials').value.trim();
             const checkItems = document.getElementById('diaryCheckItems').value.trim();
 
             if (!topic) {
+                alert('단원 / 수업 주제를 입력해주세요.');
                 return;
             }
 
             let entry = appData.journals.find(j => j.schoolId === currentSelectedSchoolId && j.date === date);
             if (entry) {
+                entry.location = location;
+                entry.time = time;
+                entry.session = session;
+                entry.cumulative = cumulative;
                 entry.topic = topic;
                 entry.content = content;
                 entry.materials = materials;
@@ -1270,6 +1298,10 @@
                     id: 'j-' + Date.now(),
                     schoolId: currentSelectedSchoolId,
                     date: date,
+                    location: location,
+                    time: time,
+                    session: session,
+                    cumulative: cumulative,
                     topic: topic,
                     content: content,
                     materials: materials,
@@ -1278,34 +1310,146 @@
             }
 
             saveState();
-            renderSavedDiaryList();
+            updateLiveDiaryPreview();
+            alert('수업일지가 저장되었습니다.');
         }
 
-        function renderSavedDiaryList() {
-            const container = document.getElementById('diarySavedList');
-            const entries = appData.journals.filter(j => j.schoolId === currentSelectedSchoolId).sort((a,b) => b.date.localeCompare(a.date));
+        /* LIVE RENDERER FOR LESSON DIARY (photo_400b10.jpg Exact Replica) */
+        function updateLiveDiaryPreview() {
+            const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '서울초등학교', subject: '컴퓨터' };
+            document.getElementById('diaryDocSubjectName').innerText = school.subject || school.name;
+            document.getElementById('diaryDocTeacherStamp').innerText = appData.teacherName || '김현경';
 
-            if (entries.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 py-2 text-center">저장된 일지가 없습니다.</p>';
-                return;
+            const selectedDate = document.getElementById('diaryDate')?.value || getTodayString();
+            const location = document.getElementById('diaryLocation')?.value || '';
+            const time = document.getElementById('diaryTime')?.value || '';
+            const session = document.getElementById('diarySession')?.value || '';
+            const cumulative = document.getElementById('diaryCumulative')?.value || '';
+            const topic = document.getElementById('diaryTopic')?.value || '';
+            const content = document.getElementById('diaryContent')?.value || '';
+            const checkItems = document.getElementById('diaryCheckItems')?.value || '';
+
+            const currentEntry = {
+                date: selectedDate,
+                location: location,
+                time: time,
+                session: session,
+                cumulative: cumulative,
+                topic: topic,
+                content: content,
+                checkItems: checkItems
+            };
+
+            const schoolJournals = appData.journals.filter(j => j.schoolId === currentSelectedSchoolId && j.date !== selectedDate);
+            
+            const blocksData = [currentEntry, ...schoolJournals].slice(0, 3);
+            while (blocksData.length < 3) {
+                blocksData.push(null);
             }
 
+            const container = document.getElementById('diaryBlocksContainer');
             container.innerHTML = '';
-            entries.forEach(e => {
-                container.innerHTML += `
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center text-xs hover:bg-slate-100 cursor-pointer" onclick="selectDiaryDate('${e.date}')">
-                        <div>
-                            <span class="font-bold text-blue-700">${e.date}</span> - <span class="font-medium text-slate-800">${e.topic}</span>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-slate-400 text-[10px]"></i>
+
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            blocksData.forEach((item) => {
+                let dateDisplay = '2026년    월    일 (    요일)';
+                let locationDisplay = '';
+                let timeDisplay = ':  ~  :';
+                let contentDisplay = '';
+                let noteDisplay = '';
+                let sessionDisplay = '(   )차시';
+                let cumulativeDisplay = '(   )차시';
+
+                if (item) {
+                    if (item.date) {
+                        const dObj = new Date(item.date);
+                        if (!isNaN(dObj.getTime())) {
+                            const y = dObj.getFullYear();
+                            const m = dObj.getMonth() + 1;
+                            const d = dObj.getDate();
+                            const dayName = dayNames[dObj.getDay()];
+                            dateDisplay = `${y}년 ${m}월 ${d}일 ( ${dayName}요일 )`;
+                        }
+                    }
+                    locationDisplay = item.location || '';
+                    timeDisplay = item.time || ':  ~  :';
+                    contentDisplay = (item.topic ? `[주제] ${item.topic}\n` : '') + (item.content || '');
+                    noteDisplay = item.checkItems || '';
+                    sessionDisplay = item.session ? `(${item.session})차시` : '(   )차시';
+                    cumulativeDisplay = item.cumulative ? `(${item.cumulative})차시` : '(   )차시';
+                }
+
+                const blockHtml = `
+                    <div class="border-2 border-black p-0 bg-white">
+                        <table class="a4-table w-full text-xs text-center border-collapse table-fixed">
+                            <tr class="bg-gray-50 border-b border-black text-black">
+                                <td class="py-1.5 px-2 font-bold w-[35%] border-r border-black">${dateDisplay}</td>
+                                <td class="py-1.5 px-1 font-semibold w-[15%] bg-gray-100 border-r border-black">지도 장소</td>
+                                <td class="py-1.5 px-2 w-[20%] border-r border-black text-left pl-2">${locationDisplay}</td>
+                                <td class="py-1.5 px-1 font-semibold w-[12%] bg-gray-100 border-r border-black">지도 시간</td>
+                                <td class="py-1.5 px-2 w-[18%] border-black text-center">${timeDisplay}</td>
+                            </tr>
+                            <tr class="border-b border-black">
+                                <td class="py-8 px-2 font-bold bg-gray-50 border-r border-black align-middle">지도 내용</td>
+                                <td class="py-3 px-3 text-left align-top whitespace-pre-wrap leading-relaxed text-slate-900" colspan="4">${contentDisplay}</td>
+                            </tr>
+                            <tr class="border-b border-black">
+                                <td class="py-2 px-2 font-bold bg-gray-50 border-r border-black align-middle">특기 사항</td>
+                                <td class="py-2 px-3 text-left align-middle text-slate-900" colspan="4">${noteDisplay}</td>
+                            </tr>
+                            <tr class="bg-gray-50 text-black">
+                                <td class="py-1.5 px-2 font-bold border-r border-black">지도 차시</td>
+                                <td class="py-1.5 px-2 border-r border-black text-center font-medium" colspan="2">${sessionDisplay}</td>
+                                <td class="py-1.5 px-2 font-bold border-r border-black">누계</td>
+                                <td class="py-1.5 px-2 text-center font-medium">${cumulativeDisplay}</td>
+                            </tr>
+                        </table>
                     </div>
                 `;
+                container.innerHTML += blockHtml;
             });
         }
 
-        function selectDiaryDate(dateStr) {
-            document.getElementById('diaryDate').value = dateStr;
-            loadDiaryEntry();
+        function downloadDiaryPDF() {
+            const element = document.getElementById('liveDiaryDocument');
+            if (!element) return;
+
+            const selectedDate = document.getElementById('diaryDate')?.value || getTodayString();
+            const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '수업일지', subject: '' };
+            const fileName = `${selectedDate}_${school.name}_(${school.subject})_차시별활동일지.pdf`;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0px';
+            tempDiv.style.width = '794px';
+            tempDiv.style.background = '#ffffff';
+
+            const clone = element.cloneNode(true);
+            tempDiv.appendChild(clone);
+            document.body.appendChild(tempDiv);
+
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    width: 794
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(tempDiv);
+            }).catch(err => {
+                console.error(err);
+                if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+            });
         }
 
         /* MONTHLY REPORT & PDF GENERATION LOGIC */
@@ -1394,32 +1538,72 @@
             const schoolName = schoolSelect.options[schoolSelect.selectedIndex]?.text || '수업일지';
             const fileName = `${monthInput.value}_${schoolName}_수업일지 및 출석부.pdf`;
 
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0px';
+            tempDiv.style.width = '794px';
+            tempDiv.style.background = '#ffffff';
+
+            const clone = element.cloneNode(true);
+            tempDiv.appendChild(clone);
+            document.body.appendChild(tempDiv);
+
             const opt = {
                 margin:       [10, 10, 10, 10],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
+                html2canvas:  { scale: 2, useCORS: true, width: 794 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(tempDiv);
+            }).catch(err => {
+                console.error(err);
+                if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+            });
         }
 
         function downloadAttendancePDF() {
             const element = document.getElementById('liveAttendanceDocument');
+            if (!element) return;
+
             const selectedDate = document.getElementById('attendanceDate')?.value || getTodayString();
             const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '출석부', subject: '' };
             const fileName = `${selectedDate}_${school.name}_(${school.subject})_출석부.pdf`;
 
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0px';
+            tempDiv.style.width = '794px';
+            tempDiv.style.background = '#ffffff';
+
+            const clone = element.cloneNode(true);
+            tempDiv.appendChild(clone);
+            document.body.appendChild(tempDiv);
+
             const opt = {
-                margin:       [10, 10, 10, 10],
+                margin:       [8, 8, 8, 8],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    width: 794
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(clone).save().then(() => {
+                document.body.removeChild(tempDiv);
+            }).catch(err => {
+                console.error(err);
+                if (tempDiv.parentNode) document.body.removeChild(tempDiv);
+            });
         }
 
         /* SCHOOL CRUD MODALS */
@@ -1428,17 +1612,6 @@
             document.getElementById('schoolEditId').value = '';
             document.getElementById('schoolNameInput').value = '';
             document.getElementById('subjectNameInput').value = '';
-            document.getElementById('schoolModal').classList.remove('hidden');
-        }
-
-        function openEditSchoolModal(schoolId) {
-            const school = appData.schools.find(s => s.id === schoolId);
-            if (!school) return;
-
-            document.getElementById('schoolModalTitle').innerText = '학교 정보 수정';
-            document.getElementById('schoolEditId').value = school.id;
-            document.getElementById('schoolNameInput').value = school.name;
-            document.getElementById('subjectNameInput').value = school.subject;
             document.getElementById('schoolModal').classList.remove('hidden');
         }
 
@@ -1518,9 +1691,6 @@
             saveState();
             closeStudentModal();
             renderAttendanceList();
-            if (typeof renderRosterList === 'function') {
-                renderRosterList();
-            }
         }
 
         function deleteStudent(studentId) {
