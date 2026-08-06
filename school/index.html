@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>나는 강사다 - 초등 방과후 강사 관리 시스템</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2pdf.js for exporting to PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
@@ -164,6 +166,7 @@
     <!-- Main Responsive App Frame -->
     <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl min-h-screen md:min-h-[90vh] bg-slate-50 md:rounded-3xl md:shadow-2xl flex flex-col justify-between relative overflow-hidden my-0 md:my-6 border-slate-200 border">
 
+        <!-- Top App Bar -->
         <header class="no-print bg-white px-5 py-3.5 flex items-center justify-between border-b border-slate-100 sticky top-0 z-20 shadow-sm">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="openTeacherProfileModal()">
                 <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-emerald-400 shadow-sm">
@@ -187,6 +190,7 @@
         <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto px-4 py-5 space-y-6 pb-24">
 
+            <!-- VIEW 1: HOME VIEW (홈) -->
             <section id="view-home" class="space-y-6">
                 <!-- Center Hero / Logo Block -->
                 <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
@@ -254,6 +258,7 @@
                 </div>
             </section>
 
+            <!-- VIEW 2: ATTENDANCE LOG (출석부) -->
             <section id="view-attendance" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -312,16 +317,6 @@
 
                     <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
                         <div id="liveAttendanceDocument" class="a4-document shadow-lg">
-                            
-                            <!-- 학교별 맞춤 서식 사진 영역 (업로드 시 출력) -->
-                            <div id="attDocCustomFormContainer" class="hidden mb-3 border border-slate-300 p-1.5 rounded-lg bg-slate-50">
-                                <p class="text-[10px] text-emerald-700 font-bold mb-1 flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    학교 맞춤 출석부 서식 사진
-                                </p>
-                                <img id="attDocCustomFormImg" src="" alt="학교 서식" class="w-full h-auto max-h-48 object-contain rounded border">
-                            </div>
-
                             <div class="text-center pt-2 mb-3">
                                 <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black underline underline-offset-8 decoration-1">
                                     방과후학교 프로그램 ( <span id="docSubjectName" class="px-1">컴퓨터</span> )부 학생 출석부
@@ -406,6 +401,7 @@
                 </div>
             </section>
 
+            <!-- VIEW 3: LESSON DIARY (수업일지) -->
             <section id="view-diary" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -496,16 +492,6 @@
 
                     <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
                         <div id="liveDiaryDocument" class="a4-document shadow-lg">
-                            
-                            <!-- 학교별 맞춤 서식 사진 영역 (업로드 시 출력) -->
-                            <div id="diaryDocCustomFormContainer" class="hidden mb-3 border border-slate-300 p-1.5 rounded-lg bg-slate-50">
-                                <p class="text-[10px] text-blue-700 font-bold mb-1 flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    학교 맞춤 수업일지 서식 사진
-                                </p>
-                                <img id="diaryDocCustomFormImg" src="" alt="학교 서식" class="w-full h-auto max-h-48 object-contain rounded border">
-                            </div>
-
                             <div class="text-center pt-2 mb-3">
                                 <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black">
                                     방과후학교 프로그램 ( <span id="diaryDocSubjectName" class="px-2">컴퓨터</span> 부 ) 차시별 활동일지
@@ -532,6 +518,7 @@
                 </div>
             </section>
 
+            <!-- VIEW 4: DUTY LOG / MONTHLY REPORT (근무상황부) -->
             <section id="view-monthly" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 no-print">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -595,16 +582,6 @@
 
                     <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
                         <div id="liveMonthlyDocument" class="a4-document shadow-lg">
-                            
-                            <!-- 학교별 맞춤 서식 사진 영역 (업로드 시 출력) -->
-                            <div id="monthlyDocCustomFormContainer" class="hidden mb-3 border border-slate-300 p-1.5 rounded-lg bg-slate-50">
-                                <p class="text-[10px] text-purple-700 font-bold mb-1 flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    학교 맞춤 근무상황부 서식 사진
-                                </p>
-                                <img id="monthlyDocCustomFormImg" src="" alt="학교 서식" class="w-full h-auto max-h-48 object-contain rounded border">
-                            </div>
-
                             <div class="text-center pt-2 mb-2">
                                 <h2 class="text-xl font-bold tracking-tight text-black">방과후학교 프로그램</h2>
                                 <h1 class="text-2xl font-black tracking-tight text-black mt-1">
@@ -651,6 +628,7 @@
                 </div>
             </section>
 
+            <!-- VIEW 5: LOGIN PAGE -->
             <section id="view-login" class="space-y-6 hidden py-4">
                 <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col items-center text-center">
                     <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-brand-navy mb-4 shadow-inner">
@@ -695,6 +673,7 @@
 
         </main>
 
+        <!-- Bottom Navigation Bar -->
         <nav class="no-print bg-white border-t border-slate-200 px-3 py-2 fixed bottom-0 left-0 right-0 max-w-md md:max-w-2xl lg:max-w-4xl mx-auto z-30 flex justify-around items-center">
             <button id="nav-home" onclick="switchTab('home')" class="nav-item flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 text-slate-700 bg-brand-accent">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -714,8 +693,9 @@
             </button>
         </nav>
 
+        <!-- MODAL 1: Add School Modal -->
         <div id="schoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                     <h3 id="schoolModalTitle" class="font-bold text-slate-800 text-base">학교 및 과목 추가</h3>
                     <button onclick="closeSchoolModal()" class="text-slate-400 hover:text-slate-600">
@@ -748,44 +728,6 @@
                                 <input type="radio" name="themeColor" value="purple" class="accent-purple-600">
                                 <span class="w-4 h-4 rounded-full bg-purple-600 inline-block"></span> 퍼플
                             </label>
-                        </div>
-                    </div>
-
-                    <!-- 학교별 문서 양식/서식 사진 업로드 항목 -->
-                    <div class="pt-2 border-t border-slate-100">
-                        <label class="block text-xs font-bold text-slate-800 mb-1 flex items-center gap-1">
-                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            학교별 문서 서식 사진 업로드 (선택)
-                        </label>
-                        <p class="text-[10px] text-slate-400 mb-2">학교에서 사용하는 양식 사진을 업로드하면 문서에 자동 반영됩니다.</p>
-
-                        <div class="space-y-2.5 text-xs">
-                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                <span class="block font-bold text-slate-700 text-[11px] mb-1">① 출석부 서식 사진</span>
-                                <input type="file" id="schoolFormAttInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
-                                <div id="previewAttContainer" class="mt-1.5 hidden flex items-center gap-2">
-                                    <img id="previewAttImg" class="w-12 h-12 object-cover rounded-lg border border-slate-300">
-                                    <button type="button" onclick="removeSchoolFormImage('att')" class="text-[10px] text-red-500 underline">사진 삭제</button>
-                                </div>
-                            </div>
-
-                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                <span class="block font-bold text-slate-700 text-[11px] mb-1">② 차시별 활동일지 서식 사진</span>
-                                <input type="file" id="schoolFormDiaryInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer">
-                                <div id="previewDiaryContainer" class="mt-1.5 hidden flex items-center gap-2">
-                                    <img id="previewDiaryImg" class="w-12 h-12 object-cover rounded-lg border border-slate-300">
-                                    <button type="button" onclick="removeSchoolFormImage('diary')" class="text-[10px] text-red-500 underline">사진 삭제</button>
-                                </div>
-                            </div>
-
-                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                <span class="block font-bold text-slate-700 text-[11px] mb-1">③ 근무상황부 서식 사진</span>
-                                <input type="file" id="schoolFormMonthlyInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-100 file:text-purple-800 hover:file:bg-purple-200 cursor-pointer">
-                                <div id="previewMonthlyContainer" class="mt-1.5 hidden flex items-center gap-2">
-                                    <img id="previewMonthlyImg" class="w-12 h-12 object-cover rounded-lg border border-slate-300">
-                                    <button type="button" onclick="removeSchoolFormImage('monthly')" class="text-[10px] text-red-500 underline">사진 삭제</button>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -967,8 +909,8 @@
             teacherName: '김현경',
             isLoggedIn: true,
             schools: [
-                { id: 'sch-1', name: '목포북교초등학교', subject: '컴퓨터', color: 'blue', formImgAtt: '', formImgDiary: '', formImgMonthly: '' },
-                { id: 'sch-2', name: '서울초등학교', subject: '코딩', color: 'emerald', formImgAtt: '', formImgDiary: '', formImgMonthly: '' }
+                { id: 'sch-1', name: '목포북교초등학교', subject: '컴퓨터', color: 'blue' },
+                { id: 'sch-2', name: '서울초등학교', subject: '코딩', color: 'emerald' }
             ],
             students: [
                 { id: 'st-1', schoolId: 'sch-1', name: '김민준', grade: '3학년 1반', part: '1부', parentPhone: '010-2345-6789', studentPhone: '010-8765-4321' },
@@ -988,9 +930,6 @@
 
         let appData = loadState();
         let currentSelectedSchoolId = appData.schools[0]?.id || '';
-
-        // 변수 임시 저장을 위한 파일 데이터
-        let tempSchoolFormImages = { att: '', diary: '', monthly: '' };
 
         function loadState() {
             const saved = localStorage.getItem('iAmTeacherData');
@@ -1082,6 +1021,7 @@
             if (tabKey === 'monthly') renderMonthlyPDFPreview();
         }
 
+        /* RENDER HOME PAGE */
         function renderHomeView() {
             document.getElementById('headerTeacherNameDisplay').innerText = `${appData.teacherName} 강사님`;
             document.getElementById('homeTeacherName').innerText = appData.teacherName;
@@ -1093,14 +1033,10 @@
                 const isBlue = school.color === 'blue';
                 const isPurple = school.color === 'purple';
                 const iconBgClass = isBlue ? 'bg-blue-600' : (isPurple ? 'bg-purple-600' : 'bg-emerald-400');
-                const hasCustomForms = school.formImgAtt || school.formImgDiary || school.formImgMonthly;
 
                 const cardHtml = `
                     <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 relative group flex flex-col items-center justify-center text-center transition hover:shadow-md cursor-pointer" onclick="selectSchoolAndNavigate('${school.id}')">
-                        <div class="absolute top-4 right-4 flex items-center gap-1.5 z-10" onclick="event.stopPropagation()">
-                            <button onclick="openEditSchoolModal('${school.id}')" class="text-slate-400 hover:text-blue-600 p-1" title="학교 정보/서식 수정">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            </button>
+                        <div class="absolute top-4 right-4 flex items-center gap-2 z-10" onclick="event.stopPropagation()">
                             <button onclick="deleteSchool('${school.id}')" class="text-slate-400 hover:text-red-500 p-1" title="학교 삭제">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
@@ -1112,7 +1048,6 @@
 
                         <h3 class="font-extrabold text-slate-900 text-base tracking-tight mb-0.5">${school.name}</h3>
                         <p class="text-xs text-slate-500 font-semibold">(${school.subject})</p>
-                        ${hasCustomForms ? '<span class="mt-2 text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md border border-emerald-200">📷 맞춤서식 등록됨</span>' : ''}
                     </div>
                 `;
                 container.innerHTML += cardHtml;
@@ -1134,6 +1069,7 @@
             switchTab('attendance');
         }
 
+        /* ATTENDANCE SECTION LOGIC */
         function renderAttendanceView() {
             const dateInput = document.getElementById('attendanceDate');
             if (!dateInput.value) dateInput.value = getTodayString();
@@ -1162,6 +1098,7 @@
             const date = document.getElementById('attendanceDate').value;
             const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
             
+            // 학년 기준 오름차순 정렬 (학년이 같으면 이름순 정렬)
             students.sort((a, b) => {
                 const gradeCompare = (a.grade || '').localeCompare(b.grade || '', 'ko', { numeric: true });
                 if (gradeCompare !== 0) return gradeCompare;
@@ -1259,20 +1196,11 @@
             renderLiveAttendanceDocument();
         }
 
+        /* REAL-TIME A4 DOCUMENT RENDERER */
         function renderLiveAttendanceDocument() {
             const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '목포북교초등학교', subject: '컴퓨터' };
             const selectedDate = document.getElementById('attendanceDate')?.value || getTodayString();
             const targetMonth = selectedDate.substring(0, 7);
-
-            // 학교별 맞춤 서식 사진 로드
-            const customFormContainer = document.getElementById('attDocCustomFormContainer');
-            const customFormImg = document.getElementById('attDocCustomFormImg');
-            if (school.formImgAtt) {
-                customFormImg.src = school.formImgAtt;
-                customFormContainer.classList.remove('hidden');
-            } else {
-                customFormContainer.classList.add('hidden');
-            }
 
             document.getElementById('docSubjectName').innerText = school.subject || school.name;
             document.getElementById('docTeacherStamp').innerText = '';
@@ -1282,6 +1210,8 @@
             document.getElementById('docDateRange').innerText = `${year}. ${parseInt(month, 10)}. 1. ~ ${year}. ${parseInt(month, 10)}. ${lastDay}.`;
 
             const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
+            
+            // 실시간 A4 문서 미리보기 학년 기준 오름차순 정렬 (같으면 이름순)
             students.sort((a, b) => {
                 const gradeCompare = (a.grade || '').localeCompare(b.grade || '', 'ko', { numeric: true });
                 if (gradeCompare !== 0) return gradeCompare;
@@ -1439,6 +1369,7 @@
             showToast('전원 출석 처리되었습니다.');
         }
 
+        /* LESSON DIARY LOGIC */
         function renderDiaryView() {
             const dateInput = document.getElementById('diaryDate');
             if (!dateInput.value) dateInput.value = getTodayString();
@@ -1537,19 +1468,9 @@
             showToast('수업일지가 저장되었습니다.');
         }
 
+        /* LIVE RENDERER FOR LESSON DIARY */
         function updateLiveDiaryPreview() {
             const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '목포북교초등학교', subject: '컴퓨터' };
-            
-            // 학교별 맞춤 수업일지 서식 사진 로드
-            const customFormContainer = document.getElementById('diaryDocCustomFormContainer');
-            const customFormImg = document.getElementById('diaryDocCustomFormImg');
-            if (school.formImgDiary) {
-                customFormImg.src = school.formImgDiary;
-                customFormContainer.classList.remove('hidden');
-            } else {
-                customFormContainer.classList.add('hidden');
-            }
-
             document.getElementById('diaryDocSubjectName').innerText = school.subject || school.name;
             document.getElementById('diaryDocTeacherStamp').innerText = '';
 
@@ -1667,7 +1588,14 @@
                 margin:       [10, 10, 10, 10],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, width: 794, windowWidth: 794 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    width: 794,
+                    windowWidth: 794
+                },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -1680,6 +1608,7 @@
             });
         }
 
+        /* DUTY LOG (근무상황부) LOGIC */
         function renderMonthlyPDFPreview() {
             const monthInput = document.getElementById('monthlyReportMonth');
             if (!monthInput.value) monthInput.value = getCurrentMonthString();
@@ -1698,16 +1627,6 @@
 
             const school = appData.schools.find(s => s.id === currentSelectedSchoolId) || { name: '목포북교초등학교', subject: '컴퓨터' };
             const targetMonth = monthInput.value;
-
-            // 학교별 맞춤 근무상황부 서식 사진 로드
-            const customFormContainer = document.getElementById('monthlyDocCustomFormContainer');
-            const customFormImg = document.getElementById('monthlyDocCustomFormImg');
-            if (school.formImgMonthly) {
-                customFormImg.src = school.formImgMonthly;
-                customFormContainer.classList.remove('hidden');
-            } else {
-                customFormContainer.classList.add('hidden');
-            }
 
             document.getElementById('monthlyDocSubjectName').innerText = school.subject || school.name;
             document.getElementById('monthlyDocSchoolName').innerText = school.name || '목포북교초등학교';
@@ -1857,7 +1776,13 @@
                 margin:       [10, 10, 10, 10],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, width: 794 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    width: 794
+                },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -1893,7 +1818,13 @@
                 margin:       [10, 10, 10, 10],
                 filename:     fileName,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0, width: 794 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0,
+                    scrollX: 0,
+                    width: 794
+                },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -1906,93 +1837,18 @@
             });
         }
 
+        /* SCHOOL CRUD MODALS */
         function openAddSchoolModal() {
             document.getElementById('schoolModalTitle').innerText = '학교 및 과목 추가';
             document.getElementById('schoolEditId').value = '';
             document.getElementById('schoolNameInput').value = '';
             document.getElementById('subjectNameInput').value = '';
-            
-            tempSchoolFormImages = { att: '', diary: '', monthly: '' };
-            resetFormImagePreviews();
-            document.getElementById('schoolModal').classList.remove('hidden');
-        }
-
-        function openEditSchoolModal(schoolId) {
-            const school = appData.schools.find(s => s.id === schoolId);
-            if (!school) return;
-
-            document.getElementById('schoolModalTitle').innerText = '학교 정보 및 서식 수정';
-            document.getElementById('schoolEditId').value = school.id;
-            document.getElementById('schoolNameInput').value = school.name || '';
-            document.getElementById('subjectNameInput').value = school.subject || '';
-
-            const themeRadio = document.querySelector(`input[name="themeColor"][value="${school.color || 'blue'}"]`);
-            if (themeRadio) themeRadio.checked = true;
-
-            tempSchoolFormImages = {
-                att: school.formImgAtt || '',
-                diary: school.formImgDiary || '',
-                monthly: school.formImgMonthly || ''
-            };
-
-            updateFormImagePreviews();
             document.getElementById('schoolModal').classList.remove('hidden');
         }
 
         function closeSchoolModal() {
             document.getElementById('schoolModal').classList.add('hidden');
         }
-
-        function resetFormImagePreviews() {
-            ['att', 'diary', 'monthly'].forEach(type => {
-                const container = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}Container`);
-                const img = document.getElementById(`preview${type.charAt(0).toUpperCase() + type.slice(1)}Img`);
-                if (container && img) {
-                    img.src = '';
-                    container.classList.add('hidden');
-                }
-            });
-        }
-
-        function updateFormImagePreviews() {
-            const map = { att: 'Att', diary: 'Diary', monthly: 'Monthly' };
-            Object.keys(map).forEach(type => {
-                const container = document.getElementById(`preview${map[type]}Container`);
-                const img = document.getElementById(`preview${map[type]}Img`);
-                if (container && img) {
-                    if (tempSchoolFormImages[type]) {
-                        img.src = tempSchoolFormImages[type];
-                        container.classList.remove('hidden');
-                    } else {
-                        img.src = '';
-                        container.classList.add('hidden');
-                    }
-                }
-            });
-        }
-
-        function removeSchoolFormImage(type) {
-            tempSchoolFormImages[type] = '';
-            updateFormImagePreviews();
-        }
-
-        // 이미지 파일 선택 이벤트 바인딩
-        ['Att', 'Diary', 'Monthly'].forEach(key => {
-            const typeLower = key.toLowerCase() === 'att' ? 'att' : (key.toLowerCase() === 'diary' ? 'diary' : 'monthly');
-            document.addEventListener('change', function(e) {
-                if (e.target && e.target.id === `schoolForm${key}Input`) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(evt) {
-                            tempSchoolFormImages[typeLower] = evt.target.result;
-                            updateFormImagePreviews();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                }
-            });
-        });
 
         function saveSchool(e) {
             e.preventDefault();
@@ -2007,19 +1863,13 @@
                     school.name = name;
                     school.subject = subject;
                     school.color = color;
-                    school.formImgAtt = tempSchoolFormImages.att;
-                    school.formImgDiary = tempSchoolFormImages.diary;
-                    school.formImgMonthly = tempSchoolFormImages.monthly;
                 }
             } else {
                 const newSchool = {
                     id: 'school-' + Date.now(),
                     name: name,
                     subject: subject,
-                    color: color,
-                    formImgAtt: tempSchoolFormImages.att,
-                    formImgDiary: tempSchoolFormImages.diary,
-                    formImgMonthly: tempSchoolFormImages.monthly
+                    color: color
                 };
                 appData.schools.push(newSchool);
                 if (!currentSelectedSchoolId) currentSelectedSchoolId = newSchool.id;
@@ -2028,7 +1878,7 @@
             saveState();
             closeSchoolModal();
             renderHomeView();
-            showToast('학교 및 문서 서식 정보가 저장되었습니다.');
+            showToast('학교 정보가 저장되었습니다.');
         }
 
         function deleteSchool(schoolId) {
@@ -2041,6 +1891,7 @@
             showToast('학교가 삭제되었습니다.');
         }
 
+        /* STUDENT CRUD MODALS */
         function openAddStudentModal() {
             document.getElementById('studentModalTitle').innerText = '신규 학생 등록';
             document.getElementById('studentSubmitBtn').innerText = '등록';
@@ -2048,8 +1899,12 @@
             document.getElementById('studentNameInput').value = '';
             document.getElementById('studentGradeInput').value = '';
             document.getElementById('studentPartInput').value = '1부';
-            if (document.getElementById('studentParentPhoneInput')) document.getElementById('studentParentPhoneInput').value = '';
-            if (document.getElementById('studentPhoneInput')) document.getElementById('studentPhoneInput').value = '';
+            if (document.getElementById('studentParentPhoneInput')) {
+                document.getElementById('studentParentPhoneInput').value = '';
+            }
+            if (document.getElementById('studentPhoneInput')) {
+                document.getElementById('studentPhoneInput').value = '';
+            }
             document.getElementById('studentModal').classList.remove('hidden');
         }
 
@@ -2063,8 +1918,12 @@
             document.getElementById('studentNameInput').value = student.name || '';
             document.getElementById('studentGradeInput').value = student.grade || '';
             document.getElementById('studentPartInput').value = student.part || '1부';
-            if (document.getElementById('studentParentPhoneInput')) document.getElementById('studentParentPhoneInput').value = student.parentPhone || '';
-            if (document.getElementById('studentPhoneInput')) document.getElementById('studentPhoneInput').value = student.studentPhone || '';
+            if (document.getElementById('studentParentPhoneInput')) {
+                document.getElementById('studentParentPhoneInput').value = student.parentPhone || '';
+            }
+            if (document.getElementById('studentPhoneInput')) {
+                document.getElementById('studentPhoneInput').value = student.studentPhone || '';
+            }
             document.getElementById('studentModal').classList.remove('hidden');
         }
 
@@ -2118,7 +1977,7 @@
             showToast('학생 정보가 삭제되었습니다.');
         }
 
-        /* TEACHER PROFILE & SIGNUP MODALS */
+        /* TEACHER PROFILE MODAL */
         function openTeacherProfileModal() {
             document.getElementById('profileModal').classList.remove('hidden');
         }
@@ -2127,6 +1986,7 @@
             document.getElementById('profileModal').classList.add('hidden');
         }
 
+        /* SIGNUP MODAL LOGIC */
         function openSignupModal() {
             document.getElementById('signupNameInput').value = '';
             document.getElementById('signupIdInput').value = '';
@@ -2162,7 +2022,7 @@
             showToast(`환영합니다, ${name} 강사님! 회원가입이 완료되었습니다.`);
         }
 
-        /* DATA BACKUP & CSV IMPORT FUNCTIONS */
+        /* DATA BACKUP & RESTORE FUNCTIONS (JSON) */
         function exportDataJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -2198,6 +2058,7 @@
             e.target.value = '';
         }
 
+        /* CSV BULK STUDENT IMPORT FUNCTIONS */
         let selectedCsvFile = null;
 
         function openCsvModal() {
