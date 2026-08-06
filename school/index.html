@@ -149,6 +149,8 @@
             table-layout: fixed;
             word-break: break-word;
             white-space: normal;
+            vertical-align: middle !important;
+            line-height: 1.4 !important;
         }
 
         .a4-table tr, .a4-table td, .a4-table th {
@@ -233,6 +235,25 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- NEW: Data Backup & Restore Card -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">데이터 관리 (백업 & 복원)</h3>
+                        <span class="text-[10px] text-slate-400">JSON 파일 백업</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="exportDataJSON()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition font-medium flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>데이터 내보내기</span>
+                        </button>
+                        <button onclick="document.getElementById('jsonFileInput').click()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition font-medium flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            <span>데이터 복원하기</span>
+                        </button>
+                        <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
+                    </div>
+                </div>
             </section>
 
             <!-- VIEW 2: ATTENDANCE LOG (출석부) -->
@@ -254,12 +275,16 @@
                 <!-- Actions Bar -->
                 <div class="flex justify-between items-center px-1">
                     <span id="attendanceCountSummary" class="text-xs text-slate-500 font-medium">총 0명 등록됨</span>
-                    <div class="flex gap-2">
-                        <button onclick="openAddStudentModal()" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-1">
+                    <div class="flex gap-1.5">
+                        <button onclick="openCsvModal()" class="text-xs bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg font-medium hover:bg-emerald-700 transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            CSV 대량등록
+                        </button>
+                        <button onclick="openAddStudentModal()" class="text-xs bg-slate-800 text-white px-2.5 py-1.5 rounded-lg font-medium hover:bg-slate-700 transition flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                             학생 추가
                         </button>
-                        <button onclick="markAllAttendance('출석')" class="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-600 transition flex items-center gap-1">
+                        <button onclick="markAllAttendance('출석')" class="text-xs bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg font-medium hover:bg-emerald-600 transition flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             전원 출석
                         </button>
@@ -767,16 +792,41 @@
                     </button>
                 </div>
 
-                <form onsubmit="saveTeacherProfile(event)" class="space-y-3.5">
-                    <div class="text-center text-sm text-slate-600 py-2">
-                        프로필 설정을 업데이트합니다.
+        <!-- NEW: MODAL 4: CSV Student Bulk Upload Modal -->
+        <div id="csvModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-base">학생 대량 등록 (CSV 업로드)</h3>
+                    <button onclick="closeCsvModal()" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-slate-700 space-y-1">
+                        <p class="font-bold text-emerald-800">💡 CSV 파일 작성 양식 안내</p>
+                        <p>열 순서: <b>이름, 학년/반, 수업부수, 보호자연락처, 학생연락처</b></p>
+                        <p class="text-[11px] text-slate-500">예시) 김민준, 3학년 1반, 1부, 010-1234-5678, 010-9876-5432</p>
                     </div>
 
-                    <div class="pt-3 flex gap-2">
-                        <button type="button" onclick="closeTeacherProfileModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
-                        <button type="submit" class="flex-1 bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-600 transition shadow">저장</button>
+                    <div class="pt-1">
+                        <button onclick="downloadSampleCsv()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            샘플 CSV 양식 다운로드
+                        </button>
                     </div>
-                </form>
+
+                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center space-y-2 bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('csvFileInput').click()">
+                        <svg class="w-8 h-8 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        <span id="csvFileNameDisplay" class="text-xs text-slate-600 font-medium block">클릭하여 CSV 파일 선택</span>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCsvFileSelect(event)">
+                    </div>
+
+                    <div class="pt-2 flex gap-2">
+                        <button type="button" onclick="closeCsvModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
+                        <button type="button" onclick="executeCsvImport()" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 transition shadow">일괄 등록하기</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1401,28 +1451,28 @@
                 }
 
                 const blockHtml = `
-                    <div class="border-2 border-black p-0 bg-white">
+                    <div class="mb-5 bg-white">
                         <table class="a4-table w-full text-xs text-center border-collapse table-fixed">
-                            <tr class="bg-gray-50 border-b border-black text-black">
-                                <td class="py-1.5 px-2 font-bold w-[35%] border-r border-black">${dateDisplay}</td>
-                                <td class="py-1.5 px-1 font-semibold w-[15%] bg-gray-100 border-r border-black">지도 장소</td>
-                                <td class="py-1.5 px-2 w-[20%] border-r border-black text-left pl-2">${locationDisplay}</td>
-                                <td class="py-1.5 px-1 font-semibold w-[12%] bg-gray-100 border-r border-black">지도 시간</td>
-                                <td class="py-1.5 px-2 w-[18%] border-black text-center">${timeDisplay}</td>
+                            <tr class="text-black">
+                                <td class="py-2 px-2 font-bold w-[35%] bg-gray-50">${dateDisplay}</td>
+                                <td class="py-2 px-1 font-semibold w-[15%] bg-gray-100">지도 장소</td>
+                                <td class="py-2 px-2 w-[20%] text-left pl-2 bg-white">${locationDisplay}</td>
+                                <td class="py-2 px-1 font-semibold w-[12%] bg-gray-100">지도 시간</td>
+                                <td class="py-2 px-2 w-[18%] text-center bg-white">${timeDisplay}</td>
                             </tr>
-                            <tr class="border-b border-black">
-                                <td class="py-8 px-2 font-bold bg-gray-50 border-r border-black align-middle">지도 내용</td>
-                                <td class="py-3 px-3 text-left align-top whitespace-pre-wrap leading-relaxed text-slate-900" colspan="4">${contentDisplay}</td>
+                            <tr>
+                                <td class="py-8 px-2 font-bold bg-gray-50">지도 내용</td>
+                                <td class="py-3 px-3 text-left align-top whitespace-pre-wrap text-slate-900 bg-white" colspan="4">${contentDisplay}</td>
                             </tr>
-                            <tr class="border-b border-black">
-                                <td class="py-2 px-2 font-bold bg-gray-50 border-r border-black align-middle">특기 사항</td>
-                                <td class="py-2 px-3 text-left align-middle text-slate-900" colspan="4">${noteDisplay}</td>
+                            <tr>
+                                <td class="py-3 px-2 font-bold bg-gray-50">특기 사항</td>
+                                <td class="py-3 px-3 text-left text-slate-900 bg-white" colspan="4">${noteDisplay}</td>
                             </tr>
-                            <tr class="bg-gray-50 text-black">
-                                <td class="py-1.5 px-2 font-bold border-r border-black">지도 차시</td>
-                                <td class="py-1.5 px-2 border-r border-black text-center font-medium" colspan="2">${sessionDisplay}</td>
-                                <td class="py-1.5 px-2 font-bold border-r border-black">누계</td>
-                                <td class="py-1.5 px-2 text-center font-medium">${cumulativeDisplay}</td>
+                            <tr class="text-black">
+                                <td class="py-2 px-2 font-bold bg-gray-50">지도 차시</td>
+                                <td class="py-2 px-2 text-center font-medium bg-white" colspan="2">${sessionDisplay}</td>
+                                <td class="py-2 px-2 font-bold bg-gray-50">누계</td>
+                                <td class="py-2 px-2 text-center font-medium bg-white">${cumulativeDisplay}</td>
                             </tr>
                         </table>
                     </div>
@@ -1459,7 +1509,8 @@
                     useCORS: true,
                     scrollY: 0,
                     scrollX: 0,
-                    width: 794
+                    width: 794,
+                    windowWidth: 794
                 },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
@@ -1818,6 +1869,127 @@
             closeTeacherProfileModal();
         }
 
+        /* NEW: DATA BACKUP & RESTORE FUNCTIONS (JSON) */
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `나는강사다_백업데이터_${getTodayString()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDataJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const imported = JSON.parse(evt.target.result);
+                    if (imported && typeof imported === 'object' && Array.isArray(imported.schools)) {
+                        appData = imported;
+                        saveState();
+                        alert('데이터가 성공적으로 복원되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('올바른 백업 파일 형식이 아닙니다.');
+                    }
+                } catch (err) {
+                    alert('파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+            e.target.value = '';
+        }
+
+        /* NEW: CSV BULK STUDENT IMPORT FUNCTIONS */
+        let selectedCsvFile = null;
+
+        function openCsvModal() {
+            selectedCsvFile = null;
+            document.getElementById('csvFileNameDisplay').innerText = '클릭하여 CSV 파일 선택';
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('csvModal').classList.remove('hidden');
+        }
+
+        function closeCsvModal() {
+            document.getElementById('csvModal').classList.add('hidden');
+        }
+
+        function downloadSampleCsv() {
+            const csvContent = "\uFEFF이름,학년/반,수업부수,보호자연락처,학생연락처\n김민준,3학년 1반,1부,010-1234-5678,010-9876-5432\n이서연,3학년 2반,1부,010-2222-3333,\n박도윤,4학년 1반,2부,010-4444-5555,010-8888-9999";
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "학생대량등록_양식샘플.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function handleCsvFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedCsvFile = file;
+                document.getElementById('csvFileNameDisplay').innerText = file.name;
+            }
+        }
+
+        function executeCsvImport() {
+            if (!selectedCsvFile) {
+                alert('업로드할 CSV 파일을 선택해주세요.');
+                return;
+            }
+            if (!currentSelectedSchoolId) {
+                alert('선택된 학교가 없습니다.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const text = evt.target.result;
+                    const lines = text.split(/\r\n|\n/);
+                    let importedCount = 0;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                        if (cols.length >= 1 && cols[0]) {
+                            const name = cols[0];
+                            const grade = cols[1] || '1학년 1반';
+                            const part = cols[2] || '1부';
+                            const parentPhone = cols[3] || '';
+                            const studentPhone = cols[4] || '';
+
+                            appData.students.push({
+                                id: 'st-' + Date.now() + Math.random().toString(36).substr(2, 4),
+                                schoolId: currentSelectedSchoolId,
+                                name: name,
+                                grade: grade,
+                                part: part,
+                                parentPhone: parentPhone,
+                                studentPhone: studentPhone
+                            });
+                            importedCount++;
+                        }
+                    }
+
+                    saveState();
+                    closeCsvModal();
+                    renderAttendanceList();
+                    alert(`${importedCount}명의 학생이 성공적으로 추가 등록되었습니다.`);
+                } catch (err) {
+                    alert('CSV 파일 처리 중 오류가 발생했습니다: ' + err.message);
+                }
+            };
+            reader.readAsText(selectedCsvFile, 'UTF-8');
+        }
+
         /* INITIAL LOAD ON DOM CONTENT READY */
         window.onload = function() {
             updateAuthUI();
@@ -1827,3 +1999,17 @@
     </script>
 </body>
 </html>
+```
+
+---
+
+### 새로 추가된 기능 상세
+1. **데이터 백업 및 복원 (JSON Export / Import)**:
+   - **홈 화면 하단**에 `데이터 관리 (백업 & 복원)` 섹션을 추가했습니다.
+   - **데이터 내보내기**: 현재 등록된 모든 학교, 학생, 출석 기록, 수업일지, 근무 내역을 `나는강사다_백업데이터_YYYY-MM-DD.json` 파일로 즉시 저장합니다.
+   - **데이터 복원하기**: 저장해 둔 JSON 백업 파일을 선택하여 기존 브라우저 데이터를 한 번에 복원할 수 있습니다.
+
+2. **학생 대량 등록 (CSV 엑셀 업로드)**:
+   - **출석부 상단**에 `[CSV 대량등록]` 버튼을 추가했습니다.
+   - **샘플 CSV 다운로드**: 한글 깨짐 없는 표준 UTF-8 BOM 인코딩 샘플 양식 파일(`학생대량등록_양식샘플.csv`)을 제공합니다.
+   - **일괄 업로드 처리**: CSV 파일을 선택하면 수십 명의 학생 정보를 한 번에 읽어와 현재 선택된 학교/과목에 즉시 등록합니다.
