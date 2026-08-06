@@ -181,7 +181,7 @@
             </div>
             <div class="flex items-center space-x-2">
                 <button id="headerLoginBtn" onclick="handleHeaderLoginClick()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-sm">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 01-3-3h7a3 3 0 013 3v1"/></svg>
                     <span id="headerLoginBtnText">로그아웃</span>
                 </button>
             </div>
@@ -273,7 +273,7 @@
                 </div>
 
                 <div class="flex justify-between items-center px-1">
-                    <span id="attendanceCountSummary" class="text-xs text-slate-500 font-medium">총 0명 등록됨</span>
+                    <span id="attendanceCountSummary" class="text-xs text-slate-500 font-medium whitespace-nowrap shrink-0">총 0명</span>
                     <div class="flex gap-1.5">
                         <button onclick="openCsvModal()" class="text-xs bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg font-medium hover:bg-emerald-700 transition flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -739,17 +739,18 @@
             </div>
         </div>
 
-        <!-- MODAL 2: Add Student Modal -->
+        <!-- MODAL 2: Add/Edit Student Modal -->
         <div id="studentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h3 class="font-bold text-slate-800 text-base">신규 학생 등록</h3>
+                    <h3 id="studentModalTitle" class="font-bold text-slate-800 text-base">신규 학생 등록</h3>
                     <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <form onsubmit="saveStudent(event)" class="space-y-3.5">
+                    <input type="hidden" id="studentEditId" value="">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">학생 이름</label>
                         <input type="text" id="studentNameInput" required placeholder="예: 김민준" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400">
@@ -777,7 +778,7 @@
 
                     <div class="pt-3 flex gap-2">
                         <button type="button" onclick="closeStudentModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
-                        <button type="submit" class="flex-1 bg-slate-800 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-slate-700 transition shadow">등록</button>
+                        <button type="submit" id="studentSubmitBtn" class="flex-1 bg-slate-800 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-slate-700 transition shadow">등록</button>
                     </div>
                 </form>
             </div>
@@ -1096,8 +1097,16 @@
         function renderAttendanceList() {
             const date = document.getElementById('attendanceDate').value;
             const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
+            
+            // 학년 기준 오름차순 정렬 (학년이 같으면 이름순 정렬)
+            students.sort((a, b) => {
+                const gradeCompare = (a.grade || '').localeCompare(b.grade || '', 'ko', { numeric: true });
+                if (gradeCompare !== 0) return gradeCompare;
+                return (a.name || '').localeCompare(b.name || '', 'ko');
+            });
+
             const container = document.getElementById('studentAttendanceList');
-            document.getElementById('attendanceCountSummary').innerText = `총 ${students.length}명 학생`;
+            document.getElementById('attendanceCountSummary').innerText = `총 ${students.length}명`;
 
             if (students.length === 0) {
                 container.innerHTML = `
@@ -1149,13 +1158,19 @@
 
                 const itemHtml = `
                     <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2.5">
-                        <div class="flex items-center gap-2 flex-wrap border-b border-slate-100 pb-2.5">
-                            ${partBadge}
-                            <span class="font-bold text-slate-800 text-sm sm:text-base">${student.name}</span>
-                            <span class="text-xs text-slate-500 font-medium">${student.grade}</span>
-                            <span class="text-slate-300 text-xs">|</span>
-                            <span class="text-xs text-slate-600">보호자: ${student.parentPhone || '미등록'}</span>
-                            ${student.studentPhone ? `<span class="text-xs text-slate-400">| 학생: ${student.studentPhone}</span>` : ''}
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                            <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                                ${partBadge}
+                                <span class="font-bold text-slate-800 text-sm sm:text-base">${student.name}</span>
+                                <span class="text-xs text-slate-500 font-medium">${student.grade}</span>
+                                <span class="text-slate-300 text-xs">|</span>
+                                <span class="text-xs text-slate-600">보호자: ${student.parentPhone || '미등록'}</span>
+                                ${student.studentPhone ? `<span class="text-xs text-slate-400">| 학생: ${student.studentPhone}</span>` : ''}
+                            </div>
+                            <button onclick="openEditStudentModal('${student.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg flex items-center gap-1 shrink-0 transition border border-blue-200 shadow-sm" title="학생 정보 수정">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>수정</span>
+                            </button>
                         </div>
 
                         <div class="flex items-center justify-between gap-1.5 pt-0.5">
@@ -1195,6 +1210,14 @@
             document.getElementById('docDateRange').innerText = `${year}. ${parseInt(month, 10)}. 1. ~ ${year}. ${parseInt(month, 10)}. ${lastDay}.`;
 
             const students = appData.students.filter(s => s.schoolId === currentSelectedSchoolId);
+            
+            // 실시간 A4 문서 미리보기 학년 기준 오름차순 정렬 (같으면 이름순)
+            students.sort((a, b) => {
+                const gradeCompare = (a.grade || '').localeCompare(b.grade || '', 'ko', { numeric: true });
+                if (gradeCompare !== 0) return gradeCompare;
+                return (a.name || '').localeCompare(b.name || '', 'ko');
+            });
+
             document.getElementById('liveDocTotalCount').innerText = students.length;
 
             const monthRecords = appData.attendance.filter(a => a.schoolId === currentSelectedSchoolId && a.date.startsWith(targetMonth));
@@ -1870,16 +1893,36 @@
 
         /* STUDENT CRUD MODALS */
         function openAddStudentModal() {
+            document.getElementById('studentModalTitle').innerText = '신규 학생 등록';
+            document.getElementById('studentSubmitBtn').innerText = '등록';
+            document.getElementById('studentEditId').value = '';
             document.getElementById('studentNameInput').value = '';
             document.getElementById('studentGradeInput').value = '';
-            if (document.getElementById('studentPartInput')) {
-                document.getElementById('studentPartInput').value = '1부';
-            }
+            document.getElementById('studentPartInput').value = '1부';
             if (document.getElementById('studentParentPhoneInput')) {
                 document.getElementById('studentParentPhoneInput').value = '';
             }
             if (document.getElementById('studentPhoneInput')) {
                 document.getElementById('studentPhoneInput').value = '';
+            }
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function openEditStudentModal(studentId) {
+            const student = appData.students.find(s => s.id === studentId);
+            if (!student) return;
+
+            document.getElementById('studentModalTitle').innerText = '학생 정보 수정';
+            document.getElementById('studentSubmitBtn').innerText = '수정 완료';
+            document.getElementById('studentEditId').value = student.id;
+            document.getElementById('studentNameInput').value = student.name || '';
+            document.getElementById('studentGradeInput').value = student.grade || '';
+            document.getElementById('studentPartInput').value = student.part || '1부';
+            if (document.getElementById('studentParentPhoneInput')) {
+                document.getElementById('studentParentPhoneInput').value = student.parentPhone || '';
+            }
+            if (document.getElementById('studentPhoneInput')) {
+                document.getElementById('studentPhoneInput').value = student.studentPhone || '';
             }
             document.getElementById('studentModal').classList.remove('hidden');
         }
@@ -1890,6 +1933,7 @@
 
         function saveStudent(e) {
             e.preventDefault();
+            const editId = document.getElementById('studentEditId').value;
             const name = document.getElementById('studentNameInput').value.trim();
             const grade = document.getElementById('studentGradeInput').value.trim();
             const part = document.getElementById('studentPartInput') ? document.getElementById('studentPartInput').value : '1부';
@@ -1898,20 +1942,32 @@
 
             if (!currentSelectedSchoolId) return;
 
-            appData.students.push({
-                id: 'st-' + Date.now(),
-                schoolId: currentSelectedSchoolId,
-                name: name,
-                grade: grade,
-                part: part,
-                parentPhone: parentPhone,
-                studentPhone: studentPhone
-            });
+            if (editId) {
+                const st = appData.students.find(s => s.id === editId);
+                if (st) {
+                    st.name = name;
+                    st.grade = grade;
+                    st.part = part;
+                    st.parentPhone = parentPhone;
+                    st.studentPhone = studentPhone;
+                    showToast(`${name} 학생 정보가 수정되었습니다.`);
+                }
+            } else {
+                appData.students.push({
+                    id: 'st-' + Date.now(),
+                    schoolId: currentSelectedSchoolId,
+                    name: name,
+                    grade: grade,
+                    part: part,
+                    parentPhone: parentPhone,
+                    studentPhone: studentPhone
+                });
+                showToast(`${name} 학생이 등록되었습니다.`);
+            }
 
             saveState();
             closeStudentModal();
             renderAttendanceList();
-            showToast(`${name} 학생이 등록되었습니다.`);
         }
 
         function deleteStudent(studentId) {
