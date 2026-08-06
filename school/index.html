@@ -31,7 +31,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap');
         
-        /* 1. Page Print Setup for A4 Portrait & Margins */
         @page {
             size: A4 portrait !important;
             margin: 10mm !important;
@@ -43,7 +42,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 2. Print & PDF Export Media Queries */
         @media print {
             *, ::before, ::after {
                 -webkit-print-color-adjust: exact !important;
@@ -117,7 +115,6 @@
             }
         }
 
-        /* Custom scrollbars */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -130,9 +127,8 @@
             border-radius: 9999px;
         }
 
-        /* Screen Preview A4 Document Styling */
         .a4-document {
-            width: 794px; /* Standard A4 width in px at 96 DPI */
+            width: 794px;
             min-height: 1080px;
             background-color: #ffffff;
             color: #000000;
@@ -150,7 +146,7 @@
             word-break: break-word;
             white-space: normal;
             vertical-align: middle !important;
-            line-height: 1.4 !important;
+            line-height: 1.3 !important;
         }
 
         .a4-table tr, .a4-table td, .a4-table th {
@@ -160,6 +156,12 @@
     </style>
 </head>
 <body class="flex justify-center items-center min-h-screen text-slate-800">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">안내 메시지</span>
+    </div>
 
     <!-- Main Responsive App Frame -->
     <div id="app-container" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl min-h-screen md:min-h-[90vh] bg-slate-50 md:rounded-3xl md:shadow-2xl flex flex-col justify-between relative overflow-hidden my-0 md:my-6 border-slate-200 border">
@@ -236,11 +238,11 @@
                     </div>
                 </div>
 
-                <!-- NEW: Data Backup & Restore Card -->
+                <!-- Data Backup & Restore Card -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">데이터 관리 (백업 & 복원)</h3>
-                        <span class="text-[10px] text-slate-400">JSON 파일 백업</span>
+                        <span class="text-[10px] text-slate-400">JSON 백업</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <button onclick="exportDataJSON()" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition font-medium flex items-center justify-center gap-1.5">
@@ -258,7 +260,6 @@
 
             <!-- VIEW 2: ATTENDANCE LOG (출석부) -->
             <section id="view-attendance" class="space-y-4 hidden">
-                <!-- Top School & Date Selector Header -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -268,11 +269,9 @@
                         <input type="date" id="attendanceDate" class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400" onchange="renderAttendanceList()">
                     </div>
 
-                    <!-- School Selector Chips -->
                     <div id="attendanceSchoolChips" class="flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
-                <!-- Actions Bar -->
                 <div class="flex justify-between items-center px-1">
                     <span id="attendanceCountSummary" class="text-xs text-slate-500 font-medium">총 0명 등록됨</span>
                     <div class="flex gap-1.5">
@@ -318,13 +317,11 @@
 
                     <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
                         <div id="liveAttendanceDocument" class="a4-document shadow-lg">
-                            <!-- 문서 제목 (상단 전체 너비 배치) -->
                             <div class="text-center pt-2 mb-3">
                                 <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black underline underline-offset-8 decoration-1">
                                     방과후학교 프로그램 ( <span id="docSubjectName" class="px-1">컴퓨터</span> )부 학생 출석부
                                 </h1>
                             </div>
-                            <!-- 결재 칸 (제목 아래 우측 배치) -->
                             <div class="flex justify-end mb-3">
                                 <table class="a4-table text-center text-xs w-44 border-collapse">
                                     <tr class="bg-gray-100 font-semibold">
@@ -495,13 +492,11 @@
 
                     <div class="overflow-x-auto rounded-2xl border border-slate-300 shadow-md bg-slate-200 p-2 sm:p-4 flex justify-center">
                         <div id="liveDiaryDocument" class="a4-document shadow-lg">
-                            <!-- 문서 제목 (상단 전체 너비 배치) -->
                             <div class="text-center pt-2 mb-3">
                                 <h1 class="text-xl sm:text-2xl font-black tracking-tight text-black">
                                     방과후학교 프로그램 ( <span id="diaryDocSubjectName" class="px-2">컴퓨터</span> 부 ) 차시별 활동일지
                                 </h1>
                             </div>
-                            <!-- 결재 칸 (제목 아래 우측 배치) -->
                             <div class="flex justify-end mb-3">
                                 <table class="a4-table text-center text-xs w-44 border-collapse">
                                     <tr class="bg-gray-100 font-semibold">
@@ -525,7 +520,6 @@
 
             <!-- VIEW 4: DUTY LOG / MONTHLY REPORT (근무상황부) -->
             <section id="view-monthly" class="space-y-4 hidden">
-                <!-- Inputs & Selectors Card (Identical Header Style to Lesson Diary) -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 no-print">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -535,11 +529,9 @@
                         <input type="month" id="monthlyReportMonth" class="bg-slate-100 border border-slate-200 rounded-lg px-3.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500" onchange="renderMonthlyPDFPreview()">
                     </div>
 
-                    <!-- School Selector Chips -->
                     <div id="monthlySchoolChips" class="flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
-                <!-- Daily Duty Quick Entry Form -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 no-print">
                     <span class="text-xs font-bold text-slate-700 block">일자별 근무 내역 입력 / 수정</span>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -655,9 +647,14 @@
                             <input type="password" id="loginPwInput" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
 
-                        <button type="submit" class="w-full bg-brand-navy hover:bg-blue-900 text-white font-bold py-3 rounded-xl transition shadow-md text-sm mt-2">
-                            로그인
-                        </button>
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" class="flex-1 bg-brand-navy hover:bg-blue-900 text-white font-bold py-3 rounded-xl transition shadow-md text-sm">
+                                로그인
+                            </button>
+                            <button type="button" onclick="openSignupModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition text-sm">
+                                회원가입
+                            </button>
+                        </div>
                     </form>
 
                     <div class="w-full my-6 flex items-center gap-3">
@@ -795,41 +792,82 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
+                <div class="text-center text-xs text-slate-500 py-2">
+                    현재 김현경 강사님 프로필 상태입니다.
+                </div>
+            </div>
+        </div>
 
-        <!-- NEW: MODAL 4: CSV Student Bulk Upload Modal -->
+        <!-- MODAL 4: Signup Modal -->
+        <div id="signupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-base">강사 회원가입</h3>
+                    <button onclick="closeSignupModal()" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form onsubmit="handleSignup(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">강사 성함</label>
+                        <input type="text" id="signupNameInput" required placeholder="예: 김현경" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">아이디 / 이메일</label>
+                        <input type="text" id="signupIdInput" required placeholder="teacher@school.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">비밀번호</label>
+                        <input type="password" id="signupPwInput" required placeholder="비밀번호 입력" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">비밀번호 확인</label>
+                        <input type="password" id="signupPwConfirmInput" required placeholder="비밀번호 재입력" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="pt-3 flex gap-2">
+                        <button type="button" onclick="closeSignupModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
+                        <button type="submit" class="flex-1 bg-brand-navy text-white py-2.5 rounded-xl font-bold text-xs hover:bg-blue-900 transition shadow">가입하기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 5: CSV Bulk Upload Modal -->
         <div id="csvModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
             <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h3 class="font-bold text-slate-800 text-base">학생 대량 등록 (CSV 업로드)</h3>
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        CSV 대량 학생 등록
+                    </h3>
                     <button onclick="closeCsvModal()" class="text-slate-400 hover:text-slate-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
-                <div class="space-y-3">
-                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-slate-700 space-y-1">
-                        <p class="font-bold text-emerald-800">💡 CSV 파일 작성 양식 안내</p>
-                        <p>열 순서: <b>이름, 학년/반, 수업부수, 보호자연락처, 학생연락처</b></p>
-                        <p class="text-[11px] text-slate-500">예시) 김민준, 3학년 1반, 1부, 010-1234-5678, 010-9876-5432</p>
-                    </div>
+                <div class="space-y-3 text-xs text-slate-600">
+                    <p class="leading-relaxed">
+                        엑셀에서 작성한 학생 명단(CSV)을 한 번에 등록합니다.<br>
+                        <span class="text-emerald-700 font-bold">이름, 학년/반, 수업부수, 보호자연락처, 학생연락처</span> 형식을 사용합니다.
+                    </p>
 
-                    <div class="pt-1">
-                        <button onclick="downloadSampleCsv()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            샘플 CSV 양식 다운로드
-                        </button>
-                    </div>
+                    <button onclick="downloadSampleCsv()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-2 rounded-xl border border-emerald-200 transition flex items-center justify-center gap-1.5 text-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>샘플 CSV 파일 다운로드</span>
+                    </button>
 
-                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center space-y-2 bg-slate-50 hover:bg-slate-100 transition cursor-pointer" onclick="document.getElementById('csvFileInput').click()">
-                        <svg class="w-8 h-8 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                        <span id="csvFileNameDisplay" class="text-xs text-slate-600 font-medium block">클릭하여 CSV 파일 선택</span>
+                    <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:bg-slate-50 transition" onclick="document.getElementById('csvFileInput').click()">
+                        <svg class="w-8 h-8 text-slate-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        <span id="csvFileNameDisplay" class="text-slate-500 font-medium block">클릭하여 CSV 파일 선택</span>
                         <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCsvFileSelect(event)">
                     </div>
+                </div>
 
-                    <div class="pt-2 flex gap-2">
-                        <button type="button" onclick="closeCsvModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
-                        <button type="button" onclick="executeCsvImport()" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 transition shadow">일괄 등록하기</button>
-                    </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeCsvModal()" class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-medium text-xs">취소</button>
+                    <button type="button" onclick="executeCsvImport()" class="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-700 transition shadow">업로드 실행</button>
                 </div>
             </div>
         </div>
@@ -837,6 +875,20 @@
     </div>
 
     <script>
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            if (toast && toastMsg) {
+                toastMsg.innerText = msg;
+                toast.classList.remove('opacity-0', 'pointer-events-none');
+                toast.classList.add('opacity-100');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0', 'pointer-events-none');
+                }, 2500);
+            }
+        }
+
         function getTodayString() {
             const now = new Date();
             const year = now.getFullYear();
@@ -924,6 +976,7 @@
             saveState();
             updateAuthUI();
             switchTab('login');
+            showToast('로그아웃 되었습니다.');
         }
 
         function handleFormLogin(e) {
@@ -932,6 +985,7 @@
             saveState();
             updateAuthUI();
             switchTab('home');
+            showToast('로그인되었습니다.');
         }
 
         function demoLogin() {
@@ -939,6 +993,7 @@
             saveState();
             updateAuthUI();
             switchTab('home');
+            showToast('체험 계정으로 로그인했습니다.');
         }
 
         function switchTab(tabKey) {
@@ -1047,8 +1102,8 @@
             if (students.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">
-                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2-L5 8v11z"/></svg>
-                        <p class="text-xs">등록된 학생이 없습니다. [학생 추가] 버튼을 눌러주세요.</p>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2-2L5 8v11z"/></svg>
+                        <p class="text-xs">등록된 학생이 없습니다. [학생 추가] 또는 [CSV 대량등록]을 눌러주세요.</p>
                     </div>
                 `;
                 renderLiveAttendanceDocument();
@@ -1094,7 +1149,6 @@
 
                 const itemHtml = `
                     <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2.5">
-                        <!-- 줄 1: 학생 이름 옆에 학년/반 및 연락처 전체 배치 -->
                         <div class="flex items-center gap-2 flex-wrap border-b border-slate-100 pb-2.5">
                             ${partBadge}
                             <span class="font-bold text-slate-800 text-sm sm:text-base">${student.name}</span>
@@ -1104,7 +1158,6 @@
                             ${student.studentPhone ? `<span class="text-xs text-slate-400">| 학생: ${student.studentPhone}</span>` : ''}
                         </div>
 
-                        <!-- 줄 2: 7개 버튼 (학생 정보 아래 줄로 완전히 분리) -->
                         <div class="flex items-center justify-between gap-1.5 pt-0.5">
                             <div class="flex items-center gap-1 flex-1 min-w-0">
                                 ${statusBtns}
@@ -1117,7 +1170,6 @@
                             </div>
                         </div>
 
-                        <!-- 줄 3: 특기사항 / 종료 메모 입력란 -->
                         <input type="text" placeholder="특이사항 / 종료 메모 입력 (예: 귀가, 돌봄, 병결 등)" value="${record.note || ''}" 
                             oninput="setStudentAttendanceNote('${student.id}', this.value)" 
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400">
@@ -1291,6 +1343,7 @@
             });
             saveState();
             renderAttendanceList();
+            showToast('전원 출석 처리되었습니다.');
         }
 
         /* LESSON DIARY LOGIC */
@@ -1357,7 +1410,7 @@
             const checkItems = document.getElementById('diaryCheckItems').value.trim();
 
             if (!topic) {
-                alert('단원 / 수업 주제를 입력해주세요.');
+                showToast('단원 / 수업 주제를 입력해주세요.');
                 return;
             }
 
@@ -1389,7 +1442,7 @@
 
             saveState();
             updateLiveDiaryPreview();
-            alert('수업일지가 저장되었습니다.');
+            showToast('수업일지가 저장되었습니다.');
         }
 
         /* LIVE RENDERER FOR LESSON DIARY */
@@ -1525,6 +1578,7 @@
 
             html2pdf().set(opt).from(clone).save().then(() => {
                 document.body.removeChild(tempDiv);
+                showToast('PDF 다운로드가 완료되었습니다.');
             }).catch(err => {
                 console.error(err);
                 document.body.removeChild(tempDiv);
@@ -1653,7 +1707,7 @@
             const check = document.getElementById('dutyEntryCheck').value;
 
             if (!date) {
-                alert('근무 일자를 선택해주세요.');
+                showToast('근무 일자를 선택해주세요.');
                 return;
             }
 
@@ -1673,7 +1727,7 @@
 
             saveState();
             renderMonthlyPDFPreview();
-            alert('근무 내역이 저장되었습니다.');
+            showToast('근무 내역이 저장되었습니다.');
         }
 
         function downloadMonthlyPDF() {
@@ -1711,6 +1765,7 @@
 
             html2pdf().set(opt).from(clone).save().then(() => {
                 document.body.removeChild(tempDiv);
+                showToast('PDF 저장 다운로드가 완료되었습니다.');
             }).catch(err => {
                 console.error(err);
                 document.body.removeChild(tempDiv);
@@ -1752,6 +1807,7 @@
 
             html2pdf().set(opt).from(clone).save().then(() => {
                 document.body.removeChild(tempDiv);
+                showToast('출석부 PDF 저장 다운로드가 완료되었습니다.');
             }).catch(err => {
                 console.error(err);
                 document.body.removeChild(tempDiv);
@@ -1799,6 +1855,7 @@
             saveState();
             closeSchoolModal();
             renderHomeView();
+            showToast('학교 정보가 저장되었습니다.');
         }
 
         function deleteSchool(schoolId) {
@@ -1808,6 +1865,7 @@
             }
             saveState();
             renderHomeView();
+            showToast('학교가 삭제되었습니다.');
         }
 
         /* STUDENT CRUD MODALS */
@@ -1853,12 +1911,14 @@
             saveState();
             closeStudentModal();
             renderAttendanceList();
+            showToast(`${name} 학생이 등록되었습니다.`);
         }
 
         function deleteStudent(studentId) {
             appData.students = appData.students.filter(s => s.id !== studentId);
             saveState();
             renderAttendanceList();
+            showToast('학생 정보가 삭제되었습니다.');
         }
 
         /* TEACHER PROFILE MODAL */
@@ -1870,14 +1930,43 @@
             document.getElementById('profileModal').classList.add('hidden');
         }
 
-        function saveTeacherProfile(e) {
-            e.preventDefault();
-            saveState();
-            renderHomeView();
-            closeTeacherProfileModal();
+        /* SIGNUP MODAL LOGIC */
+        function openSignupModal() {
+            document.getElementById('signupNameInput').value = '';
+            document.getElementById('signupIdInput').value = '';
+            document.getElementById('signupPwInput').value = '';
+            document.getElementById('signupPwConfirmInput').value = '';
+            document.getElementById('signupModal').classList.remove('hidden');
         }
 
-        /* NEW: DATA BACKUP & RESTORE FUNCTIONS (JSON) */
+        function closeSignupModal() {
+            document.getElementById('signupModal').classList.add('hidden');
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupNameInput').value.trim();
+            const email = document.getElementById('signupIdInput').value.trim();
+            const pw = document.getElementById('signupPwInput').value;
+            const pwConfirm = document.getElementById('signupPwConfirmInput').value;
+
+            if (pw !== pwConfirm) {
+                showToast('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            appData.teacherName = name;
+            appData.isLoggedIn = true;
+            saveState();
+
+            closeSignupModal();
+            updateAuthUI();
+            switchTab('home');
+
+            showToast(`환영합니다, ${name} 강사님! 회원가입이 완료되었습니다.`);
+        }
+
+        /* DATA BACKUP & RESTORE FUNCTIONS (JSON) */
         function exportDataJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -1886,6 +1975,7 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
+            showToast('JSON 백업 파일 내보내기가 완료되었습니다.');
         }
 
         function importDataJSON(e) {
@@ -1899,20 +1989,20 @@
                     if (imported && typeof imported === 'object' && Array.isArray(imported.schools)) {
                         appData = imported;
                         saveState();
-                        alert('데이터가 성공적으로 복원되었습니다.');
-                        location.reload();
+                        showToast('데이터가 성공적으로 복원되었습니다.');
+                        setTimeout(() => location.reload(), 800);
                     } else {
-                        alert('올바른 백업 파일 형식이 아닙니다.');
+                        showToast('올바른 백업 파일 형식이 아닙니다.');
                     }
                 } catch (err) {
-                    alert('파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+                    showToast('파일을 읽는 중 오류가 발생했습니다.');
                 }
             };
             reader.readAsText(file, 'UTF-8');
             e.target.value = '';
         }
 
-        /* NEW: CSV BULK STUDENT IMPORT FUNCTIONS */
+        /* CSV BULK STUDENT IMPORT FUNCTIONS */
         let selectedCsvFile = null;
 
         function openCsvModal() {
@@ -1935,6 +2025,7 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
+            showToast('샘플 CSV 파일이 다운로드되었습니다.');
         }
 
         function handleCsvFileSelect(e) {
@@ -1947,11 +2038,11 @@
 
         function executeCsvImport() {
             if (!selectedCsvFile) {
-                alert('업로드할 CSV 파일을 선택해주세요.');
+                showToast('업로드할 CSV 파일을 선택해주세요.');
                 return;
             }
             if (!currentSelectedSchoolId) {
-                alert('선택된 학교가 없습니다.');
+                showToast('선택된 학교가 없습니다.');
                 return;
             }
 
@@ -1990,9 +2081,9 @@
                     saveState();
                     closeCsvModal();
                     renderAttendanceList();
-                    alert(`${importedCount}명의 학생이 성공적으로 추가 등록되었습니다.`);
+                    showToast(`${importedCount}명의 학생이 성공적으로 대량 등록되었습니다.`);
                 } catch (err) {
-                    alert('CSV 파일 처리 중 오류가 발생했습니다: ' + err.message);
+                    showToast('CSV 파일 처리 중 오류가 발생했습니다.');
                 }
             };
             reader.readAsText(selectedCsvFile, 'UTF-8');
@@ -2007,17 +2098,3 @@
     </script>
 </body>
 </html>
-```
-
----
-
-### 새로 추가된 기능 상세
-1. **데이터 백업 및 복원 (JSON Export / Import)**:
-   - **홈 화면 하단**에 `데이터 관리 (백업 & 복원)` 섹션을 추가했습니다.
-   - **데이터 내보내기**: 현재 등록된 모든 학교, 학생, 출석 기록, 수업일지, 근무 내역을 `나는강사다_백업데이터_YYYY-MM-DD.json` 파일로 즉시 저장합니다.
-   - **데이터 복원하기**: 저장해 둔 JSON 백업 파일을 선택하여 기존 브라우저 데이터를 한 번에 복원할 수 있습니다.
-
-2. **학생 대량 등록 (CSV 엑셀 업로드)**:
-   - **출석부 상단**에 `[CSV 대량등록]` 버튼을 추가했습니다.
-   - **샘플 CSV 다운로드**: 한글 깨짐 없는 표준 UTF-8 BOM 인코딩 샘플 양식 파일(`학생대량등록_양식샘플.csv`)을 제공합니다.
-   - **일괄 업로드 처리**: CSV 파일을 선택하면 수십 명의 학생 정보를 한 번에 읽어와 현재 선택된 학교/과목에 즉시 등록합니다.
