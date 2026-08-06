@@ -1043,7 +1043,7 @@
             if (students.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-100">
-                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2-2L5 8v11z"/></svg>
+                        <svg class="w-8 h-8 mx-auto mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2-L5 8v11z"/></svg>
                         <p class="text-xs">등록된 학생이 없습니다. [학생 추가] 버튼을 눌러주세요.</p>
                     </div>
                 `;
@@ -1068,7 +1068,7 @@
                     }
 
                     statusBtns += `
-                        <button onclick="setStudentAttendanceStatus('${student.id}', '${st}')" class="px-2.5 py-1 rounded-lg text-xs border transition ${colorStyle}">
+                        <button onclick="setStudentAttendanceStatus('${student.id}', '${st}')" class="flex-1 py-1.5 px-2 rounded-lg text-xs border transition text-center whitespace-nowrap ${colorStyle}">
                             ${st}
                         </button>
                     `;
@@ -1076,43 +1076,47 @@
 
                 const parentPhone = student.parentPhone || '010-0000-0000';
                 const callSmsBtns = `
-                    <a href="tel:${parentPhone}" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs flex items-center gap-1 transition" title="보호자 통화">
+                    <a href="tel:${parentPhone}" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs flex items-center justify-center gap-1 transition shrink-0" title="보호자 통화">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                         <span class="text-[10px] font-bold">통화</span>
                     </a>
-                    <a href="sms:${parentPhone}" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs flex items-center gap-1 transition" title="보호자 문자">
+                    <a href="sms:${parentPhone}" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs flex items-center justify-center gap-1 transition shrink-0" title="보호자 문자">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <span class="text-[10px] font-bold">문자</span>
                     </a>
                 `;
 
-                const partBadge = student.part ? `<span class="bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-bold mr-1">${student.part}</span>` : '';
+                const partBadge = student.part ? `<span class="bg-blue-50 text-blue-600 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0">${student.part}</span>` : '';
 
                 const itemHtml = `
-                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                ${partBadge}
-                                <span class="font-bold text-slate-800 text-sm">${student.name}</span>
-                                <span class="text-xs text-slate-400 ml-1 font-medium">${student.grade}</span>
-                                <div class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-x-2">
-                                    <span>보호자: ${student.parentPhone || '미등록'}</span>
-                                    ${student.studentPhone ? `<span class="text-slate-400">| 학생: ${student.studentPhone}</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-1">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-2.5">
+                        <!-- 줄 1: 학생 이름 옆에 학년/반 및 연락처 전체 배치 -->
+                        <div class="flex items-center gap-2 flex-wrap border-b border-slate-100 pb-2.5">
+                            ${partBadge}
+                            <span class="font-bold text-slate-800 text-sm sm:text-base">${student.name}</span>
+                            <span class="text-xs text-slate-500 font-medium">${student.grade}</span>
+                            <span class="text-slate-300 text-xs">|</span>
+                            <span class="text-xs text-slate-600">보호자: ${student.parentPhone || '미등록'}</span>
+                            ${student.studentPhone ? `<span class="text-xs text-slate-400">| 학생: ${student.studentPhone}</span>` : ''}
+                        </div>
+
+                        <!-- 줄 2: 7개 버튼 (학생 정보 아래 줄로 완전히 분리) -->
+                        <div class="flex items-center justify-between gap-1.5 pt-0.5">
+                            <div class="flex items-center gap-1 flex-1 min-w-0">
                                 ${statusBtns}
-                                <div class="flex items-center gap-1 ml-1 border-l pl-1.5 border-slate-200">
-                                    ${callSmsBtns}
-                                </div>
-                                <button onclick="deleteStudent('${student.id}')" class="ml-1 text-slate-300 hover:text-rose-500 text-xs p-1" title="학생 삭제">
+                            </div>
+                            <div class="flex items-center gap-1 pl-1.5 border-l border-slate-200 shrink-0">
+                                ${callSmsBtns}
+                                <button onclick="deleteStudent('${student.id}')" class="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition shrink-0" title="학생 삭제">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </div>
+
+                        <!-- 줄 3: 특기사항 / 종료 메모 입력란 -->
                         <input type="text" placeholder="특이사항 / 종료 메모 입력 (예: 귀가, 돌봄, 병결 등)" value="${record.note || ''}" 
                             oninput="setStudentAttendanceNote('${student.id}', this.value)" 
-                            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400">
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400">
                     </div>
                 `;
                 container.innerHTML += itemHtml;
