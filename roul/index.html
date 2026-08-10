@@ -1,1 +1,784 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>엔터키 컨트롤 스마트 룰렛</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Noto Sans KR Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    
+    /* Dynamic pointer pin animation */
+    .pointer-pin {
+      transition: transform 0.05s ease-out;
+      transform-origin: top center;
+    }
+    .pointer-pin.bounce {
+      transform: scaleY(0.82) rotate(-8deg);
+    }
 
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    /* Glowing pulse animation for start status */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(236, 72, 153, 0.8); }
+    }
+    .glow-active {
+      animation: pulseGlow 1.5s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 md:p-6 bg-slate-900 text-slate-100">
+
+  <!-- Navigation / Header -->
+  <header class="max-w-6xl w-full mx-auto mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-800 pb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <i class="fa-solid fa-arrows-spin text-xl text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400">
+          엔터키 스핀 룰렛
+        </h1>
+        <p class="text-xs text-slate-400">키보드 엔터(Enter) 하나로 시작과 정지를 제어하세요</p>
+      </div>
+    </div>
+
+    <!-- Shortcut Key Banner -->
+    <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-4 py-2 rounded-xl text-sm font-medium shadow-inner">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-600 to-pink-600 rounded-md font-mono text-xs font-bold text-white shadow">
+        <i class="fa-solid fa-keyboard"></i> Enter
+      </span>
+      <span class="text-slate-300 text-xs sm:text-sm">눌러서 돌리고, 한 번 더 눌러서 멈추기!</span>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+    
+    <!-- Left Column: Wheel & Controls (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col items-center justify-center bg-slate-800/40 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+      
+      <!-- Status Badge -->
+      <div id="statusBadge" class="mb-4 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-2 shadow">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="statusText">준비 완료 (엔터키를 눌러 돌려주세요)</span>
+      </div>
+
+      <!-- Roulette Wheel Canvas Container -->
+      <div class="relative w-full max-w-[420px] aspect-square flex items-center justify-center my-2 select-none">
+        
+        <!-- Top Indicator Pin Arrow -->
+        <div id="pointerPin" class="pointer-pin absolute -top-3 z-30 flex flex-col items-center filter drop-shadow-lg">
+          <div class="w-8 h-10 bg-gradient-to-b from-rose-500 to-red-600 clip-path-triangle rounded-t-sm shadow-xl flex items-center justify-center">
+            <i class="fa-solid fa-location-pin text-white text-sm"></i>
+          </div>
+          <!-- Triangle Tip Pointer -->
+          <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[16px] border-t-red-600 -mt-1"></div>
+        </div>
+
+        <!-- Canvas Board -->
+        <canvas id="rouletteCanvas" class="w-full h-full rounded-full shadow-2xl transition-transform duration-75"></canvas>
+
+        <!-- Center Hub Button -->
+        <button id="centerSpinBtn" onclick="toggleSpin()" class="absolute z-20 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-4 border-slate-700 text-slate-100 flex flex-col items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer group">
+          <i id="centerBtnIcon" class="fa-solid fa-play text-xl sm:text-2xl text-pink-500 group-hover:text-pink-400 transition-colors"></i>
+          <span id="centerBtnLabel" class="text-[11px] font-black tracking-wider uppercase mt-1 text-slate-300">START</span>
+        </button>
+
+        <!-- Outer Decorative Metallic Ring -->
+        <div class="absolute inset-0 border-[10px] border-slate-800/80 rounded-full pointer-events-none shadow-inner"></div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="mt-6 w-full flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button id="mainToggleBtn" onclick="toggleSpin()" class="w-full sm:w-auto min-w-[200px] px-8 py-3.5 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 active:scale-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-purple-500/25 transition-all duration-200 flex items-center justify-center gap-2 glow-active">
+          <i id="mainBtnIcon" class="fa-solid fa-play"></i>
+          <span id="mainBtnText">룰렛 돌리기 (Enter)</span>
+        </button>
+
+        <button onclick="shuffleItems()" class="w-full sm:w-auto px-5 py-3.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-white border border-slate-700 font-semibold text-sm rounded-2xl transition-all flex items-center justify-center gap-2" title="항목 순서 섞기">
+          <i class="fa-solid fa-shuffle"></i>
+          <span>순서 섞기</span>
+        </button>
+      </div>
+
+      <!-- Sound & Mute Toggle -->
+      <div class="mt-4 flex items-center gap-4 text-xs text-slate-400">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-slate-200 transition-colors">
+          <input type="checkbox" id="soundToggle" checked class="w-4 h-4 rounded accent-pink-500 bg-slate-800 border-slate-700">
+          <span><i class="fa-solid fa-volume-high"></i> 효과음 켜기</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Right Column: Settings, Items & History (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+      
+      <!-- Item Management Panel with Image Upload -->
+      <div class="bg-slate-800/40 border border-slate-800 rounded-3xl p-5 shadow-xl backdrop-blur-sm flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-400"></i> 룰렛 항목 (<span id="itemCount">0</span>)
+          </h2>
+          <button onclick="clearAllItems()" class="text-xs text-rose-400 hover:text-rose-300 hover:underline">
+            전체 삭제
+          </button>
+        </div>
+
+        <!-- Image Upload Button & Hidden Input -->
+        <div class="mb-3">
+          <input type="file" id="imageFileInput" accept="image/*" multiple onchange="handleImageUpload(event)" class="hidden">
+          <button onclick="document.getElementById('imageFileInput').click()" class="w-full py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 active:scale-95 text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+            <i class="fa-solid fa-image text-base"></i>
+            <span>🖼️ 이미지 업로드하여 추가하기 (다중 선택)</span>
+          </button>
+        </div>
+
+        <!-- Text Input Box to Add New Text Item -->
+        <form onsubmit="handleAddItem(event)" class="flex items-center gap-2 mb-3">
+          <input type="text" id="newItemInput" placeholder="텍스트 항목 입력 후 엔터..." maxlength="20" class="flex-1 bg-slate-900/90 border border-slate-700 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all">
+          <button type="submit" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold text-sm rounded-xl shadow transition-all flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-plus"></i> 추가
+          </button>
+        </form>
+
+        <!-- Item List Container -->
+        <div id="itemList" class="max-h-[280px] overflow-y-auto pr-1 space-y-2">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Winning History Log -->
+      <div class="bg-slate-800/40 border border-slate-800 rounded-3xl p-5 shadow-xl backdrop-blur-sm">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> 최근 당첨 기록
+          </h2>
+          <button onclick="clearHistory()" class="text-xs text-slate-500 hover:text-slate-300">
+            기록 비우기
+          </button>
+        </div>
+        <div id="historyList" class="flex flex-wrap gap-2 max-h-[110px] overflow-y-auto">
+          <span class="text-xs text-slate-500 italic py-1">아직 당첨 기록이 없습니다.</span>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-6xl w-full mx-auto mt-6 pt-4 border-t border-slate-800/80 text-center text-xs text-slate-500">
+    💡 <span class="font-semibold text-slate-400">팁:</span> 텍스트 입력창 외부에서 키보드의 <span class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono text-slate-300">Enter</span> 키를 누르면 룰렛이 즉시 회전하고, 다시 누르면 바퀴가 멈춥니다!
+  </footer>
+
+  <!-- Result Modal Dialog (Fullscreen Image Display) -->
+  <div id="resultModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl hidden flex flex-col items-center justify-center p-4 sm:p-8 transition-all duration-300 opacity-0 select-none">
+    <div class="flex flex-col items-center justify-center max-w-4xl w-full text-center transform scale-90 transition-all duration-300 id-modal-card">
+      <div class="px-5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-black text-sm tracking-wider uppercase mb-3 shadow-lg shadow-pink-500/20">
+        🏆 당첨 축하합니다!
+      </div>
+
+      <!-- Fullscreen High-Impact Image Container -->
+      <div id="resultImageContainer" class="w-full max-h-[62vh] flex items-center justify-center my-3 overflow-hidden rounded-3xl border-4 border-slate-700/80 bg-slate-900/90 shadow-2xl">
+        <img id="resultImage" class="max-h-[62vh] w-auto max-w-full object-contain rounded-2xl shadow-xl transition-all" src="" alt="당첨 이미지">
+      </div>
+
+      <div id="resultText" class="text-2xl sm:text-4xl font-black text-white my-2 break-words leading-tight drop-shadow-md">
+        -
+      </div>
+      <p class="text-xs sm:text-sm text-slate-400 mb-6">Enter 키나 아래 버튼을 눌러 창을 닫으세요</p>
+      <button onclick="closeResultModal()" class="px-10 py-3.5 bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 active:scale-95 text-white font-extrabold text-base rounded-2xl shadow-xl transition-all">
+        확인 (Enter)
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- State Variables ---
+    let items = [];
+
+    let isSpinning = false;
+    let currentAngle = 0; // in radians
+    let angularVelocity = 0; // current speed
+    let animationFrameId = null;
+    let lastTickSegment = -1;
+    let historyLog = [];
+
+    // Web Audio API Context
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Play procedural click sound when slice passes pointer
+    function playTickSound() {
+      if (!document.getElementById('soundToggle').checked) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.04);
+
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.04);
+      } catch (e) {}
+    }
+
+    // Play fanfare when stopped
+    function playWinSound() {
+      if (!document.getElementById('soundToggle').checked) return;
+      try {
+        const ctx = getAudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+
+          gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08);
+          gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.35);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 0.35);
+        });
+      } catch (e) {}
+    }
+
+    // Canvas elements & High-DPI handling
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function setupCanvasDPI() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = rect.width > 0 ? rect.width : 300;
+      const displayHeight = rect.height > 0 ? rect.height : 300;
+
+      canvas.width = displayWidth * dpr;
+      canvas.height = displayHeight * dpr;
+      ctx.scale(dpr, dpr);
+      drawWheel();
+    }
+
+    // Palette generator for new items
+    const colorPalette = [
+      '#f43f5e', '#ec4899', '#d946ef', '#a855f7', 
+      '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', 
+      '#06b6d4', '#14b8a6', '#10b981', '#84cc16', 
+      '#eab308', '#f97316', '#ef4444'
+    ];
+
+    function getRandomColor() {
+      return colorPalette[Math.floor(Math.random() * colorPalette.length)];
+    }
+
+    // Render the roulette wheel
+    function drawWheel() {
+      const dpr = window.devicePixelRatio || 1;
+      const width = (canvas.width / dpr) || 300;
+      const height = (canvas.height / dpr) || 300;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.max(10, Math.min(centerX, centerY) - 8);
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (items.length === 0) {
+        // Draw empty placeholder
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 15px "Noto Sans KR"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('이미지나 항목을 추가해주세요', centerX, centerY);
+        ctx.restore();
+        return;
+      }
+
+      const sliceAngle = (Math.PI * 2) / items.length;
+
+      // Draw Pie Slices
+      items.forEach((item, index) => {
+        const startAngle = currentAngle + index * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        // Slice Fill
+        ctx.fillStyle = item.color;
+        ctx.fill();
+
+        // Inner Slice Border
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Render Image thumbnail or Text inside slice
+        ctx.save();
+        const midAngle = startAngle + sliceAngle / 2;
+
+        if (item.imgEl && item.imgEl.complete && item.imgEl.naturalWidth !== 0) {
+          // Draw Image inside slice
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(midAngle);
+
+          const imgDist = radius * 0.62;
+          const maxImgSize = Math.min(50, (radius * Math.sin(sliceAngle / 2)) * 1.5);
+          const imgRadius = Math.max(12, maxImgSize / 2);
+
+          // Draw Circular Image Clipping
+          ctx.beginPath();
+          ctx.arc(imgDist, 0, imgRadius, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+
+          ctx.drawImage(
+            item.imgEl, 
+            imgDist - imgRadius, 
+            -imgRadius, 
+            imgRadius * 2, 
+            imgRadius * 2
+          );
+
+          ctx.restore();
+
+          // Render Label if exists
+          if (item.text) {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(midAngle);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px "Noto Sans KR"';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 4;
+            
+            let text = item.text;
+            if (text.length > 6) text = text.substring(0, 5) + '…';
+            ctx.fillText(text, radius - 12, 0);
+            ctx.restore();
+          }
+
+        } else {
+          // Text-only slice
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(midAngle);
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#ffffff';
+          
+          const fontSize = items.length > 12 ? 11 : items.length > 8 ? 13 : 15;
+          ctx.font = `900 ${fontSize}px "Noto Sans KR"`;
+          ctx.shadowColor = 'rgba(0,0,0,0.6)';
+          ctx.shadowBlur = 4;
+
+          let text = item.text || '항목 ' + (index + 1);
+          if (text.length > 9) text = text.substring(0, 8) + '…';
+
+          ctx.fillText(text, radius - 20, 0);
+          ctx.restore();
+        }
+
+        ctx.restore();
+        ctx.restore();
+      });
+
+      // Outer Gloss Highlight Ring
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Animation loop & physics logic
+    function animate(timestamp) {
+      if (!isSpinning) return;
+
+      currentAngle += angularVelocity;
+      currentAngle %= (Math.PI * 2);
+
+      const sliceAngle = (Math.PI * 2) / items.length;
+      const pointerAngle = (Math.PI * 1.5 - currentAngle + Math.PI * 200) % (Math.PI * 2);
+      const currentSegment = Math.floor(pointerAngle / sliceAngle) % items.length;
+
+      if (currentSegment !== lastTickSegment) {
+        lastTickSegment = currentSegment;
+        playTickSound();
+        triggerPinBounce();
+      }
+
+      drawWheel();
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    function triggerPinBounce() {
+      const pin = document.getElementById('pointerPin');
+      pin.classList.add('bounce');
+      setTimeout(() => pin.classList.remove('bounce'), 50);
+    }
+
+    // Toggle Spin / Stop logic
+    function toggleSpin() {
+      if (items.length === 0) {
+        alertModal('이미지나 텍스트 항목을 1개 이상 추가해주세요!');
+        return;
+      }
+
+      if (!isSpinning) {
+        // --- START SPINNING ---
+        getAudioContext();
+        isSpinning = true;
+        angularVelocity = 0.28 + Math.random() * 0.08;
+        
+        updateUIState(true);
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        // --- STOP IMMEDIATELY ---
+        isSpinning = false;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+        updateUIState(false);
+
+        const sliceAngle = (Math.PI * 2) / items.length;
+        const pointerAngle = (Math.PI * 1.5 - currentAngle + Math.PI * 200) % (Math.PI * 2);
+        const winningIndex = Math.floor(pointerAngle / sliceAngle) % items.length;
+        const winner = items[winningIndex];
+
+        drawWheel();
+        handleWin(winner);
+      }
+    }
+
+    // Keydown event for Enter Key control
+    window.addEventListener('keydown', (e) => {
+      const activeElem = document.activeElement;
+      const isInputFocused = activeElem && (activeElem.tagName === 'INPUT' || activeElem.tagName === 'TEXTAREA');
+      const modalOpen = !document.getElementById('resultModal').classList.contains('hidden');
+
+      if (modalOpen) {
+        if (e.key === 'Enter') {
+          closeResultModal();
+        }
+        return;
+      }
+
+      if (e.key === 'Enter' && !isInputFocused) {
+        e.preventDefault();
+        toggleSpin();
+      }
+    });
+
+    // Win Handler
+    function handleWin(winner) {
+      playWinSound();
+
+      // Add to History
+      addToHistory(winner.text || '이미지 항목');
+
+      // Open Fullscreen Modal
+      showResultModal(winner);
+    }
+
+    function updateUIState(spinning) {
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      const mainBtn = document.getElementById('mainToggleBtn');
+      const mainBtnText = document.getElementById('mainBtnText');
+      const mainBtnIcon = document.getElementById('mainBtnIcon');
+      const centerBtnIcon = document.getElementById('centerBtnIcon');
+      const centerBtnLabel = document.getElementById('centerBtnLabel');
+
+      if (spinning) {
+        statusBadge.className = 'mb-4 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-pink-950/80 border border-pink-500/50 text-pink-300 flex items-center gap-2 shadow-lg shadow-pink-500/20';
+        statusText.innerText = '회전 중! 엔터(Enter) 키를 눌러 바로 멈추세요';
+
+        mainBtn.className = 'w-full sm:w-auto min-w-[200px] px-8 py-3.5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 active:scale-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-rose-500/30 transition-all duration-200 flex items-center justify-center gap-2 glow-active';
+        mainBtnText.innerText = '멈추기! (Enter)';
+        mainBtnIcon.className = 'fa-solid fa-hand-paper';
+
+        centerBtnIcon.className = 'fa-solid fa-stop text-xl sm:text-2xl text-rose-500 group-hover:text-rose-400 transition-colors';
+        centerBtnLabel.innerText = 'STOP';
+      } else {
+        statusBadge.className = 'mb-4 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase bg-slate-800 border border-slate-700 text-slate-300 flex items-center gap-2 shadow';
+        statusText.innerText = '준비 완료 (엔터키를 눌러 돌려주세요)';
+
+        mainBtn.className = 'w-full sm:w-auto min-w-[200px] px-8 py-3.5 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:to-indigo-700 active:scale-95 text-white font-bold text-base rounded-2xl shadow-lg shadow-purple-500/25 transition-all duration-200 flex items-center justify-center gap-2 glow-active';
+        mainBtnText.innerText = '룰렛 돌리기 (Enter)';
+        mainBtnIcon.className = 'fa-solid fa-play';
+
+        centerBtnIcon.className = 'fa-solid fa-play text-xl sm:text-2xl text-pink-500 group-hover:text-pink-400 transition-colors';
+        centerBtnLabel.innerText = 'START';
+      }
+    }
+
+    // Modal Control (Fullscreen Image Display)
+    function showResultModal(winner) {
+      const modal = document.getElementById('resultModal');
+      const resultText = document.getElementById('resultText');
+      const resultImage = document.getElementById('resultImage');
+      const imageContainer = document.getElementById('resultImageContainer');
+
+      if (typeof winner === 'string') {
+        // Message fallback
+        resultText.innerText = winner;
+        imageContainer.classList.add('hidden');
+      } else {
+        resultText.innerText = winner.text || '당첨!';
+        if (winner.imgSrc) {
+          resultImage.src = winner.imgSrc;
+          imageContainer.classList.remove('hidden');
+        } else {
+          imageContainer.classList.add('hidden');
+        }
+      }
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.id-modal-card').classList.remove('scale-90');
+        modal.querySelector('.id-modal-card').classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeResultModal() {
+      const modal = document.getElementById('resultModal');
+      modal.classList.add('opacity-0');
+      modal.querySelector('.id-modal-card').classList.remove('scale-100');
+      modal.querySelector('.id-modal-card').classList.add('scale-90');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+
+    // Image Upload Handling
+    function handleImageUpload(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const dataUrl = e.target.result;
+          const imgEl = new Image();
+          imgEl.src = dataUrl;
+
+          imgEl.onload = function() {
+            items.push({
+              text: file.name.replace(/\.[^/.]+$/, ""), // remove extension for label
+              imgSrc: dataUrl,
+              imgEl: imgEl,
+              color: getRandomColor()
+            });
+            renderItemList();
+          };
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Clear input value so same files can be uploaded again if needed
+      event.target.value = '';
+    }
+
+    // Item List Management Functions
+    function renderItemList() {
+      const listContainer = document.getElementById('itemList');
+      document.getElementById('itemCount').innerText = items.length;
+
+      if (items.length === 0) {
+        listContainer.innerHTML = `<div class="text-xs text-slate-500 italic py-6 text-center">등록된 항목이 없습니다. 이미지 또는 텍스트를 추가해 보세요!</div>`;
+        drawWheel();
+        return;
+      }
+
+      listContainer.innerHTML = items.map((item, idx) => `
+        <div class="flex items-center justify-between bg-slate-900/60 border border-slate-800 hover:border-slate-700 rounded-xl px-3 py-2 text-sm transition-all">
+          <div class="flex items-center gap-3 overflow-hidden">
+            <input type="color" value="${item.color}" onchange="updateItemColor(${idx}, this.value)" class="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 shrink-0">
+            ${item.imgSrc ? `<img src="${item.imgSrc}" class="w-8 h-8 rounded-lg object-cover border border-slate-700 shrink-0">` : ''}
+            <span class="font-medium text-slate-200 truncate">${escapeHtml(item.text || '항목 ' + (idx + 1))}</span>
+          </div>
+          <button onclick="removeItem(${idx})" class="text-slate-500 hover:text-rose-400 p-1 transition-colors" title="삭제">
+            <i class="fa-solid fa-trash-can text-xs"></i>
+          </button>
+        </div>
+      `).join('');
+
+      drawWheel();
+    }
+
+    function handleAddItem(event) {
+      event.preventDefault();
+      const input = document.getElementById('newItemInput');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      items.push({
+        text: text,
+        color: getRandomColor()
+      });
+
+      input.value = '';
+      renderItemList();
+    }
+
+    function removeItem(index) {
+      if (isSpinning) return;
+      items.splice(index, 1);
+      renderItemList();
+    }
+
+    function updateItemColor(index, newColor) {
+      items[index].color = newColor;
+      drawWheel();
+    }
+
+    function clearAllItems() {
+      if (isSpinning) return;
+      items = [];
+      renderItemList();
+    }
+
+    function shuffleItems() {
+      if (isSpinning || items.length < 2) return;
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      renderItemList();
+    }
+
+    // History Log
+    function addToHistory(text) {
+      historyLog.unshift({
+        text: text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      });
+
+      if (historyLog.length > 10) historyLog.pop();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const historyContainer = document.getElementById('historyList');
+      if (historyLog.length === 0) {
+        historyContainer.innerHTML = `<span class="text-xs text-slate-500 italic py-1">아직 당첨 기록이 없습니다.</span>`;
+        return;
+      }
+
+      historyContainer.innerHTML = historyLog.map(item => `
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-bold text-pink-300 shadow-sm animate-fade-in">
+          <i class="fa-solid fa-star text-[10px] text-amber-400"></i> ${escapeHtml(item.text)}
+          <span class="text-[10px] text-slate-500 font-normal">(${item.time})</span>
+        </span>
+      `).join('');
+    }
+
+    function clearHistory() {
+      historyLog = [];
+      renderHistory();
+    }
+
+    function alertModal(msg) {
+      showResultModal(msg);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Default sample image items generator
+    function loadSampleItems() {
+      const samples = [
+        { name: '사과', color: '#f43f5e', icon: '🍎' },
+        { name: '바나나', color: '#eab308', icon: '🍌' },
+        { name: '수박', color: '#10b981', icon: '🍉' },
+        { name: '포도', color: '#a855f7', icon: '🍇' }
+      ];
+
+      items = samples.map(s => ({
+        text: `${s.icon} ${s.name}`,
+        color: s.color
+      }));
+      renderItemList();
+    }
+
+    // Window Init
+    window.onload = function() {
+      setupCanvasDPI();
+      loadSampleItems();
+
+      window.addEventListener('resize', () => {
+        setupCanvasDPI();
+      });
+    };
+  </script>
+</body>
+</html>
