@@ -1,1 +1,687 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스택버거! 언플러그드 코딩 보드게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+    <style>
+        body {
+            font-family: 'Jua', 'Nanum Gothic', sans-serif;
+            background-color: #f4ede2;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* 3D Card Flip CSS */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Real Board Game Orange Waffle Pattern Backing */
+        .waffle-card-back {
+            background-color: #e26922;
+            background-image: 
+                radial-gradient(#f89b53 22%, transparent 22%),
+                radial-gradient(#f89b53 22%, transparent 22%);
+            background-position: 0 0, 5px 5px;
+            background-size: 10px 10px;
+            border: 2px solid #b2480a;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
+        }
+
+        /* Deck Card Pattern */
+        .deck-card-back {
+            background: linear-gradient(135deg, #e26922 0%, #ca520d 100%);
+            border: 2px solid #8d3100;
+        }
+
+        /* Clean view without scrollbars */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="h-screen max-h-screen w-screen overflow-hidden text-slate-800 flex flex-col justify-between bg-[#f5ede0]">
+
+    <!-- Top Header Bar -->
+    <header class="bg-amber-400 border-b-4 border-amber-600 px-3 py-1 shadow-md shrink-0 z-30">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xl sm:text-2xl">🍔</span>
+                <div>
+                    <h1 class="text-base sm:text-xl font-black text-amber-950 tracking-wider leading-none">스택버거! <span class="text-[9px] sm:text-[10px] bg-amber-700 text-white px-2 py-0.5 rounded-full font-sans font-bold ml-1 inline-block">보드게임 버전</span></h1>
+                </div>
+            </div>
+
+            <!-- Header Controls & Stats -->
+            <div class="flex items-center space-x-2">
+                <!-- Score Display -->
+                <div class="bg-amber-100 border-2 border-amber-500 rounded-xl px-2 py-0.5 text-center shadow-inner">
+                    <span class="text-[8px] text-amber-800 block leading-none font-bold">내 점수</span>
+                    <span id="scoreText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0</span>
+                </div>
+
+                <!-- Burger Count -->
+                <div class="bg-amber-100 border-2 border-amber-500 rounded-xl px-2 py-0.5 text-center shadow-inner">
+                    <span class="text-[8px] text-amber-800 block leading-none font-bold">완성된 버거</span>
+                    <span id="burgerCountText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0 / 7</span>
+                </div>
+
+                <!-- Difficulty -->
+                <select id="diffSelect" onchange="changeDifficulty()" class="bg-white border-2 border-amber-600 text-amber-950 text-xs font-bold rounded-xl px-1.5 py-0.5 focus:outline-none cursor-pointer shadow">
+                    <option value="easy">쉬움 (3단계 ⭐)</option>
+                    <option value="normal" selected>보통 (4단계 ⭐⭐)</option>
+                    <option value="hard">어려움 (5단계 ⭐⭐⭐)</option>
+                </select>
+
+                <!-- Help Button -->
+                <button onclick="openModal('helpModal')" class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold px-2 py-0.5 rounded-xl border-b-2 border-blue-700 shadow text-xs">
+                    ❓ 게임설명
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Play Area -->
+    <main class="max-w-6xl mx-auto w-full p-2 flex-1 flex flex-col justify-between overflow-hidden min-h-0 gap-1.5">
+
+        <!-- Top Table Section: Deck, Recipe Card (Order Card), Plate -->
+        <section class="bg-[#e2d5c3] border-2 sm:border-3 border-[#bca88e] rounded-2xl p-2 shadow-md flex items-center justify-between gap-2 overflow-hidden shrink-0 h-40 sm:h-44">
+            
+            <!-- Left: Card Deck Stack -->
+            <div class="flex flex-col items-center justify-center shrink-0">
+                <div class="text-[10px] font-extrabold text-amber-900 mb-1">🎴 주문 카드 덱</div>
+                <div class="relative w-16 sm:w-20 h-24 sm:h-28 cursor-pointer active:scale-95 transition" onclick="useHint()" title="힌트 받기">
+                    <div class="absolute inset-0 translate-x-1 translate-y-1 deck-card-back rounded-xl border border-amber-900 shadow"></div>
+                    <div class="absolute inset-0 deck-card-back rounded-xl border-2 border-amber-900 shadow-md flex flex-col items-center justify-center text-white p-1 text-center">
+                        <span class="text-2xl sm:text-3xl">🍔</span>
+                        <span class="text-[9px] font-black mt-0.5 text-amber-100">스택버거</span>
+                        <span class="text-[8px] bg-amber-800/90 px-1.5 py-0.5 rounded-full mt-1 font-bold">💡 힌트 (<span id="hintCount">3</span>)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Active Order Card -->
+            <div class="flex-1 flex flex-col items-center justify-center max-w-sm h-full overflow-hidden">
+                <div class="text-[10px] font-extrabold text-amber-900 mb-1 flex items-center gap-1 shrink-0">
+                    <span>📋 손님의 주문 카드</span>
+                    <span id="customerTag" class="bg-amber-300 text-amber-950 px-2 py-0.5 rounded-full text-[9px] font-bold">🐻 아기곰</span>
+                </div>
+                
+                <div id="recipeCard" class="w-full bg-white border-2 border-slate-300 rounded-xl p-1.5 shadow-md flex flex-col justify-between h-[120px] sm:h-[135px] overflow-hidden">
+                    <div class="flex justify-between items-center border-b pb-0.5 border-slate-200 shrink-0">
+                        <span id="burgerTitle" class="text-xs sm:text-sm font-black text-slate-800">살찌는버거</span>
+                        <span id="chefHats" class="text-xs">👨‍🍳👨‍🍳👨‍🍳</span>
+                    </div>
+
+                    <div id="cardBurgerGraphic" class="flex flex-col-reverse items-center justify-center space-y-reverse space-y-0.5 my-auto overflow-hidden flex-1 py-0.5 w-full">
+                        <!-- Graphic layers generated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Plate Building Stack -->
+            <div class="flex flex-col items-center justify-end shrink-0 w-24 sm:w-32 h-full bg-[#d2c3b0]/50 border-2 border-dashed border-[#b3a18a] rounded-xl p-1 relative overflow-hidden">
+                <div class="text-[9px] font-extrabold text-amber-900 absolute top-1 left-1 z-10">🍽️ 완성되는 버거</div>
+                
+                <div id="plateStack" class="flex flex-col-reverse items-center justify-end w-full space-y-reverse space-y-0.5 mb-1 overflow-hidden max-h-[110px] sm:max-h-[125px]">
+                    <!-- Built burger layers show up here -->
+                </div>
+
+                <div class="w-20 sm:w-28 h-2 bg-white border-2 border-slate-300 rounded-full shadow shrink-0 z-10"></div>
+            </div>
+
+        </section>
+
+        <!-- Bottom Table Section: Face-Down Waffle Cards -->
+        <section class="bg-[#ebd9c1] border-2 sm:border-3 border-[#c2b097] rounded-2xl p-1.5 shadow-md flex flex-col justify-between flex-1 overflow-hidden min-h-0">
+            
+            <!-- Table Header -->
+            <div class="flex justify-between items-center mb-1 shrink-0 px-1">
+                <div class="flex items-center space-x-1">
+                    <span class="text-sm sm:text-base">🍪</span>
+                    <h2 class="text-xs sm:text-sm font-black text-amber-950">재료 타일 (뒤집어 찾기)</h2>
+                </div>
+                <div class="text-[9px] sm:text-xs text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full font-bold">
+                    주문 카드의 가장 아래쪽 재료부터 순서대로 맞추세요! 🧠
+                </div>
+            </div>
+
+            <!-- Waffle Pattern Grid -->
+            <div id="tileGridContainer" class="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden">
+                <div id="tileGrid" class="grid gap-1.5 sm:gap-2 w-full h-full max-w-4xl mx-auto items-center justify-center p-0.5">
+                    <!-- Dynamic tiles render here -->
+                </div>
+            </div>
+
+            <!-- Status Guidance Message -->
+            <div class="text-center shrink-0 mt-1">
+                <p id="gameStatusMsg" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block shadow-xs">
+                    버거의 가장 아래에 들어가는 **[참깨빵]** 타일을 찾아보세요!
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border-4 border-amber-400 rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl animate-pop-in">
+            <div class="text-5xl mb-1">🎉</div>
+            <h2 class="text-2xl font-black text-amber-900 mb-1">버거 완성!</h2>
+            <p class="text-amber-700 text-xs sm:text-sm font-bold mb-3">레시피 순서대로 완벽하게 만들었습니다!</p>
+            
+            <div class="bg-amber-50 rounded-2xl p-3 border-2 border-amber-200 mb-4 space-y-1 text-amber-950 font-bold text-sm">
+                <div class="flex justify-between">
+                    <span>획득 점수:</span>
+                    <span id="modalScoreGain" class="text-amber-600">+100점</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>현재 총점:</span>
+                    <span id="modalTotalScore" class="text-amber-800">100점</span>
+                </div>
+            </div>
+
+            <button onclick="nextCustomer()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-lg font-bold py-2.5 rounded-2xl border-b-4 border-amber-700 shadow-lg transition">
+                다음 주문 카드 뽑기 ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- Clear Game Modal -->
+    <div id="clearModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-amber-100 border-4 border-amber-500 rounded-3xl p-6 max-w-md w-full text-center shadow-2xl animate-pop-in">
+            <div class="text-6xl mb-2">🏆</div>
+            <h2 class="text-3xl font-black text-amber-950 mb-1">스택버거 장인 달성!</h2>
+            <p class="text-amber-800 font-bold mb-4">순차 실행과 스택(Stack) 개념을 마스터하셨습니다!</p>
+            
+            <div class="bg-white rounded-2xl p-4 border-2 border-amber-300 mb-5 space-y-2">
+                <div class="text-xl font-bold text-amber-900">최종 점수: <span id="finalScore" class="text-2xl text-amber-600">0</span>점</div>
+                <div class="text-sm text-slate-600 font-bold">칭호: <span id="badgeText" class="text-amber-700 font-bold">⭐ 최고의 셰프</span></div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xl font-bold py-3 rounded-2xl border-b-4 border-emerald-700 shadow-lg transition">
+                🎮 다시 게임하기
+            </button>
+        </div>
+    </div>
+
+    <!-- Educational & Help Modal -->
+    <div id="helpModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border-4 border-blue-400 rounded-3xl p-5 max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl relative">
+            <button onclick="closeModal('helpModal')" class="absolute top-3 right-4 text-2xl font-bold text-slate-400 hover:text-slate-600">✕</button>
+            
+            <div class="flex items-center space-x-2 mb-3">
+                <span class="text-3xl">🍔</span>
+                <h2 class="text-2xl font-bold text-blue-950">스택버거 게임 방법 & 코딩 원리</h2>
+            </div>
+
+            <div class="space-y-3 text-slate-700 text-xs sm:text-sm">
+                <div class="bg-blue-50 p-3 rounded-2xl border border-blue-200">
+                    <h3 class="font-bold text-blue-900 text-sm sm:text-base mb-1">🎮 게임 방법</h3>
+                    <ol class="list-decimal list-inside space-y-1 font-semibold text-slate-800">
+                        <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 확인합니다.</li>
+                        <li>바닥에 놓인 오렌지 와플 카드를 뒤집어 올바른 재료를 찾아 쌓습니다.</li>
+                        <li>틀린 재료를 뒤집으면 카드가 다시 엎어집니다! (위치를 잘 기억하세요)</li>
+                    </ol>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <h3 class="font-bold text-amber-900 text-sm sm:text-base mb-1">1️⃣ 컴퓨팅 사고력: 순차 (Sequence)</h3>
+                    <p class="leading-relaxed">
+                        컴퓨터 코딩에서는 명령을 **정해진 순서대로 하나씩 실행**해야 올바른 결과가 나옵니다. 순서가 틀리면 햄버거가 완성되지 않듯 코딩에서도 순서가 핵심입니다!
+                    </p>
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
+                    <h3 class="font-bold text-emerald-900 text-sm sm:text-base mb-1">2️⃣ 자료구조: 스택 (Stack)</h3>
+                    <p class="leading-relaxed">
+                        **'스택(Stack)'**은 아래에서부터 차례차례 쌓아 올리는 자료구조입니다. 제일 나중에 놓은 재료가 가장 위에 놓이게 됩니다 (LIFO).
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="closeModal('helpModal')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-xl transition">
+                알겠어요! 게임 시작하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio Synthesizer
+        class AudioSynth {
+            constructor() { this.ctx = null; }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playFlip() {
+                this.init(); if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(640, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+            }
+            playMatch() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                osc.frequency.setValueAtTime(783.99, now + 0.16);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(now + 0.28);
+            }
+            playWrong() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.22);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(now + 0.22);
+            }
+            playVictory() {
+                this.init(); if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.18, now + idx * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.25);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.09);
+                    osc.stop(now + idx * 0.09 + 0.25);
+                });
+            }
+        }
+
+        const sound = new AudioSynth();
+
+        const INGREDIENTS = {
+            BOTTOM_BUN: { id: 'BOTTOM_BUN', name: '참깨빵', emoji: '🍞', cardColor: 'bg-amber-200 border-amber-500 text-amber-950', h: 'h-3 sm:h-3.5' },
+            PATTY:      { id: 'PATTY',      name: '고기패티', emoji: '🥩', cardColor: 'bg-amber-800 border-amber-950 text-white', h: 'h-3 sm:h-3.5' },
+            CHEESE:     { id: 'CHEESE',     name: '치즈',    emoji: '🧀', cardColor: 'bg-yellow-300 border-yellow-600 text-amber-950', h: 'h-2.5 sm:h-3' },
+            LETTUCE:    { id: 'LETTUCE',    name: '양상추',  emoji: '🥬', cardColor: 'bg-emerald-400 border-emerald-700 text-emerald-950', h: 'h-2.5 sm:h-3' },
+            TOMATO:     { id: 'TOMATO',     name: '토마토',  emoji: '🍅', cardColor: 'bg-red-500 border-red-700 text-white', h: 'h-2.5 sm:h-3' },
+            CHICKEN:    { id: 'CHICKEN',    name: '치킨패티', emoji: '🍗', cardColor: 'bg-orange-300 border-orange-600 text-amber-950', h: 'h-3 sm:h-3.5' },
+            TOP_BUN:    { id: 'TOP_BUN',    name: '햄버거빵', emoji: '🥯', cardColor: 'bg-amber-300 border-amber-600 text-amber-950', h: 'h-3 sm:h-3.5' }
+        };
+
+        const BURGER_NAMES = [
+            { name: "고기만버거", hats: "👨‍🍳" },
+            { name: "치즈토스트", hats: "👨‍🍳" },
+            { name: "살찌는버거", hats: "👨‍🍳👨‍🍳👨‍🍳" },
+            { name: "치킨치즈버거", hats: "👨‍🍳👨‍🍳" },
+            { name: "더블패티버거", hats: "👨‍🍳👨‍🍳" },
+            { name: "빅스택버거", hats: "👨‍🍳👨‍🍳👨‍🍳" }
+        ];
+
+        const CUSTOMERS = ["🐻 아기곰", "🐰 토끼", "🦊 여우", "🐱 고양이", "🐶 강아지", "🐼 판다"];
+
+        const DIFFICULTY_SETTINGS = {
+            easy: { recipeLength: 3, gridCount: 8, hints: 4, targetBurgers: 3, cols: 'grid-cols-4', rows: 'grid-rows-2' },
+            normal: { recipeLength: 4, gridCount: 12, hints: 3, targetBurgers: 5, cols: 'grid-cols-4 sm:grid-cols-6', rows: 'grid-rows-3 sm:grid-rows-2' },
+            hard: { recipeLength: 5, gridCount: 16, hints: 2, targetBurgers: 7, cols: 'grid-cols-4 sm:grid-cols-8', rows: 'grid-rows-4 sm:grid-rows-2' }
+        };
+
+        let currentDifficulty = 'normal';
+        let score = 0;
+        let burgerCount = 0;
+        let hintsLeft = 3;
+
+        let currentRecipe = [];
+        let currentStepIndex = 0;
+        let gridTiles = [];
+        let isProcessing = false;
+
+        function initGame() {
+            score = 0;
+            burgerCount = 0;
+            updateHeaderUI();
+            startNewRound();
+        }
+
+        function changeDifficulty() {
+            currentDifficulty = document.getElementById('diffSelect').value;
+            initGame();
+        }
+
+        function startNewRound() {
+            const config = DIFFICULTY_SETTINGS[currentDifficulty];
+            hintsLeft = config.hints;
+            document.getElementById('hintCount').textContent = hintsLeft;
+
+            const customer = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+            document.getElementById('customerTag').textContent = customer;
+
+            const burgerInfo = BURGER_NAMES[Math.floor(Math.random() * BURGER_NAMES.length)];
+            document.getElementById('burgerTitle').textContent = burgerInfo.name;
+            document.getElementById('chefHats').textContent = burgerInfo.hats;
+
+            const middlePool = [INGREDIENTS.PATTY.id, INGREDIENTS.CHEESE.id, INGREDIENTS.LETTUCE.id, INGREDIENTS.TOMATO.id, INGREDIENTS.CHICKEN.id];
+            
+            currentRecipe = [INGREDIENTS.BOTTOM_BUN.id];
+            const middleCount = config.recipeLength - 2;
+            for (let i = 0; i < middleCount; i++) {
+                currentRecipe.push(middlePool[Math.floor(Math.random() * middlePool.length)]);
+            }
+            currentRecipe.push(INGREDIENTS.TOP_BUN.id);
+
+            currentStepIndex = 0;
+
+            setupTileGrid(config.gridCount);
+            renderRecipeCard();
+            renderPlateStack();
+            updateStepInstruction();
+        }
+
+        function setupTileGrid(gridCount) {
+            let pool = [...currentRecipe];
+            const allKeys = Object.keys(INGREDIENTS);
+
+            while (pool.length < gridCount) {
+                const randKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+                pool.push(randKey);
+            }
+
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            gridTiles = pool.map((ingId, idx) => ({
+                id: idx,
+                ingredientId: ingId,
+                isFlipped: false
+            }));
+
+            renderTileGrid();
+        }
+
+        function renderRecipeCard() {
+            const graphicEl = document.getElementById('cardBurgerGraphic');
+            if (!graphicEl) return;
+            graphicEl.innerHTML = '';
+
+            currentRecipe.forEach((ingId, idx) => {
+                const ing = INGREDIENTS[ingId];
+                const isCurrent = idx === currentStepIndex;
+                const isDone = idx < currentStepIndex;
+
+                const layerGraphic = document.createElement('div');
+                layerGraphic.className = `w-full max-w-[200px] ${ing.h} ${ing.cardColor} rounded border border-slate-700/40 flex items-center justify-between px-2 text-[9px] sm:text-[10px] font-black shadow-xs shrink-0 transition-all ${
+                    isDone ? 'opacity-30 line-through' : isCurrent ? 'ring-2 ring-amber-500 scale-105 z-10' : ''
+                }`;
+                layerGraphic.innerHTML = `
+                    <span class="flex items-center gap-1"><span class="text-[10px] sm:text-xs">${ing.emoji}</span> ${ing.name}</span>
+                    <span class="text-[8px] font-bold opacity-80">${isDone ? '✓' : `${idx + 1}단계`}</span>
+                `;
+                graphicEl.appendChild(layerGraphic);
+            });
+        }
+
+        function renderPlateStack() {
+            const plateEl = document.getElementById('plateStack');
+            if (!plateEl) return;
+            plateEl.innerHTML = '';
+
+            for (let i = 0; i < currentStepIndex; i++) {
+                const ing = INGREDIENTS[currentRecipe[i]];
+                const layerEl = document.createElement('div');
+                layerEl.className = `w-18 sm:w-24 ${ing.h} ${ing.cardColor} rounded border border-amber-900/40 flex items-center justify-center text-[8px] sm:text-[9px] font-bold shadow-xs animate-pop-in shrink-0`;
+                layerEl.innerHTML = `<span class="mr-1">${ing.emoji}</span> ${ing.name}`;
+                plateEl.appendChild(layerEl);
+            }
+        }
+
+        function renderTileGrid() {
+            const gridEl = document.getElementById('tileGrid');
+            if (!gridEl) return;
+            gridEl.innerHTML = '';
+
+            const config = DIFFICULTY_SETTINGS[currentDifficulty];
+            gridEl.className = `grid ${config.cols} ${config.rows} gap-1.5 sm:gap-2 w-full h-full max-w-4xl mx-auto items-center justify-center p-0.5`;
+
+            gridTiles.forEach((tile) => {
+                const ing = INGREDIENTS[tile.ingredientId];
+
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'w-full h-full min-h-0 perspective-1000 cursor-pointer mx-auto flex flex-col justify-center';
+                cardContainer.onclick = () => handleTileClick(tile.id);
+
+                const cardInner = document.createElement('div');
+                cardInner.id = `card-inner-${tile.id}`;
+                cardInner.className = `w-full h-full relative transform-style-3d rounded-xl shadow-md transition-all ${
+                    tile.isFlipped ? 'rotate-y-180' : ''
+                }`;
+
+                // Front (Orange Waffle Back pattern)
+                const cardFront = document.createElement('div');
+                cardFront.className = 'absolute inset-0 w-full h-full waffle-card-back rounded-xl flex flex-col items-center justify-center backface-hidden p-0.5 active:scale-95 transition overflow-hidden';
+                cardFront.innerHTML = `
+                    <div class="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-amber-950/20 flex items-center justify-center text-white/90 text-[8px] sm:text-[10px] font-black">🍔</div>
+                    <span class="text-[7px] sm:text-[8px] text-amber-100 font-extrabold mt-0.5 leading-none">스택버거</span>
+                `;
+
+                // Back (Ingredient Card Revealed - Text Right-side Up)
+                const cardBack = document.createElement('div');
+                cardBack.className = `absolute inset-0 w-full h-full ${ing.cardColor} rounded-xl border-2 flex flex-col items-center justify-center rotate-y-180 backface-hidden p-1 text-center overflow-hidden`;
+                cardBack.innerHTML = `
+                    <span class="text-sm sm:text-base leading-none">${ing.emoji}</span>
+                    <span class="text-[8px] sm:text-[10px] font-black leading-tight mt-0.5 break-keep select-none">${ing.name}</span>
+                `;
+
+                cardInner.appendChild(cardFront);
+                cardInner.appendChild(cardBack);
+                cardContainer.appendChild(cardInner);
+                gridEl.appendChild(cardContainer);
+            });
+        }
+
+        function handleTileClick(tileId) {
+            if (isProcessing) return;
+
+            const tile = gridTiles[tileId];
+            if (tile.isFlipped) return;
+
+            sound.playFlip();
+            tile.isFlipped = true;
+            updateTileUI(tileId);
+
+            const expectedIngId = currentRecipe[currentStepIndex];
+
+            if (tile.ingredientId === expectedIngId) {
+                // Correct!
+                sound.playMatch();
+                currentStepIndex++;
+
+                renderRecipeCard();
+                renderPlateStack();
+                updateStepInstruction();
+
+                if (currentStepIndex >= currentRecipe.length) {
+                    isProcessing = true;
+                    setTimeout(() => {
+                        onBurgerCompleted();
+                    }, 400);
+                }
+            } else {
+                // Wrong! Reset sequence
+                isProcessing = true;
+                sound.playWrong();
+
+                const gridEl = document.getElementById('tileGrid');
+                gridEl.classList.add('animate-shake');
+
+                setTimeout(() => {
+                    gridEl.classList.remove('animate-shake');
+                    gridTiles.forEach(t => t.isFlipped = false);
+                    gridTiles.forEach(t => updateTileUI(t.id));
+
+                    currentStepIndex = 0;
+                    renderRecipeCard();
+                    renderPlateStack();
+                    updateStepInstruction();
+
+                    const statusMsg = document.getElementById('gameStatusMsg');
+                    statusMsg.textContent = "⚠️ 순서가 틀렸습니다! 타일이 다시 뒤집힙니다.";
+                    statusMsg.className = "text-xs sm:text-sm font-bold text-red-700 bg-red-100 py-0.5 px-3 rounded-xl border border-red-300 inline-block";
+
+                    isProcessing = false;
+                }, 900);
+            }
+        }
+
+        function updateTileUI(tileId) {
+            const tile = gridTiles[tileId];
+            const cardInner = document.getElementById(`card-inner-${tileId}`);
+            if (cardInner) {
+                if (tile.isFlipped) {
+                    cardInner.classList.add('rotate-y-180');
+                } else {
+                    cardInner.classList.remove('rotate-y-180');
+                }
+            }
+        }
+
+        function updateStepInstruction() {
+            if (currentStepIndex < currentRecipe.length) {
+                const targetIng = INGREDIENTS[currentRecipe[currentStepIndex]];
+                const statusMsg = document.getElementById('gameStatusMsg');
+                statusMsg.textContent = `다음 쌓을 재료: [${targetIng.name} ${targetIng.emoji}] 타일을 찾으세요!`;
+                statusMsg.className = "text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block";
+            }
+        }
+
+        function useHint() {
+            if (hintsLeft <= 0 || isProcessing) return;
+
+            hintsLeft--;
+            document.getElementById('hintCount').textContent = hintsLeft;
+
+            const targetIngId = currentRecipe[currentStepIndex];
+
+            gridTiles.forEach(t => {
+                if (t.ingredientId === targetIngId && !t.isFlipped) {
+                    const cardInner = document.getElementById(`card-inner-${t.id}`);
+                    if (cardInner) {
+                        cardInner.classList.add('ring-4', 'ring-yellow-400', 'rotate-y-180');
+                    }
+                }
+            });
+
+            isProcessing = true;
+            setTimeout(() => {
+                gridTiles.forEach(t => {
+                    if (t.ingredientId === targetIngId && !t.isFlipped) {
+                        const cardInner = document.getElementById(`card-inner-${t.id}`);
+                        if (cardInner) {
+                            cardInner.classList.remove('ring-4', 'ring-yellow-400', 'rotate-y-180');
+                        }
+                    }
+                });
+                isProcessing = false;
+            }, 1200);
+        }
+
+        function onBurgerCompleted() {
+            sound.playVictory();
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 65,
+                    spread: 55,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            score += 100;
+            burgerCount++;
+            updateHeaderUI();
+
+            const config = DIFFICULTY_SETTINGS[currentDifficulty];
+
+            if (burgerCount >= config.targetBurgers) {
+                document.getElementById('finalScore').textContent = score;
+                let badge = "⭐ 스택 입문자";
+                if (score >= 700) badge = "🏆 명예 햄버거 마스터";
+                else if (score >= 400) badge = "🌟 스택버거 셰프";
+                document.getElementById('badgeText').textContent = badge;
+
+                openModal('clearModal');
+            } else {
+                document.getElementById('modalScoreGain').textContent = "+100점";
+                document.getElementById('modalTotalScore').textContent = `${score}점`;
+                openModal('victoryModal');
+            }
+        }
+
+        function nextCustomer() {
+            closeModal('victoryModal');
+            isProcessing = false;
+            startNewRound();
+        }
+
+        function restartGame() {
+            closeModal('clearModal');
+            isProcessing = false;
+            initGame();
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('scoreText').textContent = score;
+            const config = DIFFICULTY_SETTINGS[currentDifficulty];
+            document.getElementById('burgerCountText').textContent = `${burgerCount} / ${config.targetBurgers}`;
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
