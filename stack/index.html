@@ -19,20 +19,45 @@
             touch-action: manipulation;
         }
 
-        /* 3D Card Flip CSS */
+        /* Standardized Clean 3D Card Flip CSS */
         .perspective-1000 {
             perspective: 1000px;
+            -webkit-perspective: 1000px;
         }
-        .transform-style-3d {
-            transform-style: preserve-3d;
+        .card-inner-box {
+            position: relative;
+            width: 100%;
+            height: 100%;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
         }
-        .backface-hidden {
+        .card-inner-box.flipped {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        .card-face-front,
+        .card-face-back {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .rotate-y-180 {
+        .card-face-front {
+            z-index: 2;
+            transform: rotateY(0deg);
+            -webkit-transform: rotateY(0deg);
+        }
+        .card-face-back {
             transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
         }
 
         /* Real Board Game Orange Waffle Pattern Backing */
@@ -51,6 +76,16 @@
         .deck-card-back {
             background: linear-gradient(135deg, #e26922 0%, #ca520d 100%);
             border: 2px solid #8d3100;
+        }
+
+        /* Shake animation for incorrect match */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
         }
 
         /* Clean view without scrollbars */
@@ -83,7 +118,7 @@
                 <!-- Burger Count -->
                 <div class="bg-amber-100 border-2 border-amber-500 rounded-xl px-2 py-0.5 text-center shadow-inner">
                     <span class="text-[8px] text-amber-800 block leading-none font-bold">완성된 버거</span>
-                    <span id="burgerCountText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0 / 7</span>
+                    <span id="burgerCountText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0 / 5</span>
                 </div>
 
                 <!-- Difficulty -->
@@ -105,15 +140,15 @@
     <main class="max-w-6xl mx-auto w-full p-2 flex-1 flex flex-col justify-between overflow-hidden min-h-0 gap-1.5">
 
         <!-- Top Table Section: Deck, Recipe Card (Order Card), Plate -->
-        <section class="bg-[#e2d5c3] border-2 sm:border-3 border-[#bca88e] rounded-2xl p-2 shadow-md flex items-center justify-between gap-2 overflow-hidden shrink-0 h-40 sm:h-44">
+        <section class="bg-[#e2d5c3] border-2 sm:border-3 border-[#bca88e] rounded-2xl p-2 shadow-md flex items-center justify-between gap-2 overflow-hidden shrink-0 h-36 sm:h-40">
             
             <!-- Left: Card Deck Stack -->
             <div class="flex flex-col items-center justify-center shrink-0">
                 <div class="text-[10px] font-extrabold text-amber-900 mb-1">🎴 주문 카드 덱</div>
-                <div class="relative w-16 sm:w-20 h-24 sm:h-28 cursor-pointer active:scale-95 transition" onclick="useHint()" title="힌트 받기">
+                <div class="relative w-16 sm:w-20 h-20 sm:h-24 cursor-pointer active:scale-95 transition" onclick="useHint()" title="힌트 받기">
                     <div class="absolute inset-0 translate-x-1 translate-y-1 deck-card-back rounded-xl border border-amber-900 shadow"></div>
                     <div class="absolute inset-0 deck-card-back rounded-xl border-2 border-amber-900 shadow-md flex flex-col items-center justify-center text-white p-1 text-center">
-                        <span class="text-2xl sm:text-3xl">🍔</span>
+                        <span class="text-xl sm:text-2xl">🍔</span>
                         <span class="text-[9px] font-black mt-0.5 text-amber-100">스택버거</span>
                         <span class="text-[8px] bg-amber-800/90 px-1.5 py-0.5 rounded-full mt-1 font-bold">💡 힌트 (<span id="hintCount">3</span>)</span>
                     </div>
@@ -121,20 +156,20 @@
             </div>
 
             <!-- Center: Active Order Card -->
-            <div class="flex-1 flex flex-col items-center justify-center max-w-sm h-full overflow-hidden">
-                <div class="text-[10px] font-extrabold text-amber-900 mb-1 flex items-center gap-1 shrink-0">
+            <div class="flex-1 flex flex-col items-center justify-center max-w-md h-full overflow-hidden">
+                <div class="text-[10px] font-extrabold text-amber-900 mb-0.5 flex items-center gap-1 shrink-0">
                     <span>📋 손님의 주문 카드</span>
                     <span id="customerTag" class="bg-amber-300 text-amber-950 px-2 py-0.5 rounded-full text-[9px] font-bold">🐻 아기곰</span>
                 </div>
                 
-                <div id="recipeCard" class="w-full bg-white border-2 border-slate-300 rounded-xl p-1.5 shadow-md flex flex-col justify-between h-[120px] sm:h-[135px] overflow-hidden">
+                <div id="recipeCard" class="w-full bg-white border-2 border-slate-300 rounded-xl p-1.5 shadow-md flex flex-col justify-between h-[105px] sm:h-[120px] overflow-hidden">
                     <div class="flex justify-between items-center border-b pb-0.5 border-slate-200 shrink-0">
-                        <span id="burgerTitle" class="text-xs sm:text-sm font-black text-slate-800">살찌는버거</span>
-                        <span id="chefHats" class="text-xs">👨‍🍳👨‍🍳👨‍🍳</span>
+                        <span id="burgerTitle" class="text-xs sm:text-sm font-black text-slate-800">더블패티버거</span>
+                        <span id="chefHats" class="text-xs">👨‍🍳👨‍🍳</span>
                     </div>
 
                     <div id="cardBurgerGraphic" class="flex flex-col-reverse items-center justify-center space-y-reverse space-y-0.5 my-auto overflow-hidden flex-1 py-0.5 w-full">
-                        <!-- Graphic layers generated via JS -->
+                        <!-- Dynamic burger layer list generated via JS -->
                     </div>
                 </div>
             </div>
@@ -143,7 +178,7 @@
             <div class="flex flex-col items-center justify-end shrink-0 w-24 sm:w-32 h-full bg-[#d2c3b0]/50 border-2 border-dashed border-[#b3a18a] rounded-xl p-1 relative overflow-hidden">
                 <div class="text-[9px] font-extrabold text-amber-900 absolute top-1 left-1 z-10">🍽️ 완성되는 버거</div>
                 
-                <div id="plateStack" class="flex flex-col-reverse items-center justify-end w-full space-y-reverse space-y-0.5 mb-1 overflow-hidden max-h-[110px] sm:max-h-[125px]">
+                <div id="plateStack" class="flex flex-col-reverse items-center justify-end w-full space-y-reverse space-y-0.5 mb-1 overflow-hidden max-h-[95px] sm:max-h-[110px]">
                     <!-- Built burger layers show up here -->
                 </div>
 
@@ -167,16 +202,16 @@
             </div>
 
             <!-- Waffle Pattern Grid -->
-            <div id="tileGridContainer" class="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden">
-                <div id="tileGrid" class="grid gap-1.5 sm:gap-2 w-full h-full max-w-4xl mx-auto items-center justify-center p-0.5">
+            <div id="tileGridContainer" class="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden py-0.5">
+                <div id="tileGrid" class="grid gap-1 sm:gap-1.5 w-full h-full max-w-4xl mx-auto items-center justify-center">
                     <!-- Dynamic tiles render here -->
                 </div>
             </div>
 
             <!-- Status Guidance Message -->
-            <div class="text-center shrink-0 mt-1">
+            <div class="text-center shrink-0 mt-0.5">
                 <p id="gameStatusMsg" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block shadow-xs">
-                    버거의 가장 아래에 들어가는 **[참깨빵]** 타일을 찾아보세요!
+                    다음 쌓을 재료: [참깨빵 🍞] 타일을 찾으세요!
                 </p>
             </div>
 
@@ -242,7 +277,7 @@
                     <ol class="list-decimal list-inside space-y-1 font-semibold text-slate-800">
                         <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 확인합니다.</li>
                         <li>바닥에 놓인 오렌지 와플 카드를 뒤집어 올바른 재료를 찾아 쌓습니다.</li>
-                        <li>틀린 재료를 뒤집으면 카드가 다시 엎어집니다! (위치를 잘 기억하세요)</li>
+                        <li>틀린 재료를 뒤집으면 카드가 다시 엎어집니다! (타일 위치는 바뀌지 않으니 잘 기억해두세요!)</li>
                     </ol>
                 </div>
 
@@ -268,7 +303,7 @@
     </div>
 
     <script>
-        // Web Audio Synthesizer
+        // Web Audio Synthesizer for Retro Game SFX
         class AudioSynth {
             constructor() { this.ctx = null; }
             init() {
@@ -375,6 +410,11 @@
             score = 0;
             burgerCount = 0;
             updateHeaderUI();
+            
+            // Generate tile positions on full game init or difficulty change
+            const config = DIFFICULTY_SETTINGS[currentDifficulty];
+            setupTileGrid(config.gridCount);
+
             startNewRound();
         }
 
@@ -406,21 +446,39 @@
 
             currentStepIndex = 0;
 
-            setupTileGrid(config.gridCount);
+            // Flip all cards back face-down without reshuffling their grid positions
+            gridTiles.forEach(t => t.isFlipped = false);
+
+            renderTileGrid();
             renderRecipeCard();
             renderPlateStack();
             updateStepInstruction();
         }
 
         function setupTileGrid(gridCount) {
-            let pool = [...currentRecipe];
             const allKeys = Object.keys(INGREDIENTS);
+            let pool = [];
 
+            // ALWAYS guarantee at least 1 instance of EVERY ingredient in the game so no recipe is unsolvable!
+            allKeys.forEach(ingKey => {
+                pool.push(ingKey);
+            });
+
+            // Also guarantee current recipe items are included
+            currentRecipe.forEach(ingId => {
+                pool.push(ingId);
+            });
+
+            // Fill remaining pool slots with random ingredients up to gridCount
             while (pool.length < gridCount) {
                 const randKey = allKeys[Math.floor(Math.random() * allKeys.length)];
                 pool.push(randKey);
             }
 
+            // Trim if pool unexpectedly exceeded gridCount, though gridCount >= allKeys.length (8, 12, 16)
+            pool = pool.slice(0, gridCount);
+
+            // Fisher-Yates Tile Shuffle Algorithm
             for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -431,8 +489,59 @@
                 ingredientId: ingId,
                 isFlipped: false
             }));
+        }
 
-            renderTileGrid();
+        function handleTileClick(tileId) {
+            if (isProcessing) return;
+
+            const tile = gridTiles.find(t => t.id === tileId);
+            if (!tile || tile.isFlipped) return;
+
+            // Flip card face up
+            tile.isFlipped = true;
+            updateTileUI(tile.id);
+            sound.playFlip();
+
+            const expectedIngId = currentRecipe[currentStepIndex];
+
+            if (tile.ingredientId === expectedIngId) {
+                // Correct match!
+                sound.playMatch();
+                currentStepIndex++;
+
+                renderRecipeCard();
+                renderPlateStack();
+                updateStepInstruction();
+
+                if (currentStepIndex >= currentRecipe.length) {
+                    isProcessing = true;
+                    setTimeout(() => {
+                        onBurgerCompleted();
+                    }, 500);
+                }
+            } else {
+                // Incorrect match!
+                sound.playWrong();
+                isProcessing = true;
+
+                const statusMsg = document.getElementById('gameStatusMsg');
+                if (statusMsg) {
+                    statusMsg.textContent = "⚠️ 순서가 틀렸습니다! 타일 위치를 기억해 다시 도전해보세요!";
+                    statusMsg.className = "text-xs sm:text-sm font-bold text-red-900 bg-red-100 py-0.5 px-3 rounded-xl border border-red-300 inline-block shadow-xs animate-shake";
+                }
+
+                setTimeout(() => {
+                    // Flip cards back face-down without reshuffling positions
+                    gridTiles.forEach(t => t.isFlipped = false);
+                    renderTileGrid();
+
+                    currentStepIndex = 0;
+                    renderRecipeCard();
+                    renderPlateStack();
+                    updateStepInstruction();
+                    isProcessing = false;
+                }, 1000);
+            }
         }
 
         function renderRecipeCard() {
@@ -477,32 +586,30 @@
             gridEl.innerHTML = '';
 
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
-            gridEl.className = `grid ${config.cols} ${config.rows} gap-1.5 sm:gap-2 w-full h-full max-w-4xl mx-auto items-center justify-center p-0.5`;
+            gridEl.className = `grid ${config.cols} ${config.rows} gap-1 sm:gap-1.5 w-full h-full max-w-4xl mx-auto items-center justify-center p-0.5`;
 
             gridTiles.forEach((tile) => {
                 const ing = INGREDIENTS[tile.ingredientId];
 
                 const cardContainer = document.createElement('div');
-                cardContainer.className = 'w-full h-full min-h-0 perspective-1000 cursor-pointer mx-auto flex flex-col justify-center';
+                cardContainer.className = 'w-full h-full min-h-[50px] sm:min-h-[60px] max-h-[75px] sm:max-h-[85px] perspective-1000 cursor-pointer mx-auto flex flex-col justify-center';
                 cardContainer.onclick = () => handleTileClick(tile.id);
 
                 const cardInner = document.createElement('div');
                 cardInner.id = `card-inner-${tile.id}`;
-                cardInner.className = `w-full h-full relative transform-style-3d rounded-xl shadow-md transition-all ${
-                    tile.isFlipped ? 'rotate-y-180' : ''
-                }`;
+                cardInner.className = `card-inner-box shadow-md ${tile.isFlipped ? 'flipped' : ''}`;
 
-                // Front (Orange Waffle Back pattern)
+                // Front Face (Orange Waffle Pattern Backing)
                 const cardFront = document.createElement('div');
-                cardFront.className = 'absolute inset-0 w-full h-full waffle-card-back rounded-xl flex flex-col items-center justify-center backface-hidden p-0.5 active:scale-95 transition overflow-hidden';
+                cardFront.className = 'card-face-front waffle-card-back p-0.5 active:scale-95 transition overflow-hidden';
                 cardFront.innerHTML = `
-                    <div class="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full bg-amber-950/20 flex items-center justify-center text-white/90 text-[8px] sm:text-[10px] font-black">🍔</div>
+                    <div class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950/20 flex items-center justify-center text-white/90 text-[8px] sm:text-[9px] font-black">🍔</div>
                     <span class="text-[7px] sm:text-[8px] text-amber-100 font-extrabold mt-0.5 leading-none">스택버거</span>
                 `;
 
-                // Back (Ingredient Card Revealed - Text Right-side Up)
+                // Back Face (Revealed Ingredient Card - Unmirrored Right Side Up)
                 const cardBack = document.createElement('div');
-                cardBack.className = `absolute inset-0 w-full h-full ${ing.cardColor} rounded-xl border-2 flex flex-col items-center justify-center rotate-y-180 backface-hidden p-1 text-center overflow-hidden`;
+                cardBack.className = `card-face-back ${ing.cardColor} border-2 p-1 text-center overflow-hidden`;
                 cardBack.innerHTML = `
                     <span class="text-sm sm:text-base leading-none">${ing.emoji}</span>
                     <span class="text-[8px] sm:text-[10px] font-black leading-tight mt-0.5 break-keep select-none">${ing.name}</span>
@@ -515,68 +622,14 @@
             });
         }
 
-        function handleTileClick(tileId) {
-            if (isProcessing) return;
-
-            const tile = gridTiles[tileId];
-            if (tile.isFlipped) return;
-
-            sound.playFlip();
-            tile.isFlipped = true;
-            updateTileUI(tileId);
-
-            const expectedIngId = currentRecipe[currentStepIndex];
-
-            if (tile.ingredientId === expectedIngId) {
-                // Correct!
-                sound.playMatch();
-                currentStepIndex++;
-
-                renderRecipeCard();
-                renderPlateStack();
-                updateStepInstruction();
-
-                if (currentStepIndex >= currentRecipe.length) {
-                    isProcessing = true;
-                    setTimeout(() => {
-                        onBurgerCompleted();
-                    }, 400);
-                }
-            } else {
-                // Wrong! Reset sequence
-                isProcessing = true;
-                sound.playWrong();
-
-                const gridEl = document.getElementById('tileGrid');
-                gridEl.classList.add('animate-shake');
-
-                setTimeout(() => {
-                    gridEl.classList.remove('animate-shake');
-                    gridTiles.forEach(t => t.isFlipped = false);
-                    gridTiles.forEach(t => updateTileUI(t.id));
-
-                    currentStepIndex = 0;
-                    renderRecipeCard();
-                    renderPlateStack();
-                    updateStepInstruction();
-
-                    const statusMsg = document.getElementById('gameStatusMsg');
-                    statusMsg.textContent = "⚠️ 순서가 틀렸습니다! 타일이 다시 뒤집힙니다.";
-                    statusMsg.className = "text-xs sm:text-sm font-bold text-red-700 bg-red-100 py-0.5 px-3 rounded-xl border border-red-300 inline-block";
-
-                    isProcessing = false;
-                }, 900);
-            }
-        }
-
         function updateTileUI(tileId) {
             const tile = gridTiles[tileId];
             const cardInner = document.getElementById(`card-inner-${tileId}`);
             if (cardInner) {
                 if (tile.isFlipped) {
-                    cardInner.classList.add('rotate-y-180');
+                    cardInner.classList.add('flipped');
                 } else {
-                    cardInner.classList.remove('rotate-y-180');
+                    cardInner.classList.remove('flipped');
                 }
             }
         }
@@ -585,8 +638,10 @@
             if (currentStepIndex < currentRecipe.length) {
                 const targetIng = INGREDIENTS[currentRecipe[currentStepIndex]];
                 const statusMsg = document.getElementById('gameStatusMsg');
-                statusMsg.textContent = `다음 쌓을 재료: [${targetIng.name} ${targetIng.emoji}] 타일을 찾으세요!`;
-                statusMsg.className = "text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block";
+                if (statusMsg) {
+                    statusMsg.textContent = `다음 쌓을 재료: [${targetIng.name} ${targetIng.emoji}] 타일을 찾으세요!`;
+                    statusMsg.className = "text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block shadow-xs";
+                }
             }
         }
 
@@ -602,7 +657,7 @@
                 if (t.ingredientId === targetIngId && !t.isFlipped) {
                     const cardInner = document.getElementById(`card-inner-${t.id}`);
                     if (cardInner) {
-                        cardInner.classList.add('ring-4', 'ring-yellow-400', 'rotate-y-180');
+                        cardInner.classList.add('ring-4', 'ring-yellow-400');
                     }
                 }
             });
@@ -613,7 +668,7 @@
                     if (t.ingredientId === targetIngId && !t.isFlipped) {
                         const cardInner = document.getElementById(`card-inner-${t.id}`);
                         if (cardInner) {
-                            cardInner.classList.remove('ring-4', 'ring-yellow-400', 'rotate-y-180');
+                            cardInner.classList.remove('ring-4', 'ring-yellow-400');
                         }
                     }
                 });
