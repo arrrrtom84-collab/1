@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스택버거! 언플러그드 코딩 보드게임</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>스택버거! 언플러그드 코딩 보드게임 (반응형 1인/2인 대결 & AI 모드)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,19 +11,26 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             font-family: 'Jua', 'Nanum Gothic', sans-serif;
             background-color: #f4ede2;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
+            overscroll-behavior: none;
         }
 
-        /* Standardized Clean 3D Card Flip CSS */
+        /* 3D Card Flip CSS */
         .perspective-1000 {
             perspective: 1000px;
             -webkit-perspective: 1000px;
         }
+        
         .card-inner-box {
             position: relative;
             width: 100%;
@@ -32,10 +39,12 @@
             transform-style: preserve-3d;
             -webkit-transform-style: preserve-3d;
         }
+        
         .card-inner-box.flipped {
             transform: rotateY(180deg);
             -webkit-transform: rotateY(180deg);
         }
+        
         .card-face-front,
         .card-face-back {
             position: absolute;
@@ -44,173 +53,207 @@
             height: 100%;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            border-radius: 0.75rem;
+            border-radius: 0.6rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
+        
         .card-face-front {
             z-index: 2;
             transform: rotateY(0deg);
             -webkit-transform: rotateY(0deg);
         }
+        
         .card-face-back {
             transform: rotateY(180deg);
             -webkit-transform: rotateY(180deg);
         }
 
-        /* Real Board Game Orange Waffle Pattern Backing */
+        /* Waffle Pattern Backing */
         .waffle-card-back {
             background-color: #e26922;
             background-image: 
                 radial-gradient(#f89b53 22%, transparent 22%),
                 radial-gradient(#f89b53 22%, transparent 22%);
-            background-position: 0 0, 5px 5px;
-            background-size: 10px 10px;
+            background-position: 0 0, 4px 4px;
+            background-size: 8px 8px;
             border: 2px solid #b2480a;
             box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
         }
 
-        /* Deck Card Pattern */
         .deck-card-back {
             background: linear-gradient(135deg, #e26922 0%, #ca520d 100%);
             border: 2px solid #8d3100;
         }
 
-        /* Shake animation for incorrect match */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
         }
+        
         .animate-shake {
-            animation: shake 0.4s ease-in-out;
+            animation: shake 0.35s ease-in-out;
         }
 
-        /* Clean view without scrollbars */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
         ::-webkit-scrollbar {
             display: none;
         }
     </style>
 </head>
-<body class="h-screen max-h-screen w-screen overflow-hidden text-slate-800 flex flex-col justify-between bg-[#f5ede0]">
+<body class="h-screen max-h-screen w-screen overflow-hidden text-slate-800 flex flex-col justify-between bg-[#f5ede0] p-1 sm:p-2">
 
-    <!-- Top Header Bar -->
-    <header class="bg-amber-400 border-b-4 border-amber-600 px-3 py-1 shadow-md shrink-0 z-30">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
+    <!-- Header / Control Navigation Bar -->
+    <header class="bg-amber-400 border-b-2 sm:border-b-4 border-amber-600 px-1.5 sm:px-3 py-1 rounded-xl shadow-md shrink-0 z-30 mb-1">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-1">
+            
             <!-- Logo & Title -->
-            <div class="flex items-center space-x-2">
-                <span class="text-xl sm:text-2xl">🍔</span>
+            <div class="flex items-center space-x-1 shrink-0">
+                <span class="text-base sm:text-xl lg:text-2xl">🍔</span>
                 <div>
-                    <h1 class="text-base sm:text-xl font-black text-amber-950 tracking-wider leading-none">스택버거! <span class="text-[9px] sm:text-[10px] bg-amber-700 text-white px-2 py-0.5 rounded-full font-sans font-bold ml-1 inline-block">보드게임 버전</span></h1>
+                    <h1 class="text-xs sm:text-base lg:text-lg font-black text-amber-950 tracking-wider leading-none flex items-center gap-1">
+                        스택버거! 
+                        <span id="modeBadge" class="text-[8px] sm:text-[10px] bg-amber-700 text-white px-1.5 py-0.5 rounded-full font-sans font-bold">1인 모드</span>
+                    </h1>
                 </div>
             </div>
 
-            <!-- Header Controls & Stats -->
-            <div class="flex items-center space-x-2">
-                <!-- Score Display -->
-                <div class="bg-amber-100 border-2 border-amber-500 rounded-xl px-2 py-0.5 text-center shadow-inner">
-                    <span class="text-[8px] text-amber-800 block leading-none font-bold">내 점수</span>
-                    <span id="scoreText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0</span>
+            <!-- Mode Switcher, Scores & Action Controls -->
+            <div class="flex items-center gap-0.5 sm:gap-1.5 flex-wrap shrink-0">
+                
+                <!-- Game Mode Selector -->
+                <select id="gameModeSelect" onchange="changeGameMode()" class="bg-amber-100 border border-amber-600 text-amber-950 text-[9px] sm:text-xs font-bold rounded-lg px-1 py-0.5 focus:outline-none cursor-pointer shadow-xs shrink-0">
+                    <option value="single" selected>👤 1인</option>
+                    <option value="multi">👥 2인 대결</option>
+                </select>
+
+                <!-- 1P Score Display -->
+                <div id="p1ScoreBox" class="bg-rose-100 border border-rose-500 rounded-lg px-1 sm:px-1.5 py-0.5 text-center shadow-inner flex items-center gap-1 shrink-0">
+                    <span id="p1LabelText" class="text-[7px] sm:text-[8px] text-rose-800 leading-none font-bold">내 점수</span>
+                    <span id="p1ScoreText" class="text-xs sm:text-sm font-black text-rose-950 leading-none">0</span>
+                </div>
+
+                <!-- 2P Score Display (Visible in 2P mode) -->
+                <div id="p2ScoreBox" class="bg-blue-100 border border-blue-500 rounded-lg px-1 sm:px-1.5 py-0.5 text-center shadow-inner hidden flex items-center gap-1 shrink-0">
+                    <span class="text-[7px] sm:text-[8px] text-blue-800 leading-none font-bold">2P 점수</span>
+                    <span id="p2ScoreText" class="text-xs sm:text-sm font-black text-blue-950 leading-none">0</span>
                 </div>
 
                 <!-- Burger Count -->
-                <div class="bg-amber-100 border-2 border-amber-500 rounded-xl px-2 py-0.5 text-center shadow-inner">
-                    <span class="text-[8px] text-amber-800 block leading-none font-bold">완성된 버거</span>
-                    <span id="burgerCountText" class="text-xs sm:text-base font-black text-amber-900 leading-tight">0 / 5</span>
+                <div class="bg-amber-100 border border-amber-500 rounded-lg px-1 sm:px-1.5 py-0.5 text-center shadow-inner hidden md:flex items-center gap-1 shrink-0">
+                    <span class="text-[7px] sm:text-[8px] text-amber-800 leading-none font-bold">완성</span>
+                    <span id="burgerCountText" class="text-xs sm:text-sm font-black text-amber-900 leading-none">0/5</span>
                 </div>
 
                 <!-- Difficulty -->
-                <select id="diffSelect" onchange="changeDifficulty()" class="bg-white border-2 border-amber-600 text-amber-950 text-xs font-bold rounded-xl px-1.5 py-0.5 focus:outline-none cursor-pointer shadow">
-                    <option value="easy">쉬움 (3단계 ⭐)</option>
-                    <option value="normal" selected>보통 (4단계 ⭐⭐)</option>
-                    <option value="hard">어려움 (5단계 ⭐⭐⭐)</option>
+                <select id="diffSelect" onchange="changeDifficulty()" class="bg-white border border-amber-600 text-amber-950 text-[9px] sm:text-xs font-bold rounded-lg px-1 py-0.5 focus:outline-none cursor-pointer shadow-xs shrink-0">
+                    <option value="easy">쉬움 (3단계)</option>
+                    <option value="normal" selected>보통 (4단계)</option>
+                    <option value="hard">어려움 (5단계)</option>
                 </select>
 
+                <!-- AI Order Generator Button -->
+                <button onclick="openModal('aiModal')" class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 active:scale-95 text-white font-black px-1.5 py-0.5 rounded-lg border-b-2 border-indigo-800 shadow-xs text-[9px] sm:text-xs flex items-center gap-0.5 shrink-0">
+                    🤖 AI 손님
+                </button>
+
                 <!-- Help Button -->
-                <button onclick="openModal('helpModal')" class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold px-2 py-0.5 rounded-xl border-b-2 border-blue-700 shadow text-xs">
-                    ❓ 게임설명
+                <button onclick="openModal('helpModal')" class="bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold px-1.5 py-0.5 rounded-lg border-b-2 border-blue-700 shadow-xs text-[9px] sm:text-xs shrink-0">
+                    ❓ 설명
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Play Area -->
-    <main class="max-w-6xl mx-auto w-full p-2 flex-1 flex flex-col justify-between overflow-hidden min-h-0 gap-1.5">
+    <!-- Main Game Board Container -->
+    <main class="max-w-6xl mx-auto w-full flex-1 flex flex-col justify-between overflow-hidden min-h-0 gap-1.5">
 
-        <!-- Top Table Section: Deck, Recipe Card (Order Card), Plate -->
-        <section class="bg-[#e2d5c3] border-2 sm:border-3 border-[#bca88e] rounded-2xl p-2 shadow-md flex items-center justify-between gap-2 overflow-hidden shrink-0 h-36 sm:h-40">
+        <!-- Top Table Section: Deck, Active Recipe Order Card, Plate Stack -->
+        <section class="bg-[#e2d5c3] border-2 border-[#bca88e] rounded-xl sm:rounded-2xl p-1.5 sm:p-2 shadow-md flex items-center justify-between gap-1.5 sm:gap-3 overflow-hidden shrink-0 h-[125px] sm:h-[150px] lg:h-[160px]">
             
             <!-- Left: Card Deck Stack -->
             <div class="flex flex-col items-center justify-center shrink-0">
-                <div class="text-[10px] font-extrabold text-amber-900 mb-1">🎴 주문 카드 덱</div>
-                <div class="relative w-16 sm:w-20 h-20 sm:h-24 cursor-pointer active:scale-95 transition" onclick="useHint()" title="힌트 받기">
-                    <div class="absolute inset-0 translate-x-1 translate-y-1 deck-card-back rounded-xl border border-amber-900 shadow"></div>
-                    <div class="absolute inset-0 deck-card-back rounded-xl border-2 border-amber-900 shadow-md flex flex-col items-center justify-center text-white p-1 text-center">
-                        <span class="text-xl sm:text-2xl">🍔</span>
-                        <span class="text-[9px] font-black mt-0.5 text-amber-100">스택버거</span>
-                        <span class="text-[8px] bg-amber-800/90 px-1.5 py-0.5 rounded-full mt-1 font-bold">💡 힌트 (<span id="hintCount">3</span>)</span>
+                <div class="text-[8px] sm:text-[10px] font-extrabold text-amber-900 mb-0.5">🎴 주문 덱</div>
+                <div class="relative w-12 sm:w-16 lg:w-20 h-16 sm:h-20 lg:h-24 cursor-pointer active:scale-95 transition" onclick="useHint()" title="힌트 받기">
+                    <div class="absolute inset-0 translate-x-1 translate-y-1 deck-card-back rounded-lg border border-amber-900 shadow"></div>
+                    <div class="absolute inset-0 deck-card-back rounded-lg border-2 border-amber-900 shadow-md flex flex-col items-center justify-center text-white p-0.5 text-center">
+                        <span class="text-base sm:text-xl lg:text-2xl">🍔</span>
+                        <span class="text-[7px] sm:text-[9px] font-black mt-0.5 text-amber-100">스택버거</span>
+                        <span id="hintTag" class="text-[7px] sm:text-[8px] bg-amber-800/90 px-1 py-0.5 rounded-full mt-0.5 font-bold">💡 힌트(<span id="hintCount">3</span>)</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Center: Active Order Card -->
-            <div class="flex-1 flex flex-col items-center justify-center max-w-md h-full overflow-hidden">
-                <div class="text-[10px] font-extrabold text-amber-900 mb-0.5 flex items-center gap-1 shrink-0">
-                    <span>📋 손님의 주문 카드</span>
-                    <span id="customerTag" class="bg-amber-300 text-amber-950 px-2 py-0.5 rounded-full text-[9px] font-bold">🐻 아기곰</span>
+            <!-- Center: Active Recipe Order Card -->
+            <div class="flex-1 flex flex-col items-center justify-center max-w-sm sm:max-w-md h-full overflow-hidden">
+                <div class="w-full flex items-center justify-between px-1 mb-0.5 text-[8px] sm:text-[10px] font-extrabold text-amber-900 shrink-0">
+                    <div class="flex items-center gap-1">
+                        <span>📋 손님의 주문</span>
+                        <span id="customerTag" class="bg-amber-300 text-amber-950 px-1.5 py-0.2 rounded-full font-bold">🐻 아기곰</span>
+                    </div>
                 </div>
                 
-                <div id="recipeCard" class="w-full bg-white border-2 border-slate-300 rounded-xl p-1.5 shadow-md flex flex-col justify-between h-[105px] sm:h-[120px] overflow-hidden">
+                <div id="recipeCard" class="w-full bg-white border-2 border-slate-300 rounded-lg sm:rounded-xl p-1 shadow-md flex flex-col justify-between h-full overflow-hidden">
                     <div class="flex justify-between items-center border-b pb-0.5 border-slate-200 shrink-0">
                         <span id="burgerTitle" class="text-xs sm:text-sm font-black text-slate-800">더블패티버거</span>
                         <span id="chefHats" class="text-xs">👨‍🍳👨‍🍳</span>
                     </div>
 
+                    <!-- Dynamic Visual Stack Burger Graphic -->
                     <div id="cardBurgerGraphic" class="flex flex-col-reverse items-center justify-center space-y-reverse space-y-0.5 my-auto overflow-hidden flex-1 py-0.5 w-full">
-                        <!-- Dynamic burger layer list generated via JS -->
+                        <!-- Dynamic burger graphic layers rendered via JS -->
                     </div>
                 </div>
             </div>
 
             <!-- Right: Plate Building Stack -->
-            <div class="flex flex-col items-center justify-end shrink-0 w-24 sm:w-32 h-full bg-[#d2c3b0]/50 border-2 border-dashed border-[#b3a18a] rounded-xl p-1 relative overflow-hidden">
-                <div class="text-[9px] font-extrabold text-amber-900 absolute top-1 left-1 z-10">🍽️ 완성되는 버거</div>
+            <div class="flex flex-col items-center justify-end shrink-0 w-20 sm:w-28 lg:w-32 h-full bg-[#d2c3b0]/50 border-2 border-dashed border-[#b3a18a] rounded-lg sm:rounded-xl p-1 relative overflow-hidden">
+                <div class="text-[8px] sm:text-[9px] font-extrabold text-amber-900 absolute top-0.5 left-1 z-10">🍽️ 만들 버거</div>
                 
-                <div id="plateStack" class="flex flex-col-reverse items-center justify-end w-full space-y-reverse space-y-0.5 mb-1 overflow-hidden max-h-[95px] sm:max-h-[110px]">
-                    <!-- Built burger layers show up here -->
+                <div id="plateStack" class="flex flex-col-reverse items-center justify-end w-full space-y-reverse space-y-0.5 mb-1 overflow-hidden max-h-[85px] sm:max-h-[110px]">
+                    <!-- Built burger layers render here -->
                 </div>
 
-                <div class="w-20 sm:w-28 h-2 bg-white border-2 border-slate-300 rounded-full shadow shrink-0 z-10"></div>
+                <div class="w-16 sm:w-24 h-1.5 sm:h-2 bg-white border border-slate-300 rounded-full shadow shrink-0 z-10"></div>
             </div>
 
         </section>
 
-        <!-- Bottom Table Section: Face-Down Waffle Cards -->
-        <section class="bg-[#ebd9c1] border-2 sm:border-3 border-[#c2b097] rounded-2xl p-1.5 shadow-md flex flex-col justify-between flex-1 overflow-hidden min-h-0">
+        <!-- Bottom Table Section: Flippable Ingredient Tiles Grid -->
+        <section class="bg-[#ebd9c1] border-2 border-[#c2b097] rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-md flex flex-col justify-between flex-1 overflow-hidden min-h-0">
             
             <!-- Table Header -->
-            <div class="flex justify-between items-center mb-1 shrink-0 px-1">
+            <div class="flex justify-between items-center mb-0.5 shrink-0 px-1">
                 <div class="flex items-center space-x-1">
-                    <span class="text-sm sm:text-base">🍪</span>
-                    <h2 class="text-xs sm:text-sm font-black text-amber-950">재료 타일 (뒤집어 찾기)</h2>
+                    <span class="text-xs sm:text-sm">🍪</span>
+                    <h2 class="text-[10px] sm:text-xs font-black text-amber-950">재료 타일 (뒤집어 찾기)</h2>
                 </div>
-                <div class="text-[9px] sm:text-xs text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full font-bold">
-                    주문 카드의 가장 아래쪽 재료부터 순서대로 맞추세요! 🧠
+                <div id="activePlayerIndicator" class="text-[8px] sm:text-[10px] text-rose-950 bg-rose-200 border border-rose-400 px-2 py-0.5 rounded-full font-extrabold shadow-xs">
+                    🔴 1P 플레이어 차례입니다!
                 </div>
             </div>
 
-            <!-- Waffle Pattern Grid -->
+            <!-- Tile Grid Container -->
             <div id="tileGridContainer" class="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden py-0.5">
-                <div id="tileGrid" class="grid gap-1 sm:gap-1.5 w-full h-full max-w-4xl mx-auto items-center justify-center">
-                    <!-- Dynamic tiles render here -->
+                <div id="tileGrid" class="grid w-full h-full max-w-4xl mx-auto items-center justify-center">
+                    <!-- Dynamic ingredient tiles render here -->
                 </div>
             </div>
 
             <!-- Status Guidance Message -->
             <div class="text-center shrink-0 mt-0.5">
-                <p id="gameStatusMsg" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block shadow-xs">
+                <p id="gameStatusMsg" class="text-[10px] sm:text-xs lg:text-sm font-bold text-amber-900 bg-amber-100 py-0.5 px-2.5 rounded-xl border border-amber-300 inline-block shadow-xs">
                     다음 쌓을 재료: [참깨빵 🍞] 타일을 찾으세요!
                 </p>
             </div>
@@ -219,84 +262,117 @@
 
     </main>
 
-    <!-- Victory Modal -->
-    <div id="victoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white border-4 border-amber-400 rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl animate-pop-in">
-            <div class="text-5xl mb-1">🎉</div>
-            <h2 class="text-2xl font-black text-amber-900 mb-1">버거 완성!</h2>
-            <p class="text-amber-700 text-xs sm:text-sm font-bold mb-3">레시피 순서대로 완벽하게 만들었습니다!</p>
+    <!-- AI Custom Customer Modal -->
+    <div id="aiModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white border-4 border-purple-400 rounded-2xl p-4 max-w-sm w-full text-center shadow-2xl animate-pop-in relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('aiModal')" class="absolute top-2 right-3 text-xl font-bold text-slate-400 hover:text-slate-600">✕</button>
+            <div class="text-3xl mb-1">🤖</div>
+            <h2 class="text-lg sm:text-xl font-black text-purple-950 mb-1">AI 특별 손님 주문받기</h2>
+            <p class="text-slate-600 text-xs mb-3 font-bold">원하는 테마를 입력하면 Gemini AI가 특별한 레시피 주문을 만들어 드립니다!</p>
             
-            <div class="bg-amber-50 rounded-2xl p-3 border-2 border-amber-200 mb-4 space-y-1 text-amber-950 font-bold text-sm">
-                <div class="flex justify-between">
+            <div class="space-y-2 mb-3 text-left">
+                <label class="text-xs font-bold text-purple-900 block">주문 테마/손님 종류:</label>
+                <input type="text" id="aiPromptInput" placeholder="예: 우주 외계인, 드래곤 패티, 키티 공주" class="w-full border-2 border-purple-300 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-purple-600 font-bold">
+            </div>
+
+            <div class="flex flex-wrap gap-1 mb-3 justify-center">
+                <button onclick="setAiTheme('우주 외계인')" class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full hover:bg-purple-200">🚀 우주 외계인</button>
+                <button onclick="setAiTheme('불뿜는 드래곤')" class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full hover:bg-amber-200">🐉 드래곤</button>
+                <button onclick="setAiTheme('해적 선장')" class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full hover:bg-blue-200">🏴‍☠️ 해적 선장</button>
+            </div>
+
+            <button id="aiGenerateBtn" onclick="generateAiOrder()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 rounded-xl border-b-2 border-indigo-900 shadow text-xs">
+                ✨ AI 주문 카드 생성하기
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal (Round Win) -->
+    <div id="victoryModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white border-4 border-amber-400 rounded-3xl p-4 max-w-xs w-full text-center shadow-2xl animate-pop-in">
+            <div class="text-4xl mb-1">🎉</div>
+            <h2 id="roundWinTitle" class="text-xl font-black text-amber-900 mb-0.5">버거 완성!</h2>
+            <p id="roundWinDesc" class="text-amber-700 text-xs font-bold mb-2">레시피 순서대로 완벽하게 만들었습니다!</p>
+            
+            <div class="bg-amber-50 rounded-xl p-2 border border-amber-200 mb-3 space-y-0.5 text-amber-950 font-bold text-xs">
+                <div id="modalScoreGainRow" class="flex justify-between">
                     <span>획득 점수:</span>
                     <span id="modalScoreGain" class="text-amber-600">+100점</span>
                 </div>
-                <div class="flex justify-between">
-                    <span>현재 총점:</span>
-                    <span id="modalTotalScore" class="text-amber-800">100점</span>
+                <div id="modalP1ScoreRow" class="flex justify-between">
+                    <span>1P 총점:</span>
+                    <span id="modalP1TotalScore" class="text-rose-700">100점</span>
+                </div>
+                <div id="modalP2ScoreRow" class="flex justify-between hidden">
+                    <span>2P 총점:</span>
+                    <span id="modalP2TotalScore" class="text-blue-700">0점</span>
                 </div>
             </div>
 
-            <button onclick="nextCustomer()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-lg font-bold py-2.5 rounded-2xl border-b-4 border-amber-700 shadow-lg transition">
+            <button onclick="nextCustomer()" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-sm font-bold py-2 rounded-xl border-b-2 border-amber-700 shadow transition">
                 다음 주문 카드 뽑기 ➡️
             </button>
         </div>
     </div>
 
-    <!-- Clear Game Modal -->
-    <div id="clearModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-amber-100 border-4 border-amber-500 rounded-3xl p-6 max-w-md w-full text-center shadow-2xl animate-pop-in">
-            <div class="text-6xl mb-2">🏆</div>
-            <h2 class="text-3xl font-black text-amber-950 mb-1">스택버거 장인 달성!</h2>
-            <p class="text-amber-800 font-bold mb-4">순차 실행과 스택(Stack) 개념을 마스터하셨습니다!</p>
+    <!-- Final Winner Clear Modal -->
+    <div id="clearModal" class="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-amber-100 border-4 border-amber-500 rounded-3xl p-5 max-w-sm w-full text-center shadow-2xl animate-pop-in">
+            <div class="text-5xl mb-2">🏆</div>
+            <h2 id="finalWinnerText" class="text-2xl font-black text-amber-950 mb-1">스택버거 장인 달성!</h2>
+            <p id="finalWinnerSubText" class="text-amber-800 font-bold text-xs mb-3">순차 실행과 스택(Stack) 개념을 마스터하셨습니다!</p>
             
-            <div class="bg-white rounded-2xl p-4 border-2 border-amber-300 mb-5 space-y-2">
-                <div class="text-xl font-bold text-amber-900">최종 점수: <span id="finalScore" class="text-2xl text-amber-600">0</span>점</div>
-                <div class="text-sm text-slate-600 font-bold">칭호: <span id="badgeText" class="text-amber-700 font-bold">⭐ 최고의 셰프</span></div>
+            <div class="bg-white rounded-xl p-3 border border-amber-300 mb-4 space-y-1.5">
+                <div class="flex justify-around items-center text-sm font-extrabold">
+                    <div class="text-rose-600">🔴 1P: <span id="finalP1Score">0</span>점</div>
+                    <div id="finalP2ScoreBox" class="text-blue-600 hidden">🔵 2P: <span id="finalP2Score">0</span>점</div>
+                </div>
+                <div class="text-xs text-slate-600 font-bold mt-1">칭호: <span id="badgeText" class="text-amber-700 font-bold">⭐ 최고의 셰프</span></div>
             </div>
 
-            <button onclick="restartGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-xl font-bold py-3 rounded-2xl border-b-4 border-emerald-700 shadow-lg transition">
+            <button onclick="restartGame()" class="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-base font-bold py-2.5 rounded-xl border-b-2 border-emerald-700 shadow transition">
                 🎮 다시 게임하기
             </button>
         </div>
     </div>
 
     <!-- Educational & Help Modal -->
-    <div id="helpModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white border-4 border-blue-400 rounded-3xl p-5 max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl relative">
-            <button onclick="closeModal('helpModal')" class="absolute top-3 right-4 text-2xl font-bold text-slate-400 hover:text-slate-600">✕</button>
+    <div id="helpModal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+        <div class="bg-white border-4 border-blue-400 rounded-2xl p-4 max-w-md w-full max-h-[85vh] overflow-y-auto shadow-2xl relative">
+            <button onclick="closeModal('helpModal')" class="absolute top-2 right-3 text-xl font-bold text-slate-400 hover:text-slate-600">✕</button>
             
-            <div class="flex items-center space-x-2 mb-3">
-                <span class="text-3xl">🍔</span>
-                <h2 class="text-2xl font-bold text-blue-950">스택버거 게임 방법 & 코딩 원리</h2>
+            <div class="flex items-center space-x-2 mb-2">
+                <span class="text-2xl">🍔</span>
+                <h2 class="text-lg sm:text-xl font-bold text-blue-950">게임 설명 & 대결 방법</h2>
             </div>
 
-            <div class="space-y-3 text-slate-700 text-xs sm:text-sm">
-                <div class="bg-blue-50 p-3 rounded-2xl border border-blue-200">
-                    <h3 class="font-bold text-blue-900 text-sm sm:text-base mb-1">🎮 게임 방법</h3>
+            <div class="space-y-2 text-slate-700 text-xs">
+                <div class="bg-blue-50 p-2.5 rounded-xl border border-blue-200">
+                    <h3 class="font-bold text-blue-900 text-xs sm:text-sm mb-1">🎮 플레이 규칙</h3>
                     <ol class="list-decimal list-inside space-y-1 font-semibold text-slate-800">
-                        <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 확인합니다.</li>
-                        <li>바닥에 놓인 오렌지 와플 카드를 뒤집어 올바른 재료를 찾아 쌓습니다.</li>
-                        <li>틀린 재료를 뒤집으면 카드가 다시 엎어집니다! (타일 위치는 바뀌지 않으니 잘 기억해두세요!)</li>
+                        <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 찾습니다.</li>
+                        <li>올바른 타일을 맞추면 계속해서 다음 재료를 뒤집을 수 있습니다.</li>
+                        <li><span class="text-rose-600 font-bold">2인 대결 모드:</span> 틀린 타일을 뒤집으면 카드가 엎어지고 <span class="text-blue-600 font-bold">상대방에게 차례가 넘어갑니다!</span></li>
+                        <li>버거의 마지막 재료까지 완성시킨 플레이어가 점수를 얻습니다!</li>
                     </ol>
                 </div>
 
-                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
-                    <h3 class="font-bold text-amber-900 text-sm sm:text-base mb-1">1️⃣ 컴퓨팅 사고력: 순차 (Sequence)</h3>
+                <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    <h3 class="font-bold text-amber-900 text-xs sm:text-sm mb-1">1️⃣ 컴퓨팅 사고력: 순차 (Sequence)</h3>
                     <p class="leading-relaxed">
-                        컴퓨터 코딩에서는 명령을 **정해진 순서대로 하나씩 실행**해야 올바른 결과가 나옵니다. 순서가 틀리면 햄버거가 완성되지 않듯 코딩에서도 순서가 핵심입니다!
+                        컴퓨터 코딩에서는 명령을 **정해진 순서대로 하나씩 실행**해야 합니다. 순서가 틀리면 햄버거가 완성되지 않듯 코딩에서도 순서가 핵심입니다!
                     </p>
                 </div>
 
-                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200">
-                    <h3 class="font-bold text-emerald-900 text-sm sm:text-base mb-1">2️⃣ 자료구조: 스택 (Stack)</h3>
+                <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                    <h3 class="font-bold text-emerald-900 text-xs sm:text-sm mb-1">2️⃣ 자료구조: 스택 (Stack)</h3>
                     <p class="leading-relaxed">
                         **'스택(Stack)'**은 아래에서부터 차례차례 쌓아 올리는 자료구조입니다. 제일 나중에 놓은 재료가 가장 위에 놓이게 됩니다 (LIFO).
                     </p>
                 </div>
             </div>
 
-            <button onclick="closeModal('helpModal')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-xl transition">
+            <button onclick="closeModal('helpModal')" class="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 rounded-xl text-xs transition">
                 알겠어요! 게임 시작하기
             </button>
         </div>
@@ -370,13 +446,13 @@
         const sound = new AudioSynth();
 
         const INGREDIENTS = {
-            BOTTOM_BUN: { id: 'BOTTOM_BUN', name: '참깨빵', emoji: '🍞', cardColor: 'bg-amber-200 border-amber-500 text-amber-950', h: 'h-3 sm:h-3.5' },
-            PATTY:      { id: 'PATTY',      name: '고기패티', emoji: '🥩', cardColor: 'bg-amber-800 border-amber-950 text-white', h: 'h-3 sm:h-3.5' },
-            CHEESE:     { id: 'CHEESE',     name: '치즈',    emoji: '🧀', cardColor: 'bg-yellow-300 border-yellow-600 text-amber-950', h: 'h-2.5 sm:h-3' },
-            LETTUCE:    { id: 'LETTUCE',    name: '양상추',  emoji: '🥬', cardColor: 'bg-emerald-400 border-emerald-700 text-emerald-950', h: 'h-2.5 sm:h-3' },
-            TOMATO:     { id: 'TOMATO',     name: '토마토',  emoji: '🍅', cardColor: 'bg-red-500 border-red-700 text-white', h: 'h-2.5 sm:h-3' },
-            CHICKEN:    { id: 'CHICKEN',    name: '치킨패티', emoji: '🍗', cardColor: 'bg-orange-300 border-orange-600 text-amber-950', h: 'h-3 sm:h-3.5' },
-            TOP_BUN:    { id: 'TOP_BUN',    name: '햄버거빵', emoji: '🥯', cardColor: 'bg-amber-300 border-amber-600 text-amber-950', h: 'h-3 sm:h-3.5' }
+            BOTTOM_BUN: { id: 'BOTTOM_BUN', name: '참깨빵', emoji: '🍞', cardColor: 'bg-amber-200 border-amber-500 text-amber-950', h: 'h-2.5 sm:h-3.5' },
+            PATTY:      { id: 'PATTY',      name: '고기패티', emoji: '🥩', cardColor: 'bg-amber-800 border-amber-950 text-white', h: 'h-2.5 sm:h-3.5' },
+            CHEESE:     { id: 'CHEESE',     name: '치즈',    emoji: '🧀', cardColor: 'bg-yellow-300 border-yellow-600 text-amber-950', h: 'h-2 sm:h-3' },
+            LETTUCE:    { id: 'LETTUCE',    name: '양상추',  emoji: '🥬', cardColor: 'bg-emerald-400 border-emerald-700 text-emerald-950', h: 'h-2 sm:h-3' },
+            TOMATO:     { id: 'TOMATO',     name: '토마토',  emoji: '🍅', cardColor: 'bg-red-500 border-red-700 text-white', h: 'h-2 sm:h-3' },
+            CHICKEN:    { id: 'CHICKEN',    name: '치킨패티', emoji: '🍗', cardColor: 'bg-orange-300 border-orange-600 text-amber-950', h: 'h-2.5 sm:h-3.5' },
+            TOP_BUN:    { id: 'TOP_BUN',    name: '햄버거빵', emoji: '🥯', cardColor: 'bg-amber-300 border-amber-600 text-amber-950', h: 'h-2.5 sm:h-3.5' }
         };
 
         const BURGER_NAMES = [
@@ -390,14 +466,18 @@
 
         const CUSTOMERS = ["🐻 아기곰", "🐰 토끼", "🦊 여우", "🐱 고양이", "🐶 강아지", "🐼 판다"];
 
+        // Responsive Grid Configs with optimized cols/rows
         const DIFFICULTY_SETTINGS = {
-            easy: { recipeLength: 3, gridCount: 8, hints: 4, targetBurgers: 3, cols: 'grid-cols-4', rows: 'grid-rows-2' },
+            easy:   { recipeLength: 3, gridCount: 8, hints: 4, targetBurgers: 3, cols: 'grid-cols-4 sm:grid-cols-4', rows: 'grid-rows-2' },
             normal: { recipeLength: 4, gridCount: 12, hints: 3, targetBurgers: 5, cols: 'grid-cols-4 sm:grid-cols-6', rows: 'grid-rows-3 sm:grid-rows-2' },
-            hard: { recipeLength: 5, gridCount: 16, hints: 2, targetBurgers: 7, cols: 'grid-cols-4 sm:grid-cols-8', rows: 'grid-rows-4 sm:grid-rows-2' }
+            hard:   { recipeLength: 5, gridCount: 16, hints: 2, targetBurgers: 7, cols: 'grid-cols-4 sm:grid-cols-8', rows: 'grid-rows-4 sm:grid-rows-2' }
         };
 
+        let gameMode = 'single';
         let currentDifficulty = 'normal';
-        let score = 0;
+        let p1Score = 0;
+        let p2Score = 0;
+        let activePlayer = 1;
         let burgerCount = 0;
         let hintsLeft = 3;
 
@@ -407,20 +487,92 @@
         let isProcessing = false;
 
         function initGame() {
-            score = 0;
+            p1Score = 0;
+            p2Score = 0;
+            activePlayer = 1;
             burgerCount = 0;
+            
             updateHeaderUI();
             
-            // Generate tile positions on full game init or difficulty change
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
             setupTileGrid(config.gridCount);
 
             startNewRound();
         }
 
+        function changeGameMode() {
+            gameMode = document.getElementById('gameModeSelect').value;
+            const modeBadge = document.getElementById('modeBadge');
+            const p2ScoreBox = document.getElementById('p2ScoreBox');
+            const p1LabelText = document.getElementById('p1LabelText');
+            const hintTag = document.getElementById('hintTag');
+
+            if (gameMode === 'multi') {
+                modeBadge.textContent = '2인 대결';
+                modeBadge.className = 'text-[8px] sm:text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded-full font-sans font-bold ml-1';
+                p2ScoreBox.classList.remove('hidden');
+                p1LabelText.textContent = '1P 점수';
+                if (hintTag) hintTag.classList.add('hidden');
+            } else {
+                modeBadge.textContent = '1인 모드';
+                modeBadge.className = 'text-[8px] sm:text-[10px] bg-amber-700 text-white px-1.5 py-0.5 rounded-full font-sans font-bold ml-1';
+                p2ScoreBox.classList.add('hidden');
+                p1LabelText.textContent = '내 점수';
+                if (hintTag) hintTag.classList.remove('hidden');
+            }
+
+            initGame();
+        }
+
         function changeDifficulty() {
             currentDifficulty = document.getElementById('diffSelect').value;
             initGame();
+        }
+
+        function setupTileGrid(gridCount) {
+            let pool = [];
+
+            if (gridCount === 8) {
+                // Easy: 8 tiles
+                pool = [
+                    INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
+                    INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
+                    INGREDIENTS.CHEESE.id, INGREDIENTS.CHEESE.id,
+                    INGREDIENTS.LETTUCE.id, INGREDIENTS.TOMATO.id
+                ];
+            } else if (gridCount === 12) {
+                // Normal: 12 tiles -> Guarantee 2 of each middle ingredient
+                pool = [
+                    INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
+                    INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
+                    INGREDIENTS.CHEESE.id, INGREDIENTS.CHEESE.id,
+                    INGREDIENTS.LETTUCE.id, INGREDIENTS.LETTUCE.id,
+                    INGREDIENTS.TOMATO.id, INGREDIENTS.TOMATO.id,
+                    INGREDIENTS.CHICKEN.id, INGREDIENTS.CHICKEN.id
+                ];
+            } else {
+                // Hard: 16 tiles -> Guarantee 3 of primary middle ingredients
+                pool = [
+                    INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
+                    INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
+                    INGREDIENTS.CHEESE.id, INGREDIENTS.CHEESE.id, INGREDIENTS.CHEESE.id,
+                    INGREDIENTS.LETTUCE.id, INGREDIENTS.LETTUCE.id, INGREDIENTS.LETTUCE.id,
+                    INGREDIENTS.TOMATO.id, INGREDIENTS.TOMATO.id, INGREDIENTS.TOMATO.id,
+                    INGREDIENTS.CHICKEN.id, INGREDIENTS.CHICKEN.id
+                ];
+            }
+
+            // Shuffle tile pool using Fisher-Yates algorithm
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            gridTiles = pool.map((ingId, idx) => ({
+                id: idx,
+                ingredientId: ingId,
+                isFlipped: false
+            }));
         }
 
         function startNewRound() {
@@ -435,18 +587,38 @@
             document.getElementById('burgerTitle').textContent = burgerInfo.name;
             document.getElementById('chefHats').textContent = burgerInfo.hats;
 
+            // Count available tiles for each ingredient on the current board
+            const tileCounts = {};
+            gridTiles.forEach(t => {
+                tileCounts[t.ingredientId] = (tileCounts[t.ingredientId] || 0) + 1;
+            });
+
             const middlePool = [INGREDIENTS.PATTY.id, INGREDIENTS.CHEESE.id, INGREDIENTS.LETTUCE.id, INGREDIENTS.TOMATO.id, INGREDIENTS.CHICKEN.id];
             
             currentRecipe = [INGREDIENTS.BOTTOM_BUN.id];
+            const recipeCounts = { [INGREDIENTS.BOTTOM_BUN.id]: 1 };
+
             const middleCount = config.recipeLength - 2;
             for (let i = 0; i < middleCount; i++) {
-                currentRecipe.push(middlePool[Math.floor(Math.random() * middlePool.length)]);
+                // Filter middle pool to ingredients whose count in recipe < available count on board
+                const validMiddles = middlePool.filter(ingId => {
+                    const inRecipe = recipeCounts[ingId] || 0;
+                    const onBoard = tileCounts[ingId] || 0;
+                    return inRecipe < onBoard;
+                });
+
+                const poolToUse = validMiddles.length > 0 ? validMiddles : middlePool;
+                const selected = poolToUse[Math.floor(Math.random() * poolToUse.length)];
+                
+                currentRecipe.push(selected);
+                recipeCounts[selected] = (recipeCounts[selected] || 0) + 1;
             }
+
             currentRecipe.push(INGREDIENTS.TOP_BUN.id);
 
             currentStepIndex = 0;
 
-            // Flip all cards back face-down without reshuffling their grid positions
+            // Flip tiles back face-down without reshuffling their positions
             gridTiles.forEach(t => t.isFlipped = false);
 
             renderTileGrid();
@@ -455,49 +627,12 @@
             updateStepInstruction();
         }
 
-        function setupTileGrid(gridCount) {
-            const allKeys = Object.keys(INGREDIENTS);
-            let pool = [];
-
-            // ALWAYS guarantee at least 1 instance of EVERY ingredient in the game so no recipe is unsolvable!
-            allKeys.forEach(ingKey => {
-                pool.push(ingKey);
-            });
-
-            // Also guarantee current recipe items are included
-            currentRecipe.forEach(ingId => {
-                pool.push(ingId);
-            });
-
-            // Fill remaining pool slots with random ingredients up to gridCount
-            while (pool.length < gridCount) {
-                const randKey = allKeys[Math.floor(Math.random() * allKeys.length)];
-                pool.push(randKey);
-            }
-
-            // Trim if pool unexpectedly exceeded gridCount, though gridCount >= allKeys.length (8, 12, 16)
-            pool = pool.slice(0, gridCount);
-
-            // Fisher-Yates Tile Shuffle Algorithm
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
-            }
-
-            gridTiles = pool.map((ingId, idx) => ({
-                id: idx,
-                ingredientId: ingId,
-                isFlipped: false
-            }));
-        }
-
         function handleTileClick(tileId) {
             if (isProcessing) return;
 
             const tile = gridTiles.find(t => t.id === tileId);
             if (!tile || tile.isFlipped) return;
 
-            // Flip card face up
             tile.isFlipped = true;
             updateTileUI(tile.id);
             sound.playFlip();
@@ -505,7 +640,7 @@
             const expectedIngId = currentRecipe[currentStepIndex];
 
             if (tile.ingredientId === expectedIngId) {
-                // Correct match!
+                // Correct match
                 sound.playMatch();
                 currentStepIndex++;
 
@@ -517,30 +652,38 @@
                     isProcessing = true;
                     setTimeout(() => {
                         onBurgerCompleted();
-                    }, 500);
+                    }, 400);
                 }
             } else {
-                // Incorrect match!
+                // Wrong match
                 sound.playWrong();
                 isProcessing = true;
 
                 const statusMsg = document.getElementById('gameStatusMsg');
                 if (statusMsg) {
-                    statusMsg.textContent = "⚠️ 순서가 틀렸습니다! 타일 위치를 기억해 다시 도전해보세요!";
-                    statusMsg.className = "text-xs sm:text-sm font-bold text-red-900 bg-red-100 py-0.5 px-3 rounded-xl border border-red-300 inline-block shadow-xs animate-shake";
+                    if (gameMode === 'multi') {
+                        statusMsg.textContent = `⚠️ ${activePlayer}P 실패! 차례가 상대방에게 넘어갑니다!`;
+                    } else {
+                        statusMsg.textContent = "⚠️ 순서가 틀렸습니다! 위치를 기억해 다시 도전하세요!";
+                    }
+                    statusMsg.className = "text-[10px] sm:text-xs font-bold text-red-900 bg-red-100 py-0.5 px-2 rounded-xl border border-red-300 inline-block shadow-xs animate-shake";
                 }
 
                 setTimeout(() => {
-                    // Flip cards back face-down without reshuffling positions
                     gridTiles.forEach(t => t.isFlipped = false);
                     renderTileGrid();
 
                     currentStepIndex = 0;
+
+                    if (gameMode === 'multi') {
+                        activePlayer = activePlayer === 1 ? 2 : 1;
+                    }
+
                     renderRecipeCard();
                     renderPlateStack();
                     updateStepInstruction();
                     isProcessing = false;
-                }, 1000);
+                }, 900);
             }
         }
 
@@ -555,12 +698,12 @@
                 const isDone = idx < currentStepIndex;
 
                 const layerGraphic = document.createElement('div');
-                layerGraphic.className = `w-full max-w-[200px] ${ing.h} ${ing.cardColor} rounded border border-slate-700/40 flex items-center justify-between px-2 text-[9px] sm:text-[10px] font-black shadow-xs shrink-0 transition-all ${
-                    isDone ? 'opacity-30 line-through' : isCurrent ? 'ring-2 ring-amber-500 scale-105 z-10' : ''
+                layerGraphic.className = `w-full max-w-[180px] sm:max-w-[220px] ${ing.h} ${ing.cardColor} rounded border border-slate-700/40 flex items-center justify-between px-1.5 text-[8px] sm:text-[10px] font-black shadow-xs shrink-0 transition-all ${
+                    isDone ? 'opacity-30 line-through' : isCurrent ? 'ring-2 ring-amber-500 scale-102 z-10' : ''
                 }`;
                 layerGraphic.innerHTML = `
-                    <span class="flex items-center gap-1"><span class="text-[10px] sm:text-xs">${ing.emoji}</span> ${ing.name}</span>
-                    <span class="text-[8px] font-bold opacity-80">${isDone ? '✓' : `${idx + 1}단계`}</span>
+                    <span class="flex items-center gap-1"><span class="text-[9px] sm:text-xs">${ing.emoji}</span> ${ing.name}</span>
+                    <span class="text-[7px] sm:text-[8px] font-bold opacity-80">${isDone ? '✓' : `${idx + 1}단계`}</span>
                 `;
                 graphicEl.appendChild(layerGraphic);
             });
@@ -574,7 +717,7 @@
             for (let i = 0; i < currentStepIndex; i++) {
                 const ing = INGREDIENTS[currentRecipe[i]];
                 const layerEl = document.createElement('div');
-                layerEl.className = `w-18 sm:w-24 ${ing.h} ${ing.cardColor} rounded border border-amber-900/40 flex items-center justify-center text-[8px] sm:text-[9px] font-bold shadow-xs animate-pop-in shrink-0`;
+                layerEl.className = `w-16 sm:w-22 ${ing.h} ${ing.cardColor} rounded border border-amber-900/40 flex items-center justify-center text-[7px] sm:text-[9px] font-bold shadow-xs animate-pop-in shrink-0`;
                 layerEl.innerHTML = `<span class="mr-1">${ing.emoji}</span> ${ing.name}`;
                 plateEl.appendChild(layerEl);
             }
@@ -592,27 +735,27 @@
                 const ing = INGREDIENTS[tile.ingredientId];
 
                 const cardContainer = document.createElement('div');
-                cardContainer.className = 'w-full h-full min-h-[50px] sm:min-h-[60px] max-h-[75px] sm:max-h-[85px] perspective-1000 cursor-pointer mx-auto flex flex-col justify-center';
+                cardContainer.className = 'w-full h-full min-h-[42px] sm:min-h-[54px] lg:min-h-[60px] max-h-[68px] sm:max-h-[82px] perspective-1000 cursor-pointer mx-auto flex flex-col justify-center';
                 cardContainer.onclick = () => handleTileClick(tile.id);
 
                 const cardInner = document.createElement('div');
                 cardInner.id = `card-inner-${tile.id}`;
-                cardInner.className = `card-inner-box shadow-md ${tile.isFlipped ? 'flipped' : ''}`;
+                cardInner.className = `card-inner-box shadow-sm ${tile.isFlipped ? 'flipped' : ''}`;
 
-                // Front Face (Orange Waffle Pattern Backing)
+                // Front Face (Waffle Pattern)
                 const cardFront = document.createElement('div');
                 cardFront.className = 'card-face-front waffle-card-back p-0.5 active:scale-95 transition overflow-hidden';
                 cardFront.innerHTML = `
-                    <div class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-950/20 flex items-center justify-center text-white/90 text-[8px] sm:text-[9px] font-black">🍔</div>
-                    <span class="text-[7px] sm:text-[8px] text-amber-100 font-extrabold mt-0.5 leading-none">스택버거</span>
+                    <div class="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-amber-950/20 flex items-center justify-center text-white/90 text-[7px] sm:text-[9px] font-black">🍔</div>
+                    <span class="text-[6px] sm:text-[8px] text-amber-100 font-extrabold mt-0.5 leading-none">스택버거</span>
                 `;
 
-                // Back Face (Revealed Ingredient Card - Unmirrored Right Side Up)
+                // Back Face (Revealed Ingredient - Correct orientation)
                 const cardBack = document.createElement('div');
-                cardBack.className = `card-face-back ${ing.cardColor} border-2 p-1 text-center overflow-hidden`;
+                cardBack.className = `card-face-back ${ing.cardColor} border p-0.5 text-center overflow-hidden`;
                 cardBack.innerHTML = `
-                    <span class="text-sm sm:text-base leading-none">${ing.emoji}</span>
-                    <span class="text-[8px] sm:text-[10px] font-black leading-tight mt-0.5 break-keep select-none">${ing.name}</span>
+                    <span class="text-xs sm:text-sm lg:text-base leading-none">${ing.emoji}</span>
+                    <span class="text-[7px] sm:text-[9px] font-black leading-tight mt-0.5 break-keep select-none">${ing.name}</span>
                 `;
 
                 cardInner.appendChild(cardFront);
@@ -626,27 +769,40 @@
             const tile = gridTiles[tileId];
             const cardInner = document.getElementById(`card-inner-${tileId}`);
             if (cardInner) {
-                if (tile.isFlipped) {
-                    cardInner.classList.add('flipped');
-                } else {
-                    cardInner.classList.remove('flipped');
-                }
+                if (tile.isFlipped) cardInner.classList.add('flipped');
+                else cardInner.classList.remove('flipped');
             }
         }
 
         function updateStepInstruction() {
+            const playerBadge = document.getElementById('activePlayerIndicator');
+            if (playerBadge) {
+                if (gameMode === 'multi') {
+                    if (activePlayer === 1) {
+                        playerBadge.textContent = "🔴 1P 플레이어 차례입니다!";
+                        playerBadge.className = "text-[8px] sm:text-[10px] text-rose-950 bg-rose-200 border border-rose-400 px-2 py-0.5 rounded-full font-extrabold shadow-xs";
+                    } else {
+                        playerBadge.textContent = "🔵 2P 플레이어 차례입니다!";
+                        playerBadge.className = "text-[8px] sm:text-[10px] text-blue-950 bg-blue-200 border border-blue-400 px-2 py-0.5 rounded-full font-extrabold shadow-xs";
+                    }
+                } else {
+                    playerBadge.textContent = "🧠 컴퓨팅 사고력 수련 중!";
+                    playerBadge.className = "text-[8px] sm:text-[10px] text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full font-bold";
+                }
+            }
+
             if (currentStepIndex < currentRecipe.length) {
                 const targetIng = INGREDIENTS[currentRecipe[currentStepIndex]];
                 const statusMsg = document.getElementById('gameStatusMsg');
                 if (statusMsg) {
                     statusMsg.textContent = `다음 쌓을 재료: [${targetIng.name} ${targetIng.emoji}] 타일을 찾으세요!`;
-                    statusMsg.className = "text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 py-0.5 px-3 rounded-xl border border-amber-300 inline-block shadow-xs";
+                    statusMsg.className = "text-[10px] sm:text-xs lg:text-sm font-bold text-amber-950 bg-amber-100 py-0.5 px-2.5 rounded-xl border border-amber-300 inline-block shadow-xs";
                 }
             }
         }
 
         function useHint() {
-            if (hintsLeft <= 0 || isProcessing) return;
+            if (gameMode === 'multi' || hintsLeft <= 0 || isProcessing) return;
 
             hintsLeft--;
             document.getElementById('hintCount').textContent = hintsLeft;
@@ -673,7 +829,70 @@
                     }
                 });
                 isProcessing = false;
-            }, 1200);
+            }, 1000);
+        }
+
+        async function setAiTheme(theme) {
+            document.getElementById('aiPromptInput').value = theme;
+        }
+
+        async function generateAiOrder() {
+            const promptInput = document.getElementById('aiPromptInput').value.trim() || '우주 외계인';
+            const btn = document.getElementById('aiGenerateBtn');
+            btn.disabled = true;
+            btn.textContent = '✨ AI 손님 주문 구상 중...';
+
+            const systemPrompt = `You are an AI order generator for a kids unplugged coding burger game called 'Stack Burger'. 
+Create a fun customer persona and a 4-ingredient burger recipe.
+Return JSON strictly matching this schema:
+{
+  "customerName": "string with emoji",
+  "burgerTitle": "string",
+  "recipe": ["BOTTOM_BUN", "PATTY", "CHEESE", "TOP_BUN"]
+}
+Available recipe ingredients: BOTTOM_BUN, PATTY, CHEESE, LETTUCE, TOMATO, CHICKEN, TOP_BUN.
+Ensure recipe starts with BOTTOM_BUN and ends with TOP_BUN.
+Language: Korean.`;
+
+            const userQuery = `Create a customer order for theme: ${promptInput}`;
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (jsonText) {
+                    const orderData = JSON.parse(jsonText);
+                    document.getElementById('customerTag').textContent = orderData.customerName || `🤖 ${promptInput}`;
+                    document.getElementById('burgerTitle').textContent = orderData.burgerTitle || "AI 스페셜 버거";
+                    
+                    if (Array.isArray(orderData.recipe) && orderData.recipe.length >= 3) {
+                        currentRecipe = orderData.recipe;
+                        currentStepIndex = 0;
+                        renderRecipeCard();
+                        renderPlateStack();
+                        updateStepInstruction();
+                    }
+                    closeModal('aiModal');
+                }
+            } catch (err) {
+                console.error("AI order error:", err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ AI 주문 카드 생성하기';
+            }
         }
 
         function onBurgerCompleted() {
@@ -687,23 +906,69 @@
                 });
             }
 
-            score += 100;
+            if (gameMode === 'multi') {
+                if (activePlayer === 1) p1Score += 100;
+                else p2Score += 100;
+            } else {
+                p1Score += 100;
+            }
+
             burgerCount++;
             updateHeaderUI();
 
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
 
             if (burgerCount >= config.targetBurgers) {
-                document.getElementById('finalScore').textContent = score;
+                document.getElementById('finalP1Score').textContent = p1Score;
+                document.getElementById('finalP2Score').textContent = p2Score;
+
+                const finalP2Box = document.getElementById('finalP2ScoreBox');
+                const winnerText = document.getElementById('finalWinnerText');
+                const winnerSubText = document.getElementById('finalWinnerSubText');
+
+                if (gameMode === 'multi') {
+                    finalP2Box.classList.remove('hidden');
+                    if (p1Score > p2Score) {
+                        winnerText.textContent = "🏆 1P 플레이어 승리!";
+                        winnerSubText.textContent = "뛰어난 기억력과 순차 사고로 승리했습니다!";
+                    } else if (p2Score > p1Score) {
+                        winnerText.textContent = "🏆 2P 플레이어 승리!";
+                        winnerSubText.textContent = "뛰어난 기억력과 순차 사고로 승리했습니다!";
+                    } else {
+                        winnerText.textContent = "🤝 완벽한 무승부!";
+                        winnerSubText.textContent = "두 플레이어 모두 최고의 스택버거 셰프입니다!";
+                    }
+                } else {
+                    finalP2Box.classList.add('hidden');
+                    winnerText.textContent = "🏆 스택버거 장인 달성!";
+                    winnerSubText.textContent = "순차 실행과 스택(Stack) 개념을 마스터하셨습니다!";
+                }
+
                 let badge = "⭐ 스택 입문자";
-                if (score >= 700) badge = "🏆 명예 햄버거 마스터";
-                else if (score >= 400) badge = "🌟 스택버거 셰프";
+                const maxScore = Math.max(p1Score, p2Score);
+                if (maxScore >= 500) badge = "🏆 명예 햄버거 마스터";
+                else if (maxScore >= 300) badge = "🌟 스택버거 셰프";
                 document.getElementById('badgeText').textContent = badge;
 
                 openModal('clearModal');
             } else {
+                const titleEl = document.getElementById('roundWinTitle');
+                const descEl = document.getElementById('roundWinDesc');
+                const p2Row = document.getElementById('modalP2ScoreRow');
+
+                if (gameMode === 'multi') {
+                    titleEl.textContent = `${activePlayer}P 버거 완성!`;
+                    descEl.textContent = `${activePlayer}P 플레이어가 완벽하게 버거를 만들어 100점을 획득했습니다!`;
+                    p2Row.classList.remove('hidden');
+                } else {
+                    titleEl.textContent = "버거 완성!";
+                    descEl.textContent = "레시피 순서대로 완벽하게 만들었습니다!";
+                    p2Row.classList.add('hidden');
+                }
+
                 document.getElementById('modalScoreGain').textContent = "+100점";
-                document.getElementById('modalTotalScore').textContent = `${score}점`;
+                document.getElementById('modalP1TotalScore').textContent = `${p1Score}점`;
+                document.getElementById('modalP2TotalScore').textContent = `${p2Score}점`;
                 openModal('victoryModal');
             }
         }
@@ -721,7 +986,9 @@
         }
 
         function updateHeaderUI() {
-            document.getElementById('scoreText').textContent = score;
+            document.getElementById('p1ScoreText').textContent = p1Score;
+            document.getElementById('p2ScoreText').textContent = p2Score;
+
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
             document.getElementById('burgerCountText').textContent = `${burgerCount} / ${config.targetBurgers}`;
         }
