@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>스택버거! 언플러그드 코딩 보드게임 (반응형 1인/2인 대결 & AI 모드)</title>
+    <title>스택버거! 언플러그드 코딩 보드게임</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,7 +136,14 @@
                 <select id="gameModeSelect" onchange="changeGameMode()" class="bg-amber-100 border border-amber-600 text-amber-950 text-[9px] sm:text-xs font-bold rounded-lg px-1 py-0.5 focus:outline-none cursor-pointer shadow-xs shrink-0">
                     <option value="single" selected>👤 1인</option>
                     <option value="multi">👥 2인 대결</option>
+                    <option value="speedrun">⏱️ 스피드런</option>
                 </select>
+
+                <!-- Speedrun Timer Display -->
+                <div id="timerBox" class="bg-red-100 border border-red-500 rounded-lg px-1 sm:px-1.5 py-0.5 text-center shadow-inner hidden flex items-center gap-1 shrink-0 animate-pulse">
+                    <span class="text-[7px] sm:text-[8px] text-red-800 leading-none font-bold">⏱️ 남은시간</span>
+                    <span id="timerText" class="text-xs sm:text-sm font-black text-red-950 leading-none">60초</span>
+                </div>
 
                 <!-- 1P Score Display -->
                 <div id="p1ScoreBox" class="bg-rose-100 border border-rose-500 rounded-lg px-1 sm:px-1.5 py-0.5 text-center shadow-inner flex items-center gap-1 shrink-0">
@@ -353,6 +360,7 @@
                         <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 찾습니다.</li>
                         <li>올바른 타일을 맞추면 계속해서 다음 재료를 뒤집을 수 있습니다.</li>
                         <li><span class="text-rose-600 font-bold">2인 대결 모드:</span> 틀린 타일을 뒤집으면 카드가 엎어지고 <span class="text-blue-600 font-bold">상대방에게 차례가 넘어갑니다!</span></li>
+                        <li><span class="text-red-600 font-bold">스피드런 모드:</span> 제한 시간(60초) 동안 빠르게 버거를 만드세요! 성공 시 +10초 보너스!</li>
                         <li>버거의 마지막 재료까지 완성시킨 플레이어가 점수를 얻습니다!</li>
                     </ol>
                 </div>
@@ -360,14 +368,14 @@
                 <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
                     <h3 class="font-bold text-amber-900 text-xs sm:text-sm mb-1">1️⃣ 컴퓨팅 사고력: 순차 (Sequence)</h3>
                     <p class="leading-relaxed">
-                        컴퓨터 코딩에서는 명령을 **정해진 순서대로 하나씩 실행**해야 합니다. 순서가 틀리면 햄버거가 완성되지 않듯 코딩에서도 순서가 핵심입니다!
+                        컴퓨터 코딩에서는 명령을 정해진 순서대로 하나씩 실행해야 합니다. 순서가 틀리면 햄버거가 완성되지 않듯 코딩에서도 순서가 핵심입니다!
                     </p>
                 </div>
 
                 <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
                     <h3 class="font-bold text-emerald-900 text-xs sm:text-sm mb-1">2️⃣ 자료구조: 스택 (Stack)</h3>
                     <p class="leading-relaxed">
-                        **'스택(Stack)'**은 아래에서부터 차례차례 쌓아 올리는 자료구조입니다. 제일 나중에 놓은 재료가 가장 위에 놓이게 됩니다 (LIFO).
+                        '스택(Stack)'은 아래에서부터 차례차례 쌓아 올리는 자료구조입니다. 제일 나중에 놓은 재료가 가장 위에 놓이게 됩니다 (LIFO).
                     </p>
                 </div>
             </div>
@@ -466,7 +474,6 @@
 
         const CUSTOMERS = ["🐻 아기곰", "🐰 토끼", "🦊 여우", "🐱 고양이", "🐶 강아지", "🐼 판다"];
 
-        // Responsive Grid Configs with optimized cols/rows
         const DIFFICULTY_SETTINGS = {
             easy:   { recipeLength: 3, gridCount: 8, hints: 4, targetBurgers: 3, cols: 'grid-cols-4 sm:grid-cols-4', rows: 'grid-rows-2' },
             normal: { recipeLength: 4, gridCount: 12, hints: 3, targetBurgers: 5, cols: 'grid-cols-4 sm:grid-cols-6', rows: 'grid-rows-3 sm:grid-rows-2' },
@@ -486,12 +493,24 @@
         let gridTiles = [];
         let isProcessing = false;
 
+        let timerInterval = null;
+        let timeRemaining = 60;
+        const SPEEDRUN_INITIAL_TIME = 60;
+        const SPEEDRUN_BONUS_TIME = 10;
+
         function initGame() {
             p1Score = 0;
             p2Score = 0;
             activePlayer = 1;
             burgerCount = 0;
             
+            stopTimer();
+            if (gameMode === 'speedrun') {
+                timeRemaining = SPEEDRUN_INITIAL_TIME;
+                updateTimerUI();
+                startTimer();
+            }
+
             updateHeaderUI();
             
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
@@ -506,17 +525,27 @@
             const p2ScoreBox = document.getElementById('p2ScoreBox');
             const p1LabelText = document.getElementById('p1LabelText');
             const hintTag = document.getElementById('hintTag');
+            const timerBox = document.getElementById('timerBox');
 
             if (gameMode === 'multi') {
                 modeBadge.textContent = '2인 대결';
                 modeBadge.className = 'text-[8px] sm:text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded-full font-sans font-bold ml-1';
                 p2ScoreBox.classList.remove('hidden');
+                timerBox.classList.add('hidden');
                 p1LabelText.textContent = '1P 점수';
                 if (hintTag) hintTag.classList.add('hidden');
+            } else if (gameMode === 'speedrun') {
+                modeBadge.textContent = '⏱️ 스피드런';
+                modeBadge.className = 'text-[8px] sm:text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded-full font-sans font-bold ml-1';
+                p2ScoreBox.classList.add('hidden');
+                timerBox.classList.remove('hidden');
+                p1LabelText.textContent = '내 점수';
+                if (hintTag) hintTag.classList.remove('hidden');
             } else {
                 modeBadge.textContent = '1인 모드';
                 modeBadge.className = 'text-[8px] sm:text-[10px] bg-amber-700 text-white px-1.5 py-0.5 rounded-full font-sans font-bold ml-1';
                 p2ScoreBox.classList.add('hidden');
+                timerBox.classList.add('hidden');
                 p1LabelText.textContent = '내 점수';
                 if (hintTag) hintTag.classList.remove('hidden');
             }
@@ -529,11 +558,54 @@
             initGame();
         }
 
+        function startTimer() {
+            stopTimer();
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerUI();
+                if (timeRemaining <= 0) {
+                    stopTimer();
+                    onSpeedrunTimeOut();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerUI() {
+            const timerText = document.getElementById('timerText');
+            if (timerText) {
+                timerText.textContent = `${timeRemaining}초`;
+            }
+        }
+
+        function onSpeedrunTimeOut() {
+            sound.playWrong();
+            document.getElementById('finalP1Score').textContent = p1Score;
+            document.getElementById('finalP2ScoreBox').classList.add('hidden');
+            
+            const winnerText = document.getElementById('finalWinnerText');
+            const winnerSubText = document.getElementById('finalWinnerSubText');
+            winnerText.textContent = "⏱️ 시간 종료! (타임아웃)";
+            winnerSubText.textContent = `제한 시간 동안 총 ${burgerCount}개의 버거를 완성했습니다!`;
+
+            let badge = "⏱️ 스피드 입문자";
+            if (p1Score >= 600) badge = "⚡ 번개 같은 버거 마스터";
+            else if (p1Score >= 300) badge = "🔥 스피드 셰프";
+            document.getElementById('badgeText').textContent = badge;
+
+            openModal('clearModal');
+        }
+
         function setupTileGrid(gridCount) {
             let pool = [];
 
             if (gridCount === 8) {
-                // Easy: 8 tiles
                 pool = [
                     INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
                     INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
@@ -541,7 +613,6 @@
                     INGREDIENTS.LETTUCE.id, INGREDIENTS.TOMATO.id
                 ];
             } else if (gridCount === 12) {
-                // Normal: 12 tiles -> Guarantee 2 of each middle ingredient
                 pool = [
                     INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
                     INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
@@ -551,7 +622,6 @@
                     INGREDIENTS.CHICKEN.id, INGREDIENTS.CHICKEN.id
                 ];
             } else {
-                // Hard: 16 tiles -> Guarantee 3 of primary middle ingredients
                 pool = [
                     INGREDIENTS.BOTTOM_BUN.id, INGREDIENTS.TOP_BUN.id,
                     INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id, INGREDIENTS.PATTY.id,
@@ -562,7 +632,6 @@
                 ];
             }
 
-            // Shuffle tile pool using Fisher-Yates algorithm
             for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -587,7 +656,6 @@
             document.getElementById('burgerTitle').textContent = burgerInfo.name;
             document.getElementById('chefHats').textContent = burgerInfo.hats;
 
-            // Count available tiles for each ingredient on the current board
             const tileCounts = {};
             gridTiles.forEach(t => {
                 tileCounts[t.ingredientId] = (tileCounts[t.ingredientId] || 0) + 1;
@@ -600,7 +668,6 @@
 
             const middleCount = config.recipeLength - 2;
             for (let i = 0; i < middleCount; i++) {
-                // Filter middle pool to ingredients whose count in recipe < available count on board
                 const validMiddles = middlePool.filter(ingId => {
                     const inRecipe = recipeCounts[ingId] || 0;
                     const onBoard = tileCounts[ingId] || 0;
@@ -618,13 +685,37 @@
 
             currentStepIndex = 0;
 
-            // Flip tiles back face-down without reshuffling their positions
-            gridTiles.forEach(t => t.isFlipped = false);
+            isProcessing = true;
+            gridTiles.forEach(t => t.isFlipped = true);
 
             renderTileGrid();
             renderRecipeCard();
             renderPlateStack();
-            updateStepInstruction();
+
+            let previewSeconds = 3;
+            const statusMsg = document.getElementById('gameStatusMsg');
+            
+            const updatePreviewStatus = () => {
+                if (statusMsg) {
+                    statusMsg.textContent = `👀 ${previewSeconds}초 동안 타일의 위치를 잘 기억하세요!`;
+                    statusMsg.className = "text-[10px] sm:text-xs lg:text-sm font-bold text-indigo-950 bg-indigo-100 py-0.5 px-2.5 rounded-xl border border-indigo-300 inline-block shadow-xs animate-pulse";
+                }
+            };
+
+            updatePreviewStatus();
+
+            const previewInterval = setInterval(() => {
+                previewSeconds--;
+                if (previewSeconds > 0) {
+                    updatePreviewStatus();
+                } else {
+                    clearInterval(previewInterval);
+                    gridTiles.forEach(t => t.isFlipped = false);
+                    renderTileGrid();
+                    isProcessing = false;
+                    updateStepInstruction();
+                }
+            }, 1000);
         }
 
         function handleTileClick(tileId) {
@@ -640,7 +731,6 @@
             const expectedIngId = currentRecipe[currentStepIndex];
 
             if (tile.ingredientId === expectedIngId) {
-                // Correct match
                 sound.playMatch();
                 currentStepIndex++;
 
@@ -655,7 +745,6 @@
                     }, 400);
                 }
             } else {
-                // Wrong match
                 sound.playWrong();
                 isProcessing = true;
 
@@ -698,12 +787,13 @@
                 const isDone = idx < currentStepIndex;
 
                 const layerGraphic = document.createElement('div');
+                const stepLabel = isDone ? '✓' : (idx + 1) + '단계';
                 layerGraphic.className = `w-full max-w-[180px] sm:max-w-[220px] ${ing.h} ${ing.cardColor} rounded border border-slate-700/40 flex items-center justify-between px-1.5 text-[8px] sm:text-[10px] font-black shadow-xs shrink-0 transition-all ${
                     isDone ? 'opacity-30 line-through' : isCurrent ? 'ring-2 ring-amber-500 scale-102 z-10' : ''
                 }`;
                 layerGraphic.innerHTML = `
                     <span class="flex items-center gap-1"><span class="text-[9px] sm:text-xs">${ing.emoji}</span> ${ing.name}</span>
-                    <span class="text-[7px] sm:text-[8px] font-bold opacity-80">${isDone ? '✓' : `${idx + 1}단계`}</span>
+                    <span class="text-[7px] sm:text-[8px] font-bold opacity-80">${stepLabel}</span>
                 `;
                 graphicEl.appendChild(layerGraphic);
             });
@@ -742,7 +832,6 @@
                 cardInner.id = `card-inner-${tile.id}`;
                 cardInner.className = `card-inner-box shadow-sm ${tile.isFlipped ? 'flipped' : ''}`;
 
-                // Front Face (Waffle Pattern)
                 const cardFront = document.createElement('div');
                 cardFront.className = 'card-face-front waffle-card-back p-0.5 active:scale-95 transition overflow-hidden';
                 cardFront.innerHTML = `
@@ -750,7 +839,6 @@
                     <span class="text-[6px] sm:text-[8px] text-amber-100 font-extrabold mt-0.5 leading-none">스택버거</span>
                 `;
 
-                // Back Face (Revealed Ingredient - Correct orientation)
                 const cardBack = document.createElement('div');
                 cardBack.className = `card-face-back ${ing.cardColor} border p-0.5 text-center overflow-hidden`;
                 cardBack.innerHTML = `
@@ -785,6 +873,9 @@
                         playerBadge.textContent = "🔵 2P 플레이어 차례입니다!";
                         playerBadge.className = "text-[8px] sm:text-[10px] text-blue-950 bg-blue-200 border border-blue-400 px-2 py-0.5 rounded-full font-extrabold shadow-xs";
                     }
+                } else if (gameMode === 'speedrun') {
+                    playerBadge.textContent = "⏱️ 스피드런 진행 중!";
+                    playerBadge.className = "text-[8px] sm:text-[10px] text-red-950 bg-red-200/90 px-2 py-0.5 rounded-full font-bold";
                 } else {
                     playerBadge.textContent = "🧠 컴퓨팅 사고력 수련 중!";
                     playerBadge.className = "text-[8px] sm:text-[10px] text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full font-bold";
@@ -832,7 +923,7 @@
             }, 1000);
         }
 
-        async function setAiTheme(theme) {
+        function setAiTheme(theme) {
             document.getElementById('aiPromptInput').value = theme;
         }
 
@@ -842,17 +933,7 @@
             btn.disabled = true;
             btn.textContent = '✨ AI 손님 주문 구상 중...';
 
-            const systemPrompt = `You are an AI order generator for a kids unplugged coding burger game called 'Stack Burger'. 
-Create a fun customer persona and a 4-ingredient burger recipe.
-Return JSON strictly matching this schema:
-{
-  "customerName": "string with emoji",
-  "burgerTitle": "string",
-  "recipe": ["BOTTOM_BUN", "PATTY", "CHEESE", "TOP_BUN"]
-}
-Available recipe ingredients: BOTTOM_BUN, PATTY, CHEESE, LETTUCE, TOMATO, CHICKEN, TOP_BUN.
-Ensure recipe starts with BOTTOM_BUN and ends with TOP_BUN.
-Language: Korean.`;
+            const systemPrompt = "You are an AI order generator for a kids unplugged coding burger game called 'Stack Burger'.\nCreate a fun customer persona and a 4-ingredient burger recipe.\nReturn JSON strictly matching this schema:\n{\n  \"customerName\": \"string with emoji\",\n  \"burgerTitle\": \"string\",\n  \"recipe\": [\"BOTTOM_BUN\", \"PATTY\", \"CHEESE\", \"TOP_BUN\"]\n}\nAvailable recipe ingredients: BOTTOM_BUN, PATTY, CHEESE, LETTUCE, TOMATO, CHICKEN, TOP_BUN.\nEnsure recipe starts with BOTTOM_BUN and ends with TOP_BUN.\nLanguage: Korean.";
 
             const userQuery = `Create a customer order for theme: ${promptInput}`;
             const apiKey = "";
@@ -874,16 +955,25 @@ Language: Korean.`;
                 const data = await response.json();
                 const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (jsonText) {
-                    const orderData = JSON.parse(jsonText);
-                    document.getElementById('customerTag').textContent = orderData.customerName || `🤖 ${promptInput}`;
-                    document.getElementById('burgerTitle').textContent = orderData.burgerTitle || "AI 스페셜 버거";
-                    
-                    if (Array.isArray(orderData.recipe) && orderData.recipe.length >= 3) {
-                        currentRecipe = orderData.recipe;
-                        currentStepIndex = 0;
-                        renderRecipeCard();
-                        renderPlateStack();
-                        updateStepInstruction();
+                    let orderData = null;
+                    try {
+                        orderData = JSON.parse(jsonText);
+                    } catch (parseErr) {
+                        const cleanJson = jsonText.replace(/`{3}json|`{3}/gi, '').trim();
+                        orderData = JSON.parse(cleanJson);
+                    }
+
+                    if (orderData) {
+                        document.getElementById('customerTag').textContent = orderData.customerName || `🤖 ${promptInput}`;
+                        document.getElementById('burgerTitle').textContent = orderData.burgerTitle || "AI 스페셜 버거";
+                        
+                        if (Array.isArray(orderData.recipe) && orderData.recipe.length >= 3) {
+                            currentRecipe = orderData.recipe;
+                            currentStepIndex = 0;
+                            renderRecipeCard();
+                            renderPlateStack();
+                            updateStepInstruction();
+                        }
                     }
                     closeModal('aiModal');
                 }
@@ -913,12 +1003,18 @@ Language: Korean.`;
                 p1Score += 100;
             }
 
+            if (gameMode === 'speedrun') {
+                timeRemaining += SPEEDRUN_BONUS_TIME;
+                updateTimerUI();
+            }
+
             burgerCount++;
             updateHeaderUI();
 
             const config = DIFFICULTY_SETTINGS[currentDifficulty];
 
-            if (burgerCount >= config.targetBurgers) {
+            if (gameMode !== 'speedrun' && burgerCount >= config.targetBurgers) {
+                stopTimer();
                 document.getElementById('finalP1Score').textContent = p1Score;
                 document.getElementById('finalP2Score').textContent = p2Score;
 
@@ -960,6 +1056,10 @@ Language: Korean.`;
                     titleEl.textContent = `${activePlayer}P 버거 완성!`;
                     descEl.textContent = `${activePlayer}P 플레이어가 완벽하게 버거를 만들어 100점을 획득했습니다!`;
                     p2Row.classList.remove('hidden');
+                } else if (gameMode === 'speedrun') {
+                    titleEl.textContent = "⚡ 버거 완성 (+10초 보너스)!";
+                    descEl.textContent = "스피드런 보너스 시간을 획득했습니다!";
+                    p2Row.classList.add('hidden');
                 } else {
                     titleEl.textContent = "버거 완성!";
                     descEl.textContent = "레시피 순서대로 완벽하게 만들었습니다!";
