@@ -1,1 +1,882 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍿 언플러그드 이진수 팝콘 게임 (수업용)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Jua', 'Gothic A1', sans-serif;
+            background-color: #fefce8;
+            user-select: none;
+            overflow: hidden;
+        }
 
+        /* Robust 3D Card Flip Styling with cross-browser backface fix */
+        .perspective-1000 {
+            perspective: 1000px;
+            -webkit-perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .card-front {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #f8fafc;
+            border: 2px solid #475569;
+            transform: rotateY(0deg);
+            -webkit-transform: rotateY(0deg);
+            z-index: 2;
+            opacity: 1;
+            visibility: visible;
+        }
+        .card-back {
+            background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+            color: #ffffff;
+            border: 2px solid #22c55e;
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+            z-index: 1;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .card-inner.flipped .card-front {
+            z-index: 1;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .card-inner.flipped .card-back {
+            z-index: 2;
+            opacity: 1;
+            visibility: visible;
+        }
+        .card-back.zero {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            border: 2px solid #64748b;
+            color: #94a3b8;
+        }
+
+        /* Popcorn bounce animation */
+        @keyframes popUp {
+            0% { transform: scale(0.3) translateY(40px) rotate(-10deg); opacity: 0; }
+            60% { transform: scale(1.08) translateY(-8px) rotate(4deg); opacity: 1; }
+            80% { transform: scale(0.96) translateY(2px) rotate(-1deg); }
+            100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+        }
+        .animate-pop-up {
+            animation: popUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Custom scrollbar for scoreboard list */
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between text-slate-800 bg-amber-50 selection:bg-amber-200">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white shadow-md py-2 px-4 flex-shrink-0 z-30">
+        <div class="max-w-7xl mx-auto flex justify-between items-center gap-2">
+            <div class="flex items-center space-x-2 shrink-0">
+                <div class="bg-white p-1 rounded-xl shadow-inner text-lg md:text-xl">🍿</div>
+                <div>
+                    <h1 class="text-base md:text-lg font-black tracking-wide leading-none whitespace-nowrap">이진수 팝콘 게임</h1>
+                    <p class="text-[10px] text-amber-100 font-sans font-medium hidden sm:block">초등학교 언플러그드 코딩 수업용</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector & Controls -->
+            <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
+                <div class="bg-amber-600/60 p-1 rounded-xl flex items-center space-x-1 border border-amber-300/40">
+                    <button id="modeCheese" onclick="setGameMode('cheese')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap">
+                        🧀 치즈(1~60)
+                    </button>
+                    <button id="modeCaramel" onclick="setGameMode('caramel')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
+                        🍯 카라멜(61~120)
+                    </button>
+                    <button id="modeFree" onclick="setGameMode('free')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
+                        🎲 자유(1~127)
+                    </button>
+                </div>
+
+                <button onclick="toggleSound()" id="soundBtn" class="bg-amber-600 hover:bg-amber-700 text-white p-1.5 rounded-lg shadow transition border border-amber-400/40 text-xs font-bold whitespace-nowrap shrink-0" title="음소거 토글">
+                    🔊
+                </button>
+                <button onclick="openHelpModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold shadow transition border border-amber-400/40 whitespace-nowrap shrink-0">
+                    ❓ 안내
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Classroom Display Container -->
+    <main class="flex-1 w-full max-w-7xl mx-auto p-2 md:p-3 flex flex-col justify-between min-h-0 gap-2 overflow-hidden">
+
+        <!-- Top Stage: Timer, Popcorn Bag, and Scoreboard -->
+        <div class="grid grid-cols-12 gap-2 md:gap-3 items-stretch flex-1 min-h-0">
+            
+            <!-- Left Panel: Classroom Controls & Timer -->
+            <div class="col-span-3 bg-white p-2.5 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-slate-500 text-xs font-bold flex items-center gap-1 whitespace-nowrap">⏱️ 생각 시간</span>
+                        <span id="timerDisplay" class="text-lg md:text-xl font-black text-amber-600 font-mono whitespace-nowrap">00:30</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 mb-2">
+                        <button onclick="setTimer(15)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">15초</button>
+                        <button onclick="setTimer(30)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">30초</button>
+                        <button onclick="setTimer(60)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">60초</button>
+                    </div>
+                    <div class="flex gap-1">
+                        <button id="startTimerBtn" onclick="toggleTimer()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-1.5 rounded-lg text-xs font-bold shadow transition whitespace-nowrap">
+                            ▶️ 시작
+                        </button>
+                        <button onclick="resetTimer()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition shrink-0 whitespace-nowrap">
+                            🔄
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-1.5 border-t border-slate-100">
+                    <div class="text-[10px] text-slate-400 font-medium">범위 안내</div>
+                    <div id="rangeDescription" class="text-xs font-bold text-slate-700 truncate">치즈맛: 1 ~ 60</div>
+                </div>
+            </div>
+
+            <!-- Center Stage: Animated Popcorn Bag & Popped Number -->
+            <div class="col-span-5 flex flex-col items-center justify-center relative bg-white/70 rounded-2xl p-2 border border-amber-200/80 shadow-inner overflow-hidden">
+                
+                <!-- Popcorn Popping Canvas Overlay -->
+                <canvas id="popcornCanvas" class="absolute inset-0 pointer-events-none z-20 w-full h-full"></canvas>
+
+                <!-- Popcorn Machine / Bag Display -->
+                <div class="relative flex flex-col items-center justify-center my-auto">
+                    
+                    <!-- Main Popcorn Display Badge -->
+                    <div id="popcornTargetBox" class="relative z-10 cursor-pointer my-1" onclick="popNewNumber()">
+                        <div id="popcornBadge" class="hidden animate-pop-up bg-amber-100 border-4 border-amber-400 rounded-full w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center shadow-xl relative overflow-hidden">
+                            <div class="absolute top-1 text-xl md:text-2xl opacity-80">🍿</div>
+                            <span class="text-slate-500 text-[10px] md:text-xs font-bold whitespace-nowrap">팝콘 속 십진수</span>
+                            <span id="targetDecimalText" class="text-3xl md:text-4xl font-black text-red-600 tracking-tight drop-shadow my-0.5">--</span>
+                            <span id="popcornFlavorLabel" class="px-2 py-0.5 bg-amber-300 text-amber-900 rounded-full text-[10px] font-bold whitespace-nowrap">치즈맛</span>
+                        </div>
+
+                        <!-- Initial Idle Placeholder -->
+                        <div id="popcornPlaceholder" class="bg-white border-2 border-dashed border-amber-300 rounded-full w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center p-2 text-center shadow-inner hover:border-amber-400 transition">
+                            <span class="text-2xl md:text-3xl mb-1 animate-bounce">🍿</span>
+                            <span class="text-amber-800 font-bold text-xs md:text-sm whitespace-nowrap">팝콘 튀기기!</span>
+                            <span class="text-amber-500 text-[10px] whitespace-nowrap">버튼을 누르세요</span>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Action Button -->
+                    <button id="popBtn" onclick="popNewNumber()" class="mt-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm md:text-base px-5 py-1.5 rounded-2xl shadow-md transform hover:scale-105 transition-all border-b-2 border-orange-700 flex items-center gap-1.5 whitespace-nowrap">
+                        <span>🍿</span>
+                        <span>팝콘 튀기기!</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Classroom Dynamic Scoreboard -->
+            <div class="col-span-4 bg-white p-2.5 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2 gap-1 border-b border-slate-100 pb-1.5">
+                            <h3 class="text-xs md:text-sm font-black text-slate-800 whitespace-nowrap shrink-0 flex items-center gap-1">
+                                <span>🏆</span> <span>모둠 점수판</span>
+                            </h3>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="addTeam()" class="bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold shadow transition whitespace-nowrap" title="모둠 추가">
+                                    + 모둠
+                                </button>
+                                <button onclick="removeTeam()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap" title="모둠 삭제">
+                                    - 모둠
+                                </button>
+                                <button onclick="resetScores()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap shrink-0" title="점수 초기화">
+                                    초기화
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="scoreboardList" class="space-y-1.5 max-h-36 md:max-h-44 overflow-y-auto pr-0.5 custom-scroll">
+                            <!-- Dynamic team items will be rendered by JS -->
+                        </div>
+                    </div>
+
+                    <div class="text-[10px] text-slate-400 text-center pt-1 border-t border-slate-100 whitespace-nowrap">
+                        클릭하여 모둠 점수 관리
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section: Binary Cards Area -->
+        <div class="bg-white p-2.5 md:p-3 rounded-2xl shadow-xl border-2 border-amber-300 flex-shrink-0 flex flex-col justify-between">
+            
+            <div class="flex justify-between items-center mb-1.5 gap-2">
+                <div class="shrink-0">
+                    <h2 class="text-sm md:text-base font-black text-slate-800 flex items-center gap-1.5 whitespace-nowrap">
+                        <span>🎴 이진수 카드 (64, 32, 16, 8, 4, 2, 1)</span>
+                    </h2>
+                </div>
+
+                <!-- Answer Reveal Actions -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="revealBtn" onclick="revealAnswer()" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-black text-xs md:text-sm px-3.5 py-1 rounded-xl shadow transition-all border-b-2 border-emerald-800 disabled:border-slate-400 flex items-center gap-1 whitespace-nowrap">
+                        <span>🔓 정답 뒤집기</span>
+                    </button>
+                    <button id="explanationBtn" onclick="openExplanationModal()" disabled class="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-300 text-white font-bold text-xs px-2.5 py-1 rounded-xl shadow transition whitespace-nowrap">
+                        💡 풀이
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards Grid: 7 Bits (64, 32, 16, 8, 4, 2, 1) -->
+            <div id="cardsGrid" class="grid grid-cols-7 gap-1.5 md:gap-2.5 max-w-5xl mx-auto w-full py-0.5">
+                <!-- Cards will be generated dynamically by JavaScript -->
+            </div>
+
+            <!-- Live Calculation & Answer Bar -->
+            <div class="mt-1.5 p-1.5 px-3 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center text-xs">
+                <div class="flex items-center space-x-2 text-slate-700 whitespace-nowrap">
+                    <span class="font-bold">선택 카드 합계:</span>
+                    <span id="studentSumText" class="text-base md:text-lg font-black text-amber-700">0</span>
+                </div>
+                <div id="matchStatusBadge" class="hidden px-2.5 py-0.5 rounded-full font-bold text-xs whitespace-nowrap">
+                    <!-- Target Match Status -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Compact Footer -->
+    <footer class="bg-amber-100 border-t border-amber-200 py-1 text-center text-[10px] text-amber-800 font-sans flex-shrink-0 whitespace-nowrap">
+        초등 언플러그드 이진수 팝콘 게임 | 단일 화면 모드
+    </footer>
+
+    <!-- Explanation Modal -->
+    <div id="explanationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-400 relative animate-pop-up">
+            <button onclick="closeExplanationModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
+            <div class="text-center mb-4">
+                <div class="inline-block p-2 bg-amber-100 rounded-2xl text-2xl mb-1">💡</div>
+                <h3 class="text-xl font-black text-slate-800">이진수 변환 풀이</h3>
+                <p id="modalDecimalSubtitle" class="text-amber-700 font-bold text-base mt-1">십진수 00 = 이진수 0000000</p>
+            </div>
+
+            <div class="space-y-3 text-slate-700 font-sans">
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <div class="text-xs font-bold text-amber-800 mb-1">카드의 자릿값 덧셈</div>
+                    <div id="modalFormulaText" class="text-base font-black text-slate-800 font-mono">
+                        <!-- Formula string -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <div class="text-xs font-bold text-slate-600 mb-2">자리별 카드 상태 (1: 켜짐, 0: 꺼짐)</div>
+                    <div id="modalBitBreakdown" class="grid grid-cols-7 gap-1 text-center font-mono font-bold text-xs">
+                        <!-- Bit breakdown cards -->
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeExplanationModal()" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- How To Play Modal -->
+    <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-400 relative">
+            <button onclick="closeHelpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
+            <h3 class="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                <span>🍿</span> <span>수업 진행 안내</span>
+            </h3>
+
+            <div class="space-y-3 text-slate-700 text-xs md:text-sm leading-relaxed font-sans">
+                <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <h4 class="font-bold text-amber-900 mb-0.5">🎯 수업 목적</h4>
+                    <p class="text-amber-800">
+                        컴퓨터가 0과 1로 숫자를 표현하는 원리(이진법)를 팝콘 게임을 통해 배웁니다.
+                    </p>
+                </div>
+
+                <ol class="list-decimal list-inside space-y-1.5 font-medium">
+                    <li><strong class="text-amber-700">모드 선택:</strong> 치즈맛(1~60) 또는 카라멜맛(61~120)을 선택합니다.</li>
+                    <li><strong class="text-amber-700">팝콘 튀기기:</strong> 선생님이 <span class="text-orange-600 font-bold">[팝콘 튀기기 🍿]</span> 버튼을 누르면 팝콘 속 십진수가 등장합니다.</li>
+                    <li><strong class="text-amber-700">학생 활동:</strong> 학생들은 이진수 카드(64, 32, 16, 8, 4, 2, 1)로 십진수를 만듭니다.</li>
+                    <li><strong class="text-amber-700">정답 공개:</strong> <span class="text-emerald-600 font-bold">[정답 뒤집기 🔓]</span> 버튼을 누르면 카드가 뒤집히며 정답이 공개됩니다.</li>
+                </ol>
+            </div>
+
+            <button onclick="closeHelpModal()" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio Synthesizer for game sound effects without external files
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            playPop() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+
+                gain.gain.setValueAtTime(0.6, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.09);
+            }
+
+            playFlip() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.06);
+            }
+
+            playFanfare() {
+                if (!this.enabled) return;
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const now = this.ctx.currentTime + (idx * 0.1);
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                });
+            }
+        }
+
+        const sfx = new SoundFX();
+
+        // Game State Variables
+        const BIT_VALUES = [64, 32, 16, 8, 4, 2, 1];
+        let currentMode = 'cheese'; // 'cheese' (1-60), 'caramel' (61-120), 'free' (1-127)
+        let targetDecimal = null;
+        let isRevealed = false;
+        let userBits = [0, 0, 0, 0, 0, 0, 0];
+        
+        // Dynamic Scoreboard Teams State
+        let teams = [
+            { id: 1, name: '1모둠', score: 0 },
+            { id: 2, name: '2모둠', score: 0 },
+            { id: 3, name: '3모둠', score: 0 },
+            { id: 4, name: '4모둠', score: 0 }
+        ];
+
+        // Timer Variables
+        let timerSeconds = 30;
+        let timerInitial = 30;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // Initialize UI
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCards();
+            renderScoreboard();
+            setupCanvas();
+        });
+
+        function toggleSound() {
+            sfx.enabled = !sfx.enabled;
+            const btn = document.getElementById('soundBtn');
+            btn.innerText = sfx.enabled ? '🔊' : '🔇';
+        }
+
+        function setGameMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeCheese').className = mode === 'cheese' ? 'px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap' : 'px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap';
+            document.getElementById('modeCaramel').className = mode === 'caramel' ? 'px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap' : 'px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap';
+            document.getElementById('modeFree').className = mode === 'free' ? 'px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap' : 'px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap';
+
+            const desc = document.getElementById('rangeDescription');
+            const flavorLabel = document.getElementById('popcornFlavorLabel');
+
+            if (mode === 'cheese') {
+                desc.innerText = '치즈맛: 1 ~ 60 (이진수 카드 32까지 사용)';
+                flavorLabel.innerText = '치즈맛';
+                flavorLabel.className = 'px-2 py-0.5 bg-amber-300 text-amber-900 rounded-full text-[10px] font-bold whitespace-nowrap';
+            } else if (mode === 'caramel') {
+                desc.innerText = '카라멜맛: 61 ~ 120 (이진수 카드 64까지 사용)';
+                flavorLabel.innerText = '카라멜맛';
+                flavorLabel.className = 'px-2 py-0.5 bg-amber-800 text-amber-100 rounded-full text-[10px] font-bold whitespace-nowrap';
+            } else {
+                desc.innerText = '자유 모드: 1 ~ 127 (모든 카드 사용)';
+                flavorLabel.innerText = '자유모드';
+                flavorLabel.className = 'px-2 py-0.5 bg-purple-600 text-white rounded-full text-[10px] font-bold whitespace-nowrap';
+            }
+        }
+
+        // Pop popcorn & generate target decimal
+        function popNewNumber() {
+            sfx.playPop();
+            triggerPopcornParticles();
+
+            // Reset Timer if configured
+            resetTimer();
+
+            let min = 1, max = 60;
+            if (currentMode === 'caramel') {
+                min = 61; max = 120;
+            } else if (currentMode === 'free') {
+                min = 1; max = 127;
+            }
+
+            targetDecimal = Math.floor(Math.random() * (max - min + 1)) + min;
+            isRevealed = false;
+            userBits = [0, 0, 0, 0, 0, 0, 0];
+
+            // UI Update
+            document.getElementById('popcornPlaceholder').classList.add('hidden');
+            const badge = document.getElementById('popcornBadge');
+            badge.classList.remove('hidden', 'animate-pop-up');
+            void badge.offsetWidth; // Trigger reflow for animation reset
+            badge.classList.add('animate-pop-up');
+
+            document.getElementById('targetDecimalText').innerText = targetDecimal;
+
+            document.getElementById('revealBtn').disabled = false;
+            document.getElementById('explanationBtn').disabled = true;
+
+            renderCards();
+            updateLiveSum();
+        }
+
+        // Render Cards HTML
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+
+            const targetBinary = targetDecimal !== null ? targetDecimal.toString(2).padStart(7, '0') : null;
+
+            BIT_VALUES.forEach((val, idx) => {
+                const isBitOne = targetBinary ? targetBinary[idx] === '1' : false;
+                const userVal = userBits[idx];
+
+                // Card Column
+                const cardCol = document.createElement('div');
+                cardCol.className = 'flex flex-col items-center space-y-1 w-full';
+
+                // Top Value Header
+                const valHeader = document.createElement('div');
+                valHeader.className = 'text-[10px] md:text-xs font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200 whitespace-nowrap';
+                valHeader.innerText = val;
+
+                // 3D Card Element
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'w-full h-16 sm:h-20 md:h-24 perspective-1000 cursor-pointer';
+                cardContainer.onclick = () => toggleUserCard(idx);
+
+                const cardInner = document.createElement('div');
+                cardInner.id = `cardInner-${idx}`;
+                cardInner.className = `card-inner ${isRevealed ? 'flipped' : ''}`;
+
+                // Front Side (User manual guess mode)
+                const front = document.createElement('div');
+                front.className = 'card-front';
+                front.innerHTML = `
+                    <span class="text-[9px] text-slate-400 font-sans mb-0.5 whitespace-nowrap">${val}</span>
+                    <span class="text-xl md:text-3xl font-black text-amber-400 font-mono leading-none">${userVal}</span>
+                    <span class="text-[8px] md:text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">클릭</span>
+                `;
+
+                // Back Side (Revealed Answer)
+                const back = document.createElement('div');
+                back.className = `card-back ${isBitOne ? '' : 'zero'}`;
+                back.innerHTML = `
+                    <span class="text-[9px] text-amber-200/80 font-sans mb-0.5 whitespace-nowrap">${val}</span>
+                    <span class="text-xl md:text-3xl font-black font-mono leading-none">${isBitOne ? '1' : '0'}</span>
+                    <span class="text-[8px] md:text-[9px] opacity-75 mt-0.5 whitespace-nowrap">${isBitOne ? 'ON' : 'OFF'}</span>
+                `;
+
+                cardInner.appendChild(front);
+                cardInner.appendChild(back);
+                cardContainer.appendChild(cardInner);
+
+                cardCol.appendChild(valHeader);
+                cardCol.appendChild(cardContainer);
+
+                grid.appendChild(cardCol);
+            });
+        }
+
+        // Toggle user card bit manually
+        function toggleUserCard(index) {
+            if (isRevealed) return; // Locked once answer is revealed
+            userBits[index] = userBits[index] === 0 ? 1 : 0;
+            sfx.playFlip();
+            renderCards();
+            updateLiveSum();
+        }
+
+        // Update live user calculation sum
+        function updateLiveSum() {
+            let sum = 0;
+            userBits.forEach((bit, i) => {
+                if (bit === 1) sum += BIT_VALUES[i];
+            });
+
+            document.getElementById('studentSumText').innerText = sum;
+
+            const badge = document.getElementById('matchStatusBadge');
+            if (targetDecimal === null) {
+                badge.className = 'hidden';
+                return;
+            }
+
+            badge.classList.remove('hidden');
+            if (sum === targetDecimal) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 animate-pulse whitespace-nowrap';
+                badge.innerText = '🎯 목표 수치 일치!';
+            } else {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap';
+                badge.innerText = `차이: ${targetDecimal - sum > 0 ? '+' : ''}${targetDecimal - sum}`;
+            }
+        }
+
+        // Reveal answer with staggered 3D card flips
+        function revealAnswer() {
+            if (targetDecimal === null || isRevealed) return;
+
+            isRevealed = true;
+            document.getElementById('revealBtn').disabled = true;
+            document.getElementById('explanationBtn').disabled = false;
+
+            // Staggered flip animation for 7 cards
+            BIT_VALUES.forEach((_, idx) => {
+                setTimeout(() => {
+                    const cardInner = document.getElementById(`cardInner-${idx}`);
+                    if (cardInner) {
+                        cardInner.classList.add('flipped');
+                        sfx.playFlip();
+                    }
+                }, idx * 100);
+            });
+
+            // Play fanfare sound & celebration confetti after all cards flip
+            setTimeout(() => {
+                sfx.playFanfare();
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: { y: 0.8 }
+                    });
+                }
+            }, BIT_VALUES.length * 100 + 80);
+        }
+
+        // Canvas Popcorn Explosion Animation
+        let canvas, ctx;
+        let particles = [];
+
+        function setupCanvas() {
+            canvas = document.getElementById('popcornCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        function triggerPopcornParticles() {
+            if (!canvas) return;
+            particles = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 20;
+
+            for (let i = 0; i < 28; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 7 + 3;
+                particles.push({
+                    x: centerX,
+                    y: centerY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 4,
+                    size: Math.random() * 10 + 8,
+                    rotation: Math.random() * Math.PI,
+                    vRot: (Math.random() - 0.5) * 0.2,
+                    opacity: 1
+                });
+            }
+
+            requestAnimationFrame(updateParticles);
+        }
+
+        function updateParticles() {
+            if (!ctx || particles.length === 0) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.25; // Gravity
+                p.rotation += p.vRot;
+                p.opacity -= 0.018;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.globalAlpha = Math.max(0, p.opacity);
+
+                // Draw popcorn shape
+                ctx.fillStyle = '#fef08a';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-p.size / 4, -p.size / 4, p.size / 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            });
+
+            particles = particles.filter(p => p.opacity > 0);
+            if (particles.length > 0) {
+                requestAnimationFrame(updateParticles);
+            }
+        }
+
+        // Scoreboard Functions (Dynamic Teams)
+        function renderScoreboard() {
+            const container = document.getElementById('scoreboardList');
+            if (!container) return;
+
+            container.innerHTML = '';
+            teams.forEach((team) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between bg-amber-50 p-1 md:p-1.5 rounded-xl border border-amber-200 text-xs';
+                item.innerHTML = `
+                    <span class="font-bold text-slate-700 whitespace-nowrap text-xs shrink-0">${team.name}</span>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="changeScore(${team.id}, -1)" class="w-4 h-4 md:w-5 md:h-5 bg-white rounded shadow text-xs font-black text-amber-700 hover:bg-amber-100 flex items-center justify-center shrink-0">-</button>
+                        <span class="font-black text-xs md:text-sm w-4 text-center text-orange-600 shrink-0">${team.score}</span>
+                        <button onclick="changeScore(${team.id}, 1)" class="w-4 h-4 md:w-5 md:h-5 bg-orange-500 text-white rounded shadow text-xs font-black hover:bg-orange-600 flex items-center justify-center shrink-0">+</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addTeam() {
+            if (teams.length >= 8) return; // Prevent excessive height
+            const nextId = teams.length > 0 ? Math.max(...teams.map(t => t.id)) + 1 : 1;
+            teams.push({ id: nextId, name: `${teams.length + 1}모둠`, score: 0 });
+            renderScoreboard();
+            sfx.playFlip();
+        }
+
+        function removeTeam() {
+            if (teams.length <= 1) return; // Maintain at least 1 team
+            teams.pop();
+            renderScoreboard();
+            sfx.playFlip();
+        }
+
+        function changeScore(teamId, delta) {
+            const team = teams.find(t => t.id === teamId);
+            if (team) {
+                team.score = Math.max(0, team.score + delta);
+                renderScoreboard();
+                sfx.playFlip();
+            }
+        }
+
+        function resetScores() {
+            teams.forEach(t => t.score = 0);
+            renderScoreboard();
+            sfx.playFlip();
+        }
+
+        // Timer Functions
+        function setTimer(sec) {
+            timerSeconds = sec;
+            timerInitial = sec;
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const secs = (timerSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                document.getElementById('startTimerBtn').innerText = '▶️ 시작';
+            } else {
+                if (timerSeconds <= 0) timerSeconds = timerInitial;
+                isTimerRunning = true;
+                document.getElementById('startTimerBtn').innerText = '⏸️ 일시 정지';
+
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    updateTimerDisplay();
+
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        document.getElementById('startTimerBtn').innerText = '▶️ 시작';
+                        sfx.playFanfare();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerSeconds = timerInitial;
+            updateTimerDisplay();
+            document.getElementById('startTimerBtn').innerText = '▶️ 시작';
+        }
+
+        // Explanation Modal
+        function openExplanationModal() {
+            if (targetDecimal === null) return;
+
+            const binaryStr = targetDecimal.toString(2).padStart(7, '0');
+            document.getElementById('modalDecimalSubtitle').innerText = `십진수 ${targetDecimal} = 이진수 ${binaryStr}`;
+
+            // Build formula string (e.g. 64 + 16 + 8 + 2 = 90)
+            const activeTerms = [];
+            BIT_VALUES.forEach((val, idx) => {
+                if (binaryStr[idx] === '1') {
+                    activeTerms.push(val);
+                }
+            });
+
+            const formulaStr = activeTerms.length > 0 ? `${activeTerms.join(' + ')} = ${targetDecimal}` : `0 = ${targetDecimal}`;
+            document.getElementById('modalFormulaText').innerText = formulaStr;
+
+            // Build Bit Breakdown Grid
+            const breakdownGrid = document.getElementById('modalBitBreakdown');
+            breakdownGrid.innerHTML = '';
+
+            BIT_VALUES.forEach((val, idx) => {
+                const isOne = binaryStr[idx] === '1';
+                const col = document.createElement('div');
+                col.className = `p-2 rounded-xl border ${isOne ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-slate-100 border-slate-200 text-slate-400'}`;
+                col.innerHTML = `
+                    <div class="text-[10px] text-slate-500">${val}</div>
+                    <div class="text-base font-black">${isOne ? '1' : '0'}</div>
+                `;
+                breakdownGrid.appendChild(col);
+            });
+
+            document.getElementById('explanationModal').classList.remove('hidden');
+        }
+
+        function closeExplanationModal() {
+            document.getElementById('explanationModal').classList.add('hidden');
+        }
+
+        function openHelpModal() {
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+
+        function closeHelpModal() {
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
