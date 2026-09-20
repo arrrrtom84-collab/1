@@ -47,7 +47,11 @@
             border-color: #0284c7 !important;
             border-bottom-width: 1px !important;
             transform: translateY(2px);
-            box-shadow: 0 0 10px rgba(14, 165, 233, 0.6) !important;
+            box-shadow: 0 0 12px rgba(14, 165, 233, 0.7) !important;
+        }
+
+        .key-cap.active-press .key-label {
+            color: #ffffff !important;
         }
 
         .order-badge {
@@ -59,7 +63,7 @@
             font-size: 13px;
             font-weight: 900;
             line-height: 1;
-            padding: 1px 4px;
+            padding: 1px 5px;
             border-radius: 9999px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             border: 1.5px solid #ffffff;
@@ -71,17 +75,6 @@
         @keyframes badge-pop {
             0% { transform: scale(0); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
-        }
-
-        .key-cap.target-key {
-            border-color: #2ec4b6;
-            box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.4), 0 2px 4px rgba(0,0,0,0.1);
-            animation: pulse-border 1.2s infinite alternate;
-        }
-
-        @keyframes pulse-border {
-            0% { transform: scale(1); box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.4); }
-            100% { transform: scale(1.03); box-shadow: 0 0 0 5px rgba(46, 196, 182, 0.7); }
         }
     </style>
 </head>
@@ -121,7 +114,7 @@
     <!-- MAIN DEMO STAGE -->
     <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-evenly gap-2 my-auto overflow-hidden">
 
-        <!-- Real-time Analysis Section (Enlarged) -->
+        <!-- Real-time Analysis Section -->
         <section class="w-full flex flex-col items-center justify-center shrink-0 my-1">
             <div class="w-full max-w-4xl bg-white/95 rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-teal-200 flex flex-col items-center justify-center gap-3">
                 <div class="flex items-center justify-between w-full border-b border-gray-100 pb-2 px-2">
@@ -177,16 +170,16 @@
                 <!-- Row 2: Q W E R T Y U I O P -->
                 <div class="flex gap-1 w-full">
                     <button data-key="Tab" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Tab</button>
-                    <button data-key="KeyQ" data-kor="ㅂ" data-shift-kor="ㅃ" data-eng="Q" onclick="handleKeyCapClick('KeyQ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅂ</span></button>
-                    <button data-key="KeyW" data-kor="ㅈ" data-shift-kor="ㅉ" data-eng="W" onclick="handleKeyCapClick('KeyW')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅈ</span></button>
-                    <button data-key="KeyE" data-kor="ㄷ" data-shift-kor="ㄸ" data-eng="E" onclick="handleKeyCapClick('KeyE')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄷ</span></button>
-                    <button data-key="KeyR" data-kor="ㄱ" data-shift-kor="ㄲ" data-eng="R" onclick="handleKeyCapClick('KeyR')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄱ</span></button>
-                    <button data-key="KeyT" data-kor="ㅅ" data-shift-kor="ㅆ" data-eng="T" onclick="handleKeyCapClick('KeyT')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅅ</span></button>
-                    <button data-key="KeyY" data-kor="ㅛ" data-eng="Y" onclick="handleKeyCapClick('KeyY')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅛ</span></button>
-                    <button data-key="KeyU" data-kor="ㅕ" data-eng="U" onclick="handleKeyCapClick('KeyU')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅕ</span></button>
-                    <button data-key="KeyI" data-kor="ㅑ" data-eng="I" onclick="handleKeyCapClick('KeyI')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅑ</span></button>
-                    <button data-key="KeyO" data-kor="ㅐ" data-shift-kor="ㅒ" data-eng="O" onclick="handleKeyCapClick('KeyO')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅐ</span></button>
-                    <button data-key="KeyP" data-kor="ㅔ" data-shift-kor="ㅖ" data-eng="P" onclick="handleKeyCapClick('KeyP')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅔ</span></button>
+                    <button data-key="KeyQ" data-kor="ㅂ" data-shift-kor="ㅃ" data-eng="q" onclick="handleKeyCapClick('KeyQ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅂ</span></button>
+                    <button data-key="KeyW" data-kor="ㅈ" data-shift-kor="ㅉ" data-eng="w" onclick="handleKeyCapClick('KeyW')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅈ</span></button>
+                    <button data-key="KeyE" data-kor="ㄷ" data-shift-kor="ㄸ" data-eng="e" onclick="handleKeyCapClick('KeyE')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄷ</span></button>
+                    <button data-key="KeyR" data-kor="ㄱ" data-shift-kor="ㄲ" data-eng="r" onclick="handleKeyCapClick('KeyR')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄱ</span></button>
+                    <button data-key="KeyT" data-kor="ㅅ" data-shift-kor="ㅆ" data-eng="t" onclick="handleKeyCapClick('KeyT')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅅ</span></button>
+                    <button data-key="KeyY" data-kor="ㅛ" data-eng="y" onclick="handleKeyCapClick('KeyY')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅛ</span></button>
+                    <button data-key="KeyU" data-kor="ㅕ" data-eng="u" onclick="handleKeyCapClick('KeyU')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅕ</span></button>
+                    <button data-key="KeyI" data-kor="ㅑ" data-eng="i" onclick="handleKeyCapClick('KeyI')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅑ</span></button>
+                    <button data-key="KeyO" data-kor="ㅐ" data-shift-kor="ㅒ" data-eng="o" onclick="handleKeyCapClick('KeyO')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅐ</span></button>
+                    <button data-key="KeyP" data-kor="ㅔ" data-shift-kor="ㅖ" data-eng="p" onclick="handleKeyCapClick('KeyP')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅔ</span></button>
                     <button data-key="BracketLeft" data-char="[" data-shift-char="{" onclick="handleKeyCapClick('BracketLeft')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>{</span><span class="text-[9px] text-gray-400">[</span></button>
                     <button data-key="BracketRight" data-char="]" data-shift-char="}" onclick="handleKeyCapClick('BracketRight')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>}</span><span class="text-[9px] text-gray-400">]</span></button>
                     <button data-key="Backslash" data-char="\" data-shift-char="|" onclick="handleKeyCapClick('Backslash')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>|</span><span class="text-[9px] text-gray-400">\</span></button>
@@ -195,15 +188,15 @@
                 <!-- Row 3: Home Row (A S D F G H J K L) -->
                 <div class="flex gap-1 w-full">
                     <button data-key="CapsLock" class="key-cap w-12 sm:w-16 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Caps</button>
-                    <button data-key="KeyA" data-kor="ㅁ" data-eng="A" onclick="handleKeyCapClick('KeyA')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅁ</span></button>
-                    <button data-key="KeyS" data-kor="ㄴ" data-eng="S" onclick="handleKeyCapClick('KeyS')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄴ</span></button>
-                    <button data-key="KeyD" data-kor="ㅇ" data-eng="D" onclick="handleKeyCapClick('KeyD')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅇ</span></button>
-                    <button data-key="KeyF" data-kor="ㄹ" data-eng="F" onclick="handleKeyCapClick('KeyF')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄹ</span></button>
-                    <button data-key="KeyG" data-kor="ㅎ" data-eng="G" onclick="handleKeyCapClick('KeyG')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅎ</span></button>
-                    <button data-key="KeyH" data-kor="ㅗ" data-eng="H" onclick="handleKeyCapClick('KeyH')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅗ</span></button>
-                    <button data-key="KeyJ" data-kor="ㅓ" data-eng="J" onclick="handleKeyCapClick('KeyJ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅓ</span></button>
-                    <button data-key="KeyK" data-kor="ㅏ" data-eng="K" onclick="handleKeyCapClick('KeyK')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅏ</span></button>
-                    <button data-key="KeyL" data-kor="ㅣ" data-eng="L" onclick="handleKeyCapClick('KeyL')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅣ</span></button>
+                    <button data-key="KeyA" data-kor="ㅁ" data-eng="a" onclick="handleKeyCapClick('KeyA')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅁ</span></button>
+                    <button data-key="KeyS" data-kor="ㄴ" data-eng="s" onclick="handleKeyCapClick('KeyS')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄴ</span></button>
+                    <button data-key="KeyD" data-kor="ㅇ" data-eng="d" onclick="handleKeyCapClick('KeyD')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅇ</span></button>
+                    <button data-key="KeyF" data-kor="ㄹ" data-eng="f" onclick="handleKeyCapClick('KeyF')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄹ</span></button>
+                    <button data-key="KeyG" data-kor="ㅎ" data-eng="g" onclick="handleKeyCapClick('KeyG')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅎ</span></button>
+                    <button data-key="KeyH" data-kor="ㅗ" data-eng="h" onclick="handleKeyCapClick('KeyH')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅗ</span></button>
+                    <button data-key="KeyJ" data-kor="ㅓ" data-eng="j" onclick="handleKeyCapClick('KeyJ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅓ</span></button>
+                    <button data-key="KeyK" data-kor="ㅏ" data-eng="k" onclick="handleKeyCapClick('KeyK')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅏ</span></button>
+                    <button data-key="KeyL" data-kor="ㅣ" data-eng="l" onclick="handleKeyCapClick('KeyL')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅣ</span></button>
                     <button data-key="Semicolon" data-char=";" data-shift-char=":" onclick="handleKeyCapClick('Semicolon')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>:</span><span class="text-[9px] text-gray-500 font-bold">;</span></button>
                     <button data-key="Quote" data-char="'" data-shift-char='"' onclick="handleKeyCapClick('Quote')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>"</span><span class="text-[9px] text-gray-400">'</span></button>
                     <button data-key="Enter" onclick="handleVirtualKey('Enter')" class="key-cap w-14 sm:w-20 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] sm:text-[10px] text-gray-500 font-bold">Enter</button>
@@ -252,12 +245,10 @@
 
     <script>
         const CHO_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-        // Added missing 'ㅣ' at index 20 (Total 21 vowels)
         const JOUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-        // Correct JONG_LIST including 'ㄺ' at index 9 (total 28 items)
         const JONG_LIST = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
-        const DOUBLE_JOUNG = {
+        const COMBINED_JUNG = {
             'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ',
             'ㅜㅓ': 'ㅝ', 'ㅜㅔ': 'ㅞ', 'ㅜㅣ': 'ㅟ',
             'ㅡㅣ': 'ㅢ'
@@ -293,188 +284,21 @@
         const ENGLISH_VOWELS = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
 
         let currentLang = 'KOR';
-        let typedSequence = [];
+        let typedSequence = []; // Array of objects: { char, keyCode }
         let isAudioEnabled = true;
         let isShiftPressed = false;
-
-        function decomposeChar(char) {
-            const code = char.charCodeAt(0);
-            if (code >= 0xAC00 && code <= 0xD7A3) {
-                const index = code - 0xAC00;
-                const jongIdx = index % 28;
-                const joungIdx = Math.floor((index - jongIdx) / 28) % 21;
-                const choIdx = Math.floor(Math.floor((index - jongIdx) / 28) / 21);
-                
-                const result = [CHO_LIST[choIdx], JOUNG_LIST[joungIdx]];
-                if (jongIdx > 0) {
-                    result.push(JONG_LIST[jongIdx]);
-                }
-                return result;
-            }
-            return [char];
-        }
-
-        function isVowel(char) {
-            if (currentLang === 'KOR') {
-                return JOUNG_LIST.includes(char);
-            } else {
-                return ENGLISH_VOWELS.includes(char);
-            }
-        }
-
-        function makeChar(cho, joung, jong = 0) {
-            if (cho === -1 && joung === -1) return '';
-            if (cho !== -1 && joung === -1) return CHO_LIST[cho];
-            if (cho === -1 && joung !== -1) return JOUNG_LIST[joung];
-            const code = 0xAC00 + (cho * 21 * 28) + (joung * 28) + (jong > 0 ? jong : 0);
-            return String.fromCharCode(code);
-        }
-
-        function disassembleSequenceToSyllableGroups(jamoArr) {
-            if (!jamoArr || jamoArr.length === 0) return [];
-            let groups = [];
-            let currentGroup = { cho: -1, joung: -1, jong: 0, jamos: [] };
-
-            const flush = () => {
-                if (currentGroup.cho !== -1 || currentGroup.joung !== -1 || currentGroup.jamos.length > 0) {
-                    const char = makeChar(currentGroup.cho, currentGroup.joung, currentGroup.jong);
-                    groups.push({
-                        char: char || currentGroup.jamos.join(''),
-                        jamos: [...currentGroup.jamos]
-                    });
-                }
-                currentGroup = { cho: -1, joung: -1, jong: 0, jamos: [] };
-            };
-
-            for (let i = 0; i < jamoArr.length; i++) {
-                const jamo = jamoArr[i];
-                const cIdx = CHO_LIST.indexOf(jamo);
-                const vIdx = JOUNG_LIST.indexOf(jamo);
-
-                if (jamo === ' ') {
-                    flush();
-                    groups.push({ char: ' ', jamos: [' '] });
-                    continue;
-                }
-
-                if (currentGroup.cho === -1 && currentGroup.joung === -1) {
-                    if (cIdx !== -1) {
-                        currentGroup.cho = cIdx;
-                        currentGroup.jamos.push(jamo);
-                    } else if (vIdx !== -1) {
-                        currentGroup.joung = vIdx;
-                        currentGroup.jamos.push(jamo);
-                    } else {
-                        currentGroup.jamos.push(jamo);
-                        flush();
-                    }
-                } else if (currentGroup.cho !== -1 && currentGroup.joung === -1) {
-                    if (vIdx !== -1) {
-                        currentGroup.joung = vIdx;
-                        currentGroup.jamos.push(jamo);
-                    } else if (cIdx !== -1) {
-                        flush();
-                        currentGroup.cho = cIdx;
-                        currentGroup.jamos.push(jamo);
-                    } else {
-                        flush();
-                        groups.push({ char: jamo, jamos: [jamo] });
-                    }
-                } else if (currentGroup.cho === -1 && currentGroup.joung !== -1) {
-                    if (vIdx !== -1) {
-                        const combined = DOUBLE_JOUNG[JOUNG_LIST[currentGroup.joung] + jamo];
-                        if (combined) {
-                            currentGroup.joung = JOUNG_LIST.indexOf(combined);
-                            currentGroup.jamos.push(jamo);
-                        } else {
-                            flush();
-                            currentGroup.joung = vIdx;
-                            currentGroup.jamos.push(jamo);
-                        }
-                    } else if (cIdx !== -1) {
-                        flush();
-                        currentGroup.cho = cIdx;
-                        currentGroup.jamos.push(jamo);
-                    } else {
-                        flush();
-                        groups.push({ char: jamo, jamos: [jamo] });
-                    }
-                } else if (currentGroup.cho !== -1 && currentGroup.joung !== -1 && currentGroup.jong === 0) {
-                    if (vIdx !== -1) {
-                        const combined = DOUBLE_JOUNG[JOUNG_LIST[currentGroup.joung] + jamo];
-                        if (combined) {
-                            currentGroup.joung = JOUNG_LIST.indexOf(combined);
-                            currentGroup.jamos.push(jamo);
-                        } else {
-                            flush();
-                            currentGroup.joung = vIdx;
-                            currentGroup.jamos.push(jamo);
-                        }
-                    } else if (cIdx !== -1) {
-                        const jIdx = JONG_LIST.indexOf(jamo);
-                        if (jIdx > 0) {
-                            currentGroup.jong = jIdx;
-                            currentGroup.jamos.push(jamo);
-                        } else {
-                            flush();
-                            currentGroup.cho = cIdx;
-                            currentGroup.jamos.push(jamo);
-                        }
-                    } else {
-                        flush();
-                        groups.push({ char: jamo, jamos: [jamo] });
-                    }
-                } else if (currentGroup.cho !== -1 && currentGroup.joung !== -1 && currentGroup.jong > 0) {
-                    if (vIdx !== -1) {
-                        const currentJongChar = JONG_LIST[currentGroup.jong];
-                        if (JONG_SPLIT[currentJongChar]) {
-                            const [firstJong, secondCho] = JONG_SPLIT[currentJongChar];
-                            currentGroup.jong = JONG_LIST.indexOf(firstJong);
-                            const poppedJamo = currentGroup.jamos.pop();
-                            flush();
-                            currentGroup.cho = CHO_LIST.indexOf(secondCho);
-                            currentGroup.joung = vIdx;
-                            currentGroup.jamos.push(poppedJamo, jamo);
-                        } else {
-                            currentGroup.jong = 0;
-                            const poppedJamo = currentGroup.jamos.pop();
-                            flush();
-                            currentGroup.cho = CHO_LIST.indexOf(currentJongChar);
-                            currentGroup.joung = vIdx;
-                            currentGroup.jamos.push(poppedJamo, jamo);
-                        }
-                    } else if (cIdx !== -1) {
-                        const currentJongChar = JONG_LIST[currentGroup.jong];
-                        const combined = DOUBLE_JONG[currentJongChar + jamo];
-                        if (combined) {
-                            currentGroup.jong = JONG_LIST.indexOf(combined);
-                            currentGroup.jamos.push(jamo);
-                        } else {
-                            flush();
-                            currentGroup.cho = cIdx;
-                            currentGroup.jamos.push(jamo);
-                        }
-                    } else {
-                        flush();
-                        groups.push({ char: jamo, jamos: [jamo] });
-                    }
-                }
-            }
-            flush();
-            return groups;
-        }
-
-        function assembleTypedSequenceToSyllables(jamoArr) {
-            return disassembleSequenceToSyllableGroups(jamoArr).map(g => g.char);
-        }
-
+        let lastSpaceTime = 0;
         let audioCtx = null;
-        function playKeySound(type = 'press') {
+
+        function playKeySound(type) {
             if (!isAudioEnabled) return;
             try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!audioCtx) audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
@@ -483,183 +307,371 @@
                 if (type === 'press') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.08);
                     gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.05);
+                    osc.stop(audioCtx.currentTime + 0.08);
                 } else if (type === 'correct') {
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
                     osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
                     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.18);
+                    osc.stop(audioCtx.currentTime + 0.2);
                 }
             } catch(e) {}
         }
 
-        function updateKeyHighlights() {
-            // Remove highlight and order badges from all key caps
-            const allKeys = document.querySelectorAll('.key-cap');
-            allKeys.forEach(k => {
-                k.classList.remove('active-press');
-                const badge = k.querySelector('.order-badge');
+        function isKoreanJamo(ch) {
+            return CHO_LIST.includes(ch) || JOUNG_LIST.includes(ch);
+        }
+
+        function isJoung(ch) {
+            return JOUNG_LIST.includes(ch);
+        }
+
+        function canBeJong(ch) {
+            return JONG_LIST.includes(ch) && ch !== '';
+        }
+
+        function buildSyllableChar(cho, jung, jong) {
+            if (!cho || !jung) {
+                return cho || jung || jong || '';
+            }
+            const choIdx = CHO_LIST.indexOf(cho);
+            const jungIdx = JOUNG_LIST.indexOf(jung);
+            const jongIdx = jong ? JONG_LIST.indexOf(jong) : 0;
+
+            if (choIdx === -1 || jungIdx === -1 || jongIdx === -1) {
+                return (cho || '') + (jung || '') + (jong || '');
+            }
+
+            const code = 0xAC00 + (choIdx * 21 + jungIdx) * 28 + jongIdx;
+            return String.fromCharCode(code);
+        }
+
+        function decomposeVowel(vowel) {
+            for (const [pair, combined] of Object.entries(COMBINED_JUNG)) {
+                if (combined === vowel) {
+                    return [pair[0], pair[1]];
+                }
+            }
+            return [vowel];
+        }
+
+        function decomposeJong(jong) {
+            if (JONG_SPLIT[jong]) {
+                return JONG_SPLIT[jong];
+            }
+            return [jong];
+        }
+
+        function parseHangulSequence(sequence) {
+            const syllables = [];
+            let current = null;
+
+            function finishCurrent() {
+                if (!current) return;
+                const char = buildSyllableChar(current.cho, current.jung, current.jong);
+                if (char) {
+                    const decomposed = [];
+                    if (current.cho) decomposed.push(current.cho);
+                    if (current.jung) decomposed.push(...decomposeVowel(current.jung));
+                    if (current.jong) decomposed.push(...decomposeJong(current.jong));
+
+                    syllables.push({
+                        syllableChar: char,
+                        items: current.items,
+                        decomposed: decomposed
+                    });
+                } else if (current.items.length > 0) {
+                    current.items.forEach(item => {
+                        syllables.push({
+                            syllableChar: item.char,
+                            items: [item],
+                            decomposed: [item.char]
+                        });
+                    });
+                }
+                current = null;
+            }
+
+            for (let i = 0; i < sequence.length; i++) {
+                const item = sequence[i];
+                const ch = item.char;
+
+                if (ch === ' ') {
+                    finishCurrent();
+                    syllables.push({
+                        isSpace: true,
+                        items: [item]
+                    });
+                    continue;
+                }
+
+                if (!isKoreanJamo(ch)) {
+                    finishCurrent();
+                    syllables.push({
+                        syllableChar: ch,
+                        items: [item],
+                        decomposed: [ch]
+                    });
+                    continue;
+                }
+
+                if (!current) {
+                    if (isJoung(ch)) {
+                        current = { cho: null, jung: ch, jong: null, items: [item] };
+                    } else {
+                        current = { cho: ch, jung: null, jong: null, items: [item] };
+                    }
+                    continue;
+                }
+
+                if (current.cho && !current.jung) {
+                    if (isJoung(ch)) {
+                        current.jung = ch;
+                        current.items.push(item);
+                    } else {
+                        finishCurrent();
+                        current = { cho: ch, jung: null, jong: null, items: [item] };
+                    }
+                    continue;
+                }
+
+                if (!current.cho && current.jung) {
+                    if (isJoung(ch)) {
+                        const combined = COMBINED_JUNG[current.jung + ch];
+                        if (combined) {
+                            current.jung = combined;
+                            current.items.push(item);
+                        } else {
+                            finishCurrent();
+                            current = { cho: null, jung: ch, jong: null, items: [item] };
+                        }
+                    } else {
+                        finishCurrent();
+                        current = { cho: ch, jung: null, jong: null, items: [item] };
+                    }
+                    continue;
+                }
+
+                if (current.cho && current.jung && !current.jong) {
+                    if (isJoung(ch)) {
+                        const combined = COMBINED_JUNG[current.jung + ch];
+                        if (combined) {
+                            current.jung = combined;
+                            current.items.push(item);
+                        } else {
+                            finishCurrent();
+                            current = { cho: null, jung: ch, jong: null, items: [item] };
+                        }
+                    } else {
+                        if (canBeJong(ch)) {
+                            current.jong = ch;
+                            current.items.push(item);
+                        } else {
+                            finishCurrent();
+                            current = { cho: ch, jung: null, jong: null, items: [item] };
+                        }
+                    }
+                    continue;
+                }
+
+                if (current.cho && current.jung && current.jong) {
+                    if (isJoung(ch)) {
+                        const split = JONG_SPLIT[current.jong];
+                        if (split) {
+                            const firstJong = split[0];
+                            const secondCho = split[1];
+                            const lastItem = current.items.pop();
+                            current.jong = firstJong;
+                            finishCurrent();
+                            current = { cho: secondCho, jung: ch, jong: null, items: [lastItem, item] };
+                        } else {
+                            const movedCho = current.jong;
+                            const lastItem = current.items.pop();
+                            current.jong = null;
+                            finishCurrent();
+                            current = { cho: movedCho, jung: ch, jong: null, items: [lastItem, item] };
+                        }
+                    } else {
+                        const doubleJong = DOUBLE_JONG[current.jong + ch];
+                        if (doubleJong) {
+                            current.jong = doubleJong;
+                            current.items.push(item);
+                        } else {
+                            finishCurrent();
+                            current = { cho: ch, jung: null, jong: null, items: [item] };
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            if (current) {
+                finishCurrent();
+            }
+
+            return syllables;
+        }
+
+        function renderDecomposedStage() {
+            const container = document.getElementById('decomposedStage');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // Clear active highlights and order badges from all keycaps
+            document.querySelectorAll('.key-cap').forEach(btn => {
+                btn.classList.remove('active-press');
+                const badge = btn.querySelector('.order-badge');
                 if (badge) badge.remove();
             });
 
             if (typedSequence.length === 0) return;
 
             if (currentLang === 'KOR') {
-                const groups = disassembleSequenceToSyllableGroups(typedSequence);
-                if (groups.length === 0) return;
+                const syllables = parseHangulSequence(typedSequence);
 
-                const lastGroup = groups[groups.length - 1];
-                const activeJamos = lastGroup.jamos;
-
-                const keyOrdersMap = new Map();
-
-                activeJamos.forEach((jamo, idx) => {
-                    const orderNum = idx + 1;
-                    let btn = null;
-
-                    if (jamo === ' ') {
-                        btn = document.querySelector('[data-key="Space"]');
-                    } else {
-                        btn = document.querySelector(`[data-kor="${jamo}"], [data-shift-kor="${jamo}"], [data-char="${jamo}"], [data-shift-char="${jamo}"]`);
-                    }
-
-                    if (btn) {
-                        if (!keyOrdersMap.has(btn)) {
-                            keyOrdersMap.set(btn, []);
-                        }
-                        keyOrdersMap.get(btn).push(orderNum);
-                    }
-                });
-
-                keyOrdersMap.forEach((orders, btn) => {
-                    btn.classList.add('active-press');
-                    
-                    const badge = document.createElement('span');
-                    badge.className = 'order-badge';
-                    badge.textContent = orders.join('');
-                    btn.appendChild(badge);
-                });
-            } else {
-                const keyOrdersMap = new Map();
-
-                typedSequence.forEach((char, idx) => {
-                    const orderNum = idx + 1;
-                    let btn = null;
-
-                    if (char === ' ') {
-                        btn = document.querySelector('[data-key="Space"]');
-                    } else {
-                        const lower = char.toLowerCase();
-                        const upper = char.toUpperCase();
-                        btn = document.querySelector(`[data-eng="${lower}"], [data-eng="${upper}"], [data-char="${char}"], [data-shift-char="${char}"]`);
-                    }
-
-                    if (btn) {
-                        if (!keyOrdersMap.has(btn)) {
-                            keyOrdersMap.set(btn, []);
-                        }
-                        keyOrdersMap.get(btn).push(orderNum);
-                    }
-                });
-
-                keyOrdersMap.forEach((orders, btn) => {
-                    btn.classList.add('active-press');
-                    
-                    const badge = document.createElement('span');
-                    badge.className = 'order-badge';
-                    badge.textContent = orders.join('');
-                    btn.appendChild(badge);
-                });
-            }
-        }
-
-        /* Render Syllable & Alphabet Breakdown cards */
-        function renderDecomposedStage() {
-            const container = document.getElementById('decomposedStage');
-            container.innerHTML = '';
-
-            updateKeyHighlights();
-
-            if (typedSequence.length === 0) return;
-
-            if (currentLang === 'KOR') {
-                const syllables = assembleTypedSequenceToSyllables(typedSequence);
-                syllables.forEach((char) => {
-                    if (char === ' ') {
-                        // Display visual space block
+                syllables.forEach(s => {
+                    if (s.isSpace) {
                         const spaceBlock = document.createElement('div');
-                        spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-3 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[100px] shadow-xs';
-                        spaceBlock.innerHTML = '<span class="text-xs font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
+                        spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-2 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[90px] shadow-xs';
+                        spaceBlock.innerHTML = '<span class="text-[11px] font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
                         container.appendChild(spaceBlock);
                         return;
                     }
 
-                    const jamos = decomposeChar(char);
+                    const card = document.createElement('div');
+                    card.className = 'flex flex-col items-center bg-teal-50/90 px-3 py-2 rounded-2xl border-2 border-teal-200 min-w-[80px] sm:min-w-[100px] shadow-sm';
 
-                    const block = document.createElement('div');
-                    block.className = 'flex flex-col items-center bg-teal-50/90 px-4 py-3 rounded-2xl border-2 border-teal-200 min-w-[90px] sm:min-w-[120px] shadow-sm';
-
-                    const completeCharEl = document.createElement('div');
-                    completeCharEl.className = 'text-4xl sm:text-5xl md:text-6xl font-black text-gray-800 bg-white px-4 py-1 rounded-xl shadow-xs border border-teal-100 mb-2 w-full text-center leading-none tracking-tight';
-                    completeCharEl.textContent = char;
+                    const charBox = document.createElement('div');
+                    charBox.className = 'text-3xl sm:text-4xl font-black text-teal-900 bg-white px-3.5 py-1 rounded-xl shadow-xs border border-teal-100 mb-1.5 text-center min-w-[50px]';
+                    charBox.textContent = s.syllableChar;
 
                     const jamoRow = document.createElement('div');
-                    jamoRow.className = 'flex items-center gap-1.5 justify-center w-full';
+                    jamoRow.className = 'flex items-center gap-1 justify-center flex-wrap';
 
-                    jamos.forEach((jamo) => {
-                        const jamoBadge = document.createElement('span');
-                        if (isVowel(jamo)) {
-                            jamoBadge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                    s.decomposed.forEach(ch => {
+                        const badge = document.createElement('span');
+                        if (JOUNG_LIST.includes(ch)) {
+                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
                         } else {
-                            jamoBadge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
                         }
-                        jamoBadge.textContent = jamo;
-                        jamoRow.appendChild(jamoBadge);
+                        badge.textContent = ch;
+                        jamoRow.appendChild(badge);
                     });
 
-                    block.appendChild(completeCharEl);
-                    block.appendChild(jamoRow);
-                    container.appendChild(block);
+                    card.appendChild(charBox);
+                    card.appendChild(jamoRow);
+                    container.appendChild(card);
                 });
-            } else {
-                // English Mode: Display English letters and word
-                const fullWord = typedSequence.join('');
-                
-                const block = document.createElement('div');
-                block.className = 'flex flex-col items-center bg-teal-50/90 px-5 py-3 rounded-2xl border-2 border-teal-200 min-w-[140px] shadow-sm';
 
-                const wordEl = document.createElement('div');
-                wordEl.className = 'text-4xl sm:text-5xl md:text-6xl font-black text-gray-800 bg-white px-5 py-1.5 rounded-xl shadow-xs border border-teal-100 mb-2 text-center tracking-wide whitespace-pre';
-                wordEl.textContent = fullWord.replace(/ /g, ' ␣ ');
-
-                const letterRow = document.createElement('div');
-                letterRow.className = 'flex items-center gap-1.5 justify-center w-full flex-wrap';
-
-                typedSequence.forEach((char) => {
-                    const badge = document.createElement('span');
-                    if (char === ' ') {
-                        badge.className = 'px-2 py-1 rounded-lg text-sm sm:text-base font-black bg-gray-200 text-gray-600 border border-gray-300 shadow-2xs';
-                        badge.textContent = '␣';
-                    } else if (isVowel(char)) {
-                        badge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
-                        badge.textContent = char;
-                    } else {
-                        badge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
-                        badge.textContent = char;
+                // Highlight active keys for the CURRENT (last) syllable only
+                if (syllables.length > 0) {
+                    const lastSyllable = syllables[syllables.length - 1];
+                    if (!lastSyllable.isSpace && lastSyllable.items) {
+                        lastSyllable.items.forEach((item, index) => {
+                            if (item.keyCode) {
+                                const btn = document.querySelector(`[data-key="${item.keyCode}"]`);
+                                if (btn) {
+                                    btn.classList.add('active-press');
+                                    let badge = btn.querySelector('.order-badge');
+                                    if (!badge) {
+                                        badge = document.createElement('span');
+                                        badge.className = 'order-badge';
+                                        btn.appendChild(badge);
+                                    }
+                                    badge.textContent = (index + 1).toString();
+                                }
+                            }
+                        });
                     }
-                    letterRow.appendChild(badge);
+                }
+
+            } else {
+                // English Mode: group into words separated by spaces
+                let wordBuffer = [];
+                let spaceCount = 0;
+
+                const renderWordBlock = (letters) => {
+                    if (letters.length === 0) return;
+                    const wordStr = letters.map(item => item.char).join('');
+                    const block = document.createElement('div');
+                    block.className = 'flex flex-col items-center bg-teal-50/90 px-3 py-2 rounded-2xl border-2 border-teal-200 min-w-[80px] sm:min-w-[100px] shadow-sm';
+
+                    const wordEl = document.createElement('div');
+                    wordEl.className = 'text-3xl sm:text-4xl font-black text-teal-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-teal-100 mb-1.5 text-center tracking-wide';
+                    wordEl.textContent = wordStr;
+
+                    const letterRow = document.createElement('div');
+                    letterRow.className = 'flex items-center gap-1 justify-center flex-wrap';
+
+                    letters.forEach(item => {
+                        const badge = document.createElement('span');
+                        if (ENGLISH_VOWELS.includes(item.char)) {
+                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                        } else {
+                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                        }
+                        badge.textContent = item.char;
+                        letterRow.appendChild(badge);
+                    });
+
+                    block.appendChild(wordEl);
+                    block.appendChild(letterRow);
+                    container.appendChild(block);
+                };
+
+                const renderSpaceBlock = () => {
+                    const spaceBlock = document.createElement('div');
+                    spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-2 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[90px] shadow-xs';
+                    spaceBlock.innerHTML = '<span class="text-[11px] font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
+                    container.appendChild(spaceBlock);
+                };
+
+                let lastGroupItems = [];
+
+                typedSequence.forEach(item => {
+                    if (item.char === ' ') {
+                        if (wordBuffer.length > 0) {
+                            renderWordBlock(wordBuffer);
+                            lastGroupItems = wordBuffer;
+                            wordBuffer = [];
+                        }
+                        renderSpaceBlock();
+                        lastGroupItems = [item];
+                    } else {
+                        wordBuffer.push(item);
+                    }
                 });
 
-                block.appendChild(wordEl);
-                block.appendChild(letterRow);
-                container.appendChild(block);
+                if (wordBuffer.length > 0) {
+                    renderWordBlock(wordBuffer);
+                    lastGroupItems = wordBuffer;
+                }
+
+                // Highlight active keys for current word
+                if (lastGroupItems.length > 0) {
+                    lastGroupItems.forEach((item, index) => {
+                        if (item.keyCode) {
+                            const btn = document.querySelector(`[data-key="${item.keyCode}"]`);
+                            if (btn) {
+                                btn.classList.add('active-press');
+                                let badge = btn.querySelector('.order-badge');
+                                if (!badge) {
+                                    badge = document.createElement('span');
+                                    badge.className = 'order-badge';
+                                    btn.appendChild(badge);
+                                }
+                                badge.textContent = (index + 1).toString();
+                            }
+                        }
+                    });
+                }
             }
         }
 
@@ -686,7 +698,7 @@
             }
 
             if (val) {
-                typedSequence.push(val);
+                typedSequence.push({ char: val, keyCode: keyCode });
                 triggerKeySound();
                 renderDecomposedStage();
             }
@@ -702,7 +714,10 @@
                 typedSequence = [];
                 playKeySound('correct');
             } else if (keyName === ' ') {
-                typedSequence.push(' ');
+                const now = Date.now();
+                if (now - lastSpaceTime < 150) return;
+                lastSpaceTime = now;
+                typedSequence.push({ char: ' ', keyCode: 'Space' });
                 triggerKeySound();
             } else if (keyName === 'ShiftLeft' || keyName === 'ShiftRight') {
                 isShiftPressed = !isShiftPressed;
@@ -721,7 +736,12 @@
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
-                handleVirtualKey(' ');
+                const now = Date.now();
+                if (now - lastSpaceTime < 150) return;
+                lastSpaceTime = now;
+                typedSequence.push({ char: ' ', keyCode: 'Space' });
+                triggerKeySound();
+                renderDecomposedStage();
                 return;
             }
 
@@ -747,7 +767,6 @@
             if (btn) {
                 let charToAppend = null;
                 
-                // 1. Check direct data-char for digits and punctuation
                 if (btn.hasAttribute('data-char')) {
                     charToAppend = (e.shiftKey || isShiftPressed) && btn.hasAttribute('data-shift-char')
                         ? btn.getAttribute('data-shift-char')
@@ -767,19 +786,17 @@
                     }
                 }
 
-                // Fallback for numpad digits or direct key character inputs
                 if (!charToAppend && e.key && e.key.length === 1) {
                     charToAppend = e.key;
                 }
 
                 if (charToAppend) {
-                    typedSequence.push(charToAppend);
+                    typedSequence.push({ char: charToAppend, keyCode: e.code });
                     triggerKeySound();
                     renderDecomposedStage();
                 }
             } else if (e.key && e.key.length === 1) {
-                // If physical key is pressed but doesn't map directly to a grid button (e.g. Numpad)
-                typedSequence.push(e.key);
+                typedSequence.push({ char: e.key, keyCode: null });
                 triggerKeySound();
                 renderDecomposedStage();
             }
