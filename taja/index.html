@@ -8,8 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Noto Sans KR & Gaegu -->
-    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
         html, body {
@@ -31,7 +31,7 @@
             -webkit-user-select: none;
         }
 
-        /* Keycaps visual styling - resized for no-scroll fit */
+        /* Keycaps visual styling */
         .key-cap {
             background: #ffffff;
             border: 1px solid #d1d5db;
@@ -41,7 +41,8 @@
             position: relative;
         }
 
-        .key-cap:active, .key-cap.active-press {
+        /* Normal pressed key: Sky blue */
+        .key-cap.active-press {
             background-color: #0ea5e9 !important;
             color: #ffffff !important;
             border-color: #0284c7 !important;
@@ -54,21 +55,59 @@
             color: #ffffff !important;
         }
 
-        .order-badge {
+        /* Shift Key Active styling: Vibrant Purple */
+        .key-cap.shift-active-press {
+            background-color: #a855f7 !important;
+            color: #ffffff !important;
+            border-color: #7e22ce !important;
+            border-bottom-width: 1px !important;
+            transform: translateY(2px);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.8) !important;
+        }
+
+        /* Order Badge Container - allows multiple individual circles */
+        .order-badge-container {
             position: absolute;
-            top: -6px;
-            right: -4px;
-            background-color: #ff5252;
-            color: #ffffff;
-            font-size: 13px;
-            font-weight: 900;
-            line-height: 1;
-            padding: 1px 5px;
-            border-radius: 9999px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1.5px solid #ffffff;
+            top: -8px;
+            right: -6px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
             z-index: 30;
             pointer-events: none;
+        }
+
+        .badge-circle {
+            background-color: #ff5252;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 0 5px;
+            height: 19px;
+            min-width: 19px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1.5px solid #ffffff;
+            animation: badge-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+        }
+
+        .badge-circle-shift {
+            background-color: #a855f7;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 0 5px;
+            height: 19px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1.5px solid #ffffff;
             animation: badge-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -112,22 +151,22 @@
     </header>
 
     <!-- MAIN DEMO STAGE -->
-    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-evenly gap-2 my-auto overflow-hidden">
+    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-center gap-3 my-auto overflow-hidden">
 
-        <!-- Real-time Analysis Section -->
+        <!-- Real-time Analysis Section (Enlarged Area) -->
         <section class="w-full flex flex-col items-center justify-center shrink-0 my-1">
-            <div class="w-full max-w-4xl bg-white/95 rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-teal-200 flex flex-col items-center justify-center gap-3">
+            <div class="w-full max-w-5xl bg-white/95 rounded-2xl p-4 sm:p-6 shadow-xl border-2 border-teal-200 flex flex-col items-center justify-center gap-3">
                 <div class="flex items-center justify-between w-full border-b border-gray-100 pb-2 px-2">
-                    <span class="text-sm sm:text-base font-black text-teal-800 flex items-center gap-1.5">
-                        <i class="fa-solid fa-puzzle-piece text-teal-500 text-lg"></i> <span id="stageTitle">실시간 글자 분석 및 조합</span>
+                    <span class="text-base sm:text-lg font-black text-teal-800 flex items-center gap-2">
+                        <i class="fa-solid fa-puzzle-piece text-teal-500 text-xl"></i> <span id="stageTitle">실시간 글자 분석 및 조합</span>
                     </span>
-                    <span id="colorLegend" class="text-xs text-gray-500 font-bold">
+                    <span id="colorLegend" class="text-xs sm:text-sm text-gray-500 font-bold">
                         <span class="text-sky-600">파란색: 자음</span> | <span class="text-amber-600">주황색: 모음</span>
                     </span>
                 </div>
 
-                <!-- Live Syllable Cards Container -->
-                <div id="decomposedStage" class="flex flex-wrap items-end justify-center gap-3 py-2 w-full min-h-[110px] sm:min-h-[130px]">
+                <!-- Live Syllable Cards Container (Enlarged) -->
+                <div id="decomposedStage" class="flex flex-wrap items-end justify-center gap-4 py-3 w-full min-h-[140px] sm:min-h-[160px]">
                     <!-- Generated dynamically by JavaScript -->
                 </div>
             </div>
@@ -139,10 +178,11 @@
             <div class="flex items-center justify-between border-b border-gray-100 pb-1.5 mb-1.5 px-1">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-keyboard text-teal-500 text-sm"></i>
-                    <span id="keyboardLabel" class="text-[11px] font-bold text-gray-500">두벌식 표준 한글 자판</span>
+                    <span id="keyboardLabel" class="text-xs font-bold text-gray-600">두벌식 표준 한글 자판</span>
                 </div>
-                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#0ea5e9] inline-block"></span> 누른 키</span>
+                <div class="flex items-center gap-3 text-xs font-medium text-gray-500">
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#0ea5e9] inline-block"></span> 누른 키</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#a855f7] inline-block"></span> Shift 조합키</span>
                 </div>
             </div>
 
@@ -204,7 +244,7 @@
 
                 <!-- Row 4: Z X C V B N M -->
                 <div class="flex gap-1 w-full">
-                    <button data-key="ShiftLeft" onclick="handleVirtualKey('ShiftLeft')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Shift</button>
+                    <button data-key="ShiftLeft" onclick="handleVirtualKey('ShiftLeft')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-500 font-bold">Shift</button>
                     <button data-key="KeyZ" data-kor="ㅋ" data-eng="z" onclick="handleKeyCapClick('KeyZ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅋ</span></button>
                     <button data-key="KeyX" data-kor="ㅌ" data-eng="x" onclick="handleKeyCapClick('KeyX')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅌ</span></button>
                     <button data-key="KeyC" data-kor="ㅊ" data-eng="c" onclick="handleKeyCapClick('KeyC')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅊ</span></button>
@@ -215,7 +255,7 @@
                     <button data-key="Comma" data-char="," data-shift-char="<" onclick="handleKeyCapClick('Comma')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span><</span><span class="text-[9px] text-gray-400">,</span></button>
                     <button data-key="Period" data-char="." data-shift-char=">" onclick="handleKeyCapClick('Period')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>></span><span class="text-[9px] text-gray-400">.</span></button>
                     <button data-key="Slash" data-char="/" data-shift-char="?" onclick="handleKeyCapClick('Slash')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>?</span><span class="text-[9px] text-gray-400">/</span></button>
-                    <button data-key="ShiftRight" onclick="handleVirtualKey('ShiftRight')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] text-gray-400">Shift</button>
+                    <button data-key="ShiftRight" onclick="handleVirtualKey('ShiftRight')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] text-gray-500 font-bold">Shift</button>
                 </div>
 
                 <!-- Row 5: Spacebar & Modifiers -->
@@ -240,13 +280,19 @@
     <!-- Minimal Footer -->
     <footer class="max-w-6xl w-full mx-auto text-center text-[11px] text-gray-500 py-0.5 border-t border-teal-100/60 flex items-center justify-between shrink-0">
         <p class="font-medium truncate">💡 자판을 치면 실시간으로 자음·모음 분해와 완성 글자가 생성됩니다.</p>
-        <p class="text-teal-700 font-bold shrink-0">방과후 타자교실 v2.8</p>
+        <p class="text-teal-700 font-bold shrink-0">방과후 타자교실 v2.9</p>
     </footer>
 
     <script>
+        // Hangul Jamo Constants & Tables
         const CHO_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
         const JOUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
         const JONG_LIST = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+        const DOUBLE_CONSONANTS = {
+            'ㄲ': 'ㄱ', 'ㄸ': 'ㄷ', 'ㅃ': 'ㅂ', 'ㅆ': 'ㅅ', 'ㅉ': 'ㅈ',
+            'ㅒ': 'ㅐ', 'ㅖ': 'ㅔ'
+        };
 
         const COMBINED_JUNG = {
             'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ',
@@ -282,9 +328,19 @@
         };
 
         const ENGLISH_VOWELS = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
+        
+        // 한글 2벌식에서 실제 Shift 조작이 필수인 글자들 (쌍자음 및 ㅒ, ㅖ)
+        const KOR_SHIFT_CHARS = ['ㅃ', 'ㅉ', 'ㄸ', 'ㄲ', 'ㅆ', 'ㅒ', 'ㅖ'];
+
+        function requiresShift(ch, lang) {
+            if (lang === 'KOR' || (!lang && currentLang === 'KOR')) {
+                return KOR_SHIFT_CHARS.includes(ch);
+            }
+            return /[A-Z!@#$%^&*()_+{}|:"<>?]/.test(ch);
+        }
 
         let currentLang = 'KOR';
-        let typedSequence = []; // Array of objects: { char, keyCode }
+        let typedSequence = []; // Array of objects: { char, keyCode, usedShift }
         let isAudioEnabled = true;
         let isShiftPressed = false;
         let lastSpaceTime = 0;
@@ -377,9 +433,19 @@
                 const char = buildSyllableChar(current.cho, current.jung, current.jong);
                 if (char) {
                     const decomposed = [];
-                    if (current.cho) decomposed.push(current.cho);
-                    if (current.jung) decomposed.push(...decomposeVowel(current.jung));
-                    if (current.jong) decomposed.push(...decomposeJong(current.jong));
+                    if (current.cho) decomposed.push({ ch: current.cho, usedShift: requiresShift(current.cho, 'KOR') });
+                    if (current.jung) {
+                        const vowels = decomposeVowel(current.jung);
+                        vowels.forEach(v => {
+                            decomposed.push({ ch: v, usedShift: requiresShift(v, 'KOR') });
+                        });
+                    }
+                    if (current.jong) {
+                        const jongs = decomposeJong(current.jong);
+                        jongs.forEach(j => {
+                            decomposed.push({ ch: j, usedShift: requiresShift(j, 'KOR') });
+                        });
+                    }
 
                     syllables.push({
                         syllableChar: char,
@@ -391,7 +457,7 @@
                         syllables.push({
                             syllableChar: item.char,
                             items: [item],
-                            decomposed: [item.char]
+                            decomposed: [{ ch: item.char, usedShift: requiresShift(item.char, 'KOR') }]
                         });
                     });
                 }
@@ -416,7 +482,17 @@
                     syllables.push({
                         syllableChar: ch,
                         items: [item],
-                        decomposed: [ch]
+                        decomposed: [{ ch: ch, usedShift: requiresShift(ch, currentLang) }]
+                    });
+                    continue;
+                }
+
+                if (!isKoreanJamo(ch)) {
+                    finishCurrent();
+                    syllables.push({
+                        syllableChar: ch,
+                        items: [item],
+                        decomposed: [{ ch: ch, usedShift: item.usedShift }]
                     });
                     continue;
                 }
@@ -523,11 +599,11 @@
             if (!container) return;
             container.innerHTML = '';
 
-            // Clear active highlights and order badges from all keycaps
+            // Reset keyboard keycaps
             document.querySelectorAll('.key-cap').forEach(btn => {
-                btn.classList.remove('active-press');
-                const badge = btn.querySelector('.order-badge');
-                if (badge) badge.remove();
+                btn.classList.remove('active-press', 'shift-active-press');
+                const badgeContainer = btn.querySelector('.order-badge-container');
+                if (badgeContainer) badgeContainer.remove();
             });
 
             if (typedSequence.length === 0) return;
@@ -538,31 +614,53 @@
                 syllables.forEach(s => {
                     if (s.isSpace) {
                         const spaceBlock = document.createElement('div');
-                        spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-2 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[90px] shadow-xs';
-                        spaceBlock.innerHTML = '<span class="text-[11px] font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
+                        spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/90 px-4 py-3 rounded-2xl border-2 border-dashed border-gray-300 min-w-[70px] min-h-[120px] shadow-xs';
+                        spaceBlock.innerHTML = '<span class="text-xs font-bold text-gray-400">띄어쓰기</span><span class="text-2xl font-black text-gray-400 mt-1">␣</span>';
                         container.appendChild(spaceBlock);
                         return;
                     }
 
                     const card = document.createElement('div');
-                    card.className = 'flex flex-col items-center bg-teal-50/90 px-3 py-2 rounded-2xl border-2 border-teal-200 min-w-[80px] sm:min-w-[100px] shadow-sm';
+                    card.className = 'flex flex-col items-center bg-teal-50/90 p-3 sm:p-4 rounded-2xl border-2 border-teal-200 min-w-[110px] sm:min-w-[130px] shadow-sm';
 
+                    // Enlarged Syllable Box
                     const charBox = document.createElement('div');
-                    charBox.className = 'text-3xl sm:text-4xl font-black text-teal-900 bg-white px-3.5 py-1 rounded-xl shadow-xs border border-teal-100 mb-1.5 text-center min-w-[50px]';
+                    charBox.className = 'text-4xl sm:text-5xl font-black text-teal-900 bg-white px-5 py-2 rounded-2xl shadow-xs border border-teal-100 mb-2 text-center min-w-[75px]';
                     charBox.textContent = s.syllableChar;
 
+                    // Jamo Row with Shift combos clearly annotated
                     const jamoRow = document.createElement('div');
-                    jamoRow.className = 'flex items-center gap-1 justify-center flex-wrap';
+                    jamoRow.className = 'flex items-center gap-1.5 justify-center flex-wrap';
 
-                    s.decomposed.forEach(ch => {
+                    s.decomposed.forEach(item => {
+                        const ch = typeof item === 'object' ? item.ch : item;
+                        const usedShift = typeof item === 'object' ? item.usedShift : false;
+
+                        const itemWrapper = document.createElement('div');
+                        itemWrapper.className = 'flex flex-col items-center gap-1';
+
                         const badge = document.createElement('span');
                         if (JOUNG_LIST.includes(ch)) {
-                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                            badge.className = 'px-2.5 py-1 rounded-xl text-base sm:text-lg font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs min-w-[36px] text-center';
                         } else {
-                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                            badge.className = 'px-2.5 py-1 rounded-xl text-base sm:text-lg font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs min-w-[36px] text-center';
                         }
                         badge.textContent = ch;
-                        jamoRow.appendChild(badge);
+                        itemWrapper.appendChild(badge);
+
+                        // Reserved fixed height container for S badge to keep uniform card height
+                        const sBadgeContainer = document.createElement('div');
+                        sBadgeContainer.className = 'h-5 flex items-center justify-center';
+
+                        if (usedShift) {
+                            const sBadge = document.createElement('span');
+                            sBadge.className = 'text-[10px] font-black text-purple-600 bg-purple-100 px-1.5 rounded-full border border-purple-300 shadow-2xs leading-tight';
+                            sBadge.textContent = 'S';
+                            sBadgeContainer.appendChild(sBadge);
+                        }
+                        itemWrapper.appendChild(sBadgeContainer);
+
+                        jamoRow.appendChild(itemWrapper);
                     });
 
                     card.appendChild(charBox);
@@ -570,55 +668,104 @@
                     container.appendChild(card);
                 });
 
-                // Highlight active keys for the CURRENT (last) syllable only
+                // Highlight active keycaps for the last syllable
                 if (syllables.length > 0) {
                     const lastSyllable = syllables[syllables.length - 1];
                     if (!lastSyllable.isSpace && lastSyllable.items) {
+                        const keyOrderMap = {};
+                        let SyllableUsesShift = false;
+
                         lastSyllable.items.forEach((item, index) => {
                             if (item.keyCode) {
-                                const btn = document.querySelector(`[data-key="${item.keyCode}"]`);
-                                if (btn) {
-                                    btn.classList.add('active-press');
-                                    let badge = btn.querySelector('.order-badge');
-                                    if (!badge) {
-                                        badge = document.createElement('span');
-                                        badge.className = 'order-badge';
-                                        btn.appendChild(badge);
-                                    }
-                                    badge.textContent = (index + 1).toString();
+                                if (!keyOrderMap[item.keyCode]) {
+                                    keyOrderMap[item.keyCode] = [];
                                 }
+                                keyOrderMap[item.keyCode].push({
+                                    orderNum: index + 1,
+                                    usedShift: item.usedShift
+                                });
+                            }
+                            if (item.usedShift) {
+                                SyllableUsesShift = true;
                             }
                         });
+
+                        // If Shift was used, simply highlight Left Shift key cleanly
+                        if (SyllableUsesShift) {
+                            const shiftBtn = document.querySelector('[data-key="ShiftLeft"]') || document.querySelector('[data-key="ShiftRight"]');
+                            if (shiftBtn) {
+                                shiftBtn.classList.add('shift-active-press');
+                            }
+                        }
+
+                        // Attach order badges to typed keys
+                        for (const [keyCode, entries] of Object.entries(keyOrderMap)) {
+                            const btn = document.querySelector(`[data-key="${keyCode}"]`);
+                            if (btn) {
+                                btn.classList.add('active-press');
+                                let container = btn.querySelector('.order-badge-container');
+                                if (!container) {
+                                    container = document.createElement('div');
+                                    container.className = 'order-badge-container';
+                                    btn.appendChild(container);
+                                } else {
+                                    container.innerHTML = '';
+                                }
+
+                                entries.forEach(entry => {
+                                    const circle = document.createElement('span');
+                                    circle.className = 'badge-circle';
+                                    circle.textContent = `${entry.orderNum}`;
+                                    container.appendChild(circle);
+                                });
+                            }
+                        }
                     }
                 }
 
             } else {
-                // English Mode: group into words separated by spaces
+                // English Mode: render words
                 let wordBuffer = [];
-                let spaceCount = 0;
 
                 const renderWordBlock = (letters) => {
                     if (letters.length === 0) return;
                     const wordStr = letters.map(item => item.char).join('');
                     const block = document.createElement('div');
-                    block.className = 'flex flex-col items-center bg-teal-50/90 px-3 py-2 rounded-2xl border-2 border-teal-200 min-w-[80px] sm:min-w-[100px] shadow-sm';
+                    block.className = 'flex flex-col items-center bg-teal-50/90 p-3 sm:p-4 rounded-2xl border-2 border-teal-200 min-w-[110px] sm:min-w-[130px] shadow-sm';
 
                     const wordEl = document.createElement('div');
-                    wordEl.className = 'text-3xl sm:text-4xl font-black text-teal-900 bg-white px-3 py-1 rounded-xl shadow-xs border border-teal-100 mb-1.5 text-center tracking-wide';
+                    wordEl.className = 'text-4xl sm:text-5xl font-black text-teal-900 bg-white px-5 py-2 rounded-2xl shadow-xs border border-teal-100 mb-2 text-center tracking-wide';
                     wordEl.textContent = wordStr;
 
                     const letterRow = document.createElement('div');
-                    letterRow.className = 'flex items-center gap-1 justify-center flex-wrap';
+                    letterRow.className = 'flex items-center gap-1.5 justify-center flex-wrap';
 
                     letters.forEach(item => {
+                        const itemWrapper = document.createElement('div');
+                        itemWrapper.className = 'flex flex-col items-center gap-1';
+
                         const badge = document.createElement('span');
                         if (ENGLISH_VOWELS.includes(item.char)) {
-                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                            badge.className = 'px-2.5 py-1 rounded-xl text-base sm:text-lg font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs min-w-[36px] text-center';
                         } else {
-                            badge.className = 'px-2 py-0.5 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                            badge.className = 'px-2.5 py-1 rounded-xl text-base sm:text-lg font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs min-w-[36px] text-center';
                         }
                         badge.textContent = item.char;
-                        letterRow.appendChild(badge);
+                        itemWrapper.appendChild(badge);
+
+                        // Reserved fixed height container for S badge (same as Korean mode)
+                        const sBadgeContainer = document.createElement('div');
+                        sBadgeContainer.className = 'h-5 flex items-center justify-center';
+
+                        if (item.usedShift) {
+                            const sBadge = document.createElement('span');
+                            sBadge.className = 'text-[10px] font-black text-purple-600 bg-purple-100 px-1.5 rounded-full border border-purple-300 shadow-2xs leading-tight';
+                            sBadge.textContent = 'S';
+                            sBadgeContainer.appendChild(sBadge);
+                        }
+                        itemWrapper.appendChild(sBadgeContainer);
+
+                        letterRow.appendChild(itemWrapper);
                     });
 
                     block.appendChild(wordEl);
@@ -628,8 +775,8 @@
 
                 const renderSpaceBlock = () => {
                     const spaceBlock = document.createElement('div');
-                    spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-2 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[90px] shadow-xs';
-                    spaceBlock.innerHTML = '<span class="text-[11px] font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
+                    spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/90 px-4 py-3 rounded-2xl border-2 border-dashed border-gray-300 min-w-[70px] min-h-[120px] shadow-xs';
+                    spaceBlock.innerHTML = '<span class="text-xs font-bold text-gray-400">띄어쓰기</span><span class="text-2xl font-black text-gray-400 mt-1">␣</span>';
                     container.appendChild(spaceBlock);
                 };
 
@@ -654,23 +801,54 @@
                     lastGroupItems = wordBuffer;
                 }
 
-                // Highlight active keys for current word
                 if (lastGroupItems.length > 0) {
+                    const keyOrderMap = {};
+                    let GroupUsesShift = false;
+
                     lastGroupItems.forEach((item, index) => {
                         if (item.keyCode) {
-                            const btn = document.querySelector(`[data-key="${item.keyCode}"]`);
-                            if (btn) {
-                                btn.classList.add('active-press');
-                                let badge = btn.querySelector('.order-badge');
-                                if (!badge) {
-                                    badge = document.createElement('span');
-                                    badge.className = 'order-badge';
-                                    btn.appendChild(badge);
-                                }
-                                badge.textContent = (index + 1).toString();
+                            if (!keyOrderMap[item.keyCode]) {
+                                keyOrderMap[item.keyCode] = [];
                             }
+                            keyOrderMap[item.keyCode].push({
+                                orderNum: index + 1,
+                                usedShift: item.usedShift
+                            });
+                        }
+                        if (item.usedShift) {
+                            GroupUsesShift = true;
                         }
                     });
+
+                    // Highlight Shift key on keyboard if used (same as Korean mode)
+                    if (GroupUsesShift) {
+                        const shiftBtn = document.querySelector('[data-key="ShiftLeft"]') || document.querySelector('[data-key="ShiftRight"]');
+                        if (shiftBtn) {
+                            shiftBtn.classList.add('shift-active-press');
+                        }
+                    }
+
+                    for (const [keyCode, entries] of Object.entries(keyOrderMap)) {
+                        const btn = document.querySelector(`[data-key="${keyCode}"]`);
+                        if (btn) {
+                            btn.classList.add('active-press');
+                            let container = btn.querySelector('.order-badge-container');
+                            if (!container) {
+                                container = document.createElement('div');
+                                container.className = 'order-badge-container';
+                                btn.appendChild(container);
+                            } else {
+                                container.innerHTML = '';
+                            }
+
+                            entries.forEach(entry => {
+                                const circle = document.createElement('span');
+                                circle.className = 'badge-circle';
+                                circle.textContent = `${entry.orderNum}`;
+                                container.appendChild(circle);
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -684,12 +862,13 @@
             if (!btn) return;
 
             let val = '';
+
             if (btn.hasAttribute('data-char')) {
                 val = isShiftPressed && btn.hasAttribute('data-shift-char')
                     ? btn.getAttribute('data-shift-char')
                     : btn.getAttribute('data-char');
             } else if (currentLang === 'KOR') {
-                val = isShiftPressed && btn.getAttribute('data-shift-kor') 
+                val = isShiftPressed && btn.hasAttribute('data-shift-kor') 
                     ? btn.getAttribute('data-shift-kor') 
                     : btn.getAttribute('data-kor');
             } else {
@@ -698,7 +877,15 @@
             }
 
             if (val) {
-                typedSequence.push({ char: val, keyCode: keyCode });
+                const needShift = requiresShift(val, currentLang);
+                typedSequence.push({ char: val, keyCode: keyCode, usedShift: needShift });
+                
+                // Reset virtual shift toggled state after single character click
+                if (isShiftPressed) {
+                    isShiftPressed = false;
+                    updateKeyboardLabels();
+                }
+
                 triggerKeySound();
                 renderDecomposedStage();
             }
@@ -717,7 +904,7 @@
                 const now = Date.now();
                 if (now - lastSpaceTime < 150) return;
                 lastSpaceTime = now;
-                typedSequence.push({ char: ' ', keyCode: 'Space' });
+                typedSequence.push({ char: ' ', keyCode: 'Space', usedShift: false });
                 triggerKeySound();
             } else if (keyName === 'ShiftLeft' || keyName === 'ShiftRight') {
                 isShiftPressed = !isShiftPressed;
@@ -739,7 +926,7 @@
                 const now = Date.now();
                 if (now - lastSpaceTime < 150) return;
                 lastSpaceTime = now;
-                typedSequence.push({ char: ' ', keyCode: 'Space' });
+                typedSequence.push({ char: ' ', keyCode: 'Space', usedShift: false });
                 triggerKeySound();
                 renderDecomposedStage();
                 return;
@@ -766,23 +953,26 @@
             const btn = document.querySelector(`[data-key="${e.code}"]`);
             if (btn) {
                 let charToAppend = null;
+                const shiftActive = e.shiftKey || isShiftPressed;
                 
                 if (btn.hasAttribute('data-char')) {
-                    charToAppend = (e.shiftKey || isShiftPressed) && btn.hasAttribute('data-shift-char')
+                    charToAppend = shiftActive && btn.hasAttribute('data-shift-char')
                         ? btn.getAttribute('data-shift-char')
                         : btn.getAttribute('data-char');
                 } else if (currentLang === 'KOR') {
-                    if (e.key && KEY_TO_KOR[e.key]) {
+                    if (shiftActive && btn.hasAttribute('data-shift-kor')) {
+                        charToAppend = btn.getAttribute('data-shift-kor');
+                    } else if (btn.hasAttribute('data-kor')) {
+                        charToAppend = btn.getAttribute('data-kor');
+                    } else if (e.key && KEY_TO_KOR[e.key]) {
                         charToAppend = KEY_TO_KOR[e.key];
-                    } else if (CODE_TO_KEY[e.code] && KEY_TO_KOR[CODE_TO_KEY[e.code]]) {
-                        charToAppend = KEY_TO_KOR[CODE_TO_KEY[e.code]];
                     }
                 } else {
                     if (CODE_TO_KEY[e.code]) {
                         const baseKey = CODE_TO_KEY[e.code];
-                        charToAppend = (e.shiftKey || isShiftPressed) ? baseKey.toUpperCase() : baseKey.toLowerCase();
+                        charToAppend = shiftActive ? baseKey.toUpperCase() : baseKey.toLowerCase();
                     } else if (e.key && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
-                        charToAppend = (e.shiftKey || isShiftPressed) ? e.key.toUpperCase() : e.key.toLowerCase();
+                        charToAppend = shiftActive ? e.key.toUpperCase() : e.key.toLowerCase();
                     }
                 }
 
@@ -791,12 +981,14 @@
                 }
 
                 if (charToAppend) {
-                    typedSequence.push({ char: charToAppend, keyCode: e.code });
+                    const needShift = requiresShift(charToAppend, currentLang);
+                    typedSequence.push({ char: charToAppend, keyCode: e.code, usedShift: needShift });
                     triggerKeySound();
                     renderDecomposedStage();
                 }
             } else if (e.key && e.key.length === 1) {
-                typedSequence.push({ char: e.key, keyCode: null });
+                const needShift = requiresShift(e.key, currentLang);
+                typedSequence.push({ char: e.key, keyCode: null, usedShift: needShift });
                 triggerKeySound();
                 renderDecomposedStage();
             }
@@ -830,9 +1022,9 @@
             const shiftButtons = document.querySelectorAll('[data-key^="Shift"]');
             shiftButtons.forEach(btn => {
                 if (isShiftPressed) {
-                    btn.classList.add('bg-teal-100', 'border-teal-400');
+                    btn.classList.add('bg-purple-100', 'border-purple-400', 'text-purple-800');
                 } else {
-                    btn.classList.remove('bg-teal-100', 'border-teal-400');
+                    btn.classList.remove('bg-purple-100', 'border-purple-400', 'text-purple-800');
                 }
             });
 
