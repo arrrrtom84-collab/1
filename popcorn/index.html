@@ -15,7 +15,7 @@
             overflow: hidden;
         }
 
-        /* Robust 3D Card Flip Styling with cross-browser backface fix */
+        /* 3D Card Flip Styling */
         .perspective-1000 {
             perspective: 1000px;
             -webkit-perspective: 1000px;
@@ -94,7 +94,17 @@
             animation: popUp 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* Custom scrollbar for scoreboard list */
+        /* Shake animation for incorrect answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Custom scrollbar */
         .custom-scroll::-webkit-scrollbar {
             width: 4px;
         }
@@ -124,21 +134,21 @@
             <!-- Mode Selector & Controls -->
             <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
                 <div class="bg-amber-600/60 p-1 rounded-xl flex items-center space-x-1 border border-amber-300/40">
-                    <button id="modeCheese" onclick="setGameMode('cheese')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap">
+                    <button id="modeCheese" class="px-2 py-1 rounded-lg text-xs font-bold transition-all bg-white text-orange-600 shadow whitespace-nowrap">
                         🧀 치즈(1~60)
                     </button>
-                    <button id="modeCaramel" onclick="setGameMode('caramel')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
+                    <button id="modeCaramel" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
                         🍯 카라멜(61~120)
                     </button>
-                    <button id="modeFree" onclick="setGameMode('free')" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
+                    <button id="modeFree" class="px-2 py-1 rounded-lg text-xs font-bold transition-all text-amber-100 hover:text-white whitespace-nowrap">
                         🎲 자유(1~127)
                     </button>
                 </div>
 
-                <button onclick="toggleSound()" id="soundBtn" class="bg-amber-600 hover:bg-amber-700 text-white p-1.5 rounded-lg shadow transition border border-amber-400/40 text-xs font-bold whitespace-nowrap shrink-0" title="음소거 토글">
+                <button id="soundBtn" class="bg-amber-600 hover:bg-amber-700 text-white p-1.5 rounded-lg shadow transition border border-amber-400/40 text-xs font-bold whitespace-nowrap shrink-0" title="음소거 토글">
                     🔊
                 </button>
-                <button onclick="openHelpModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold shadow transition border border-amber-400/40 whitespace-nowrap shrink-0">
+                <button id="helpBtn" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold shadow transition border border-amber-400/40 whitespace-nowrap shrink-0">
                     ❓ 안내
                 </button>
             </div>
@@ -146,96 +156,100 @@
     </header>
 
     <!-- Main Classroom Display Container -->
-    <main class="flex-1 w-full max-w-7xl mx-auto p-2 md:p-3 flex flex-col justify-between min-h-0 gap-2 overflow-hidden">
+    <main class="flex-1 w-full max-w-7xl mx-auto p-2 md:p-3 flex flex-col justify-center min-h-0 gap-2 md:gap-3 overflow-hidden">
 
         <!-- Top Stage: Timer, Popcorn Bag, and Scoreboard -->
-        <div class="grid grid-cols-12 gap-2 md:gap-3 items-stretch flex-1 min-h-0">
+        <div class="grid grid-cols-12 gap-2 md:gap-3 items-stretch max-h-[250px] md:max-h-[290px] flex-1 min-h-0">
             
             <!-- Left Panel: Classroom Controls & Timer -->
-            <div class="col-span-3 bg-white p-2.5 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-slate-500 text-xs font-bold flex items-center gap-1 whitespace-nowrap">⏱️ 생각 시간</span>
-                        <span id="timerDisplay" class="text-lg md:text-xl font-black text-amber-600 font-mono whitespace-nowrap">00:30</span>
+            <div class="col-span-3 bg-white p-2 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
+                <div class="flex flex-col h-full justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-slate-700 text-xs md:text-sm font-black flex items-center gap-1 whitespace-nowrap">⏱️ 생각 시간</span>
+                        </div>
+                        <!-- Timer Preset Buttons -->
+                        <div class="grid grid-cols-3 gap-1 mb-1.5">
+                            <button id="timerBtn15" class="py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">15초</button>
+                            <button id="timerBtn30" class="py-0.5 bg-amber-500 text-white rounded-lg text-[11px] font-bold transition shadow whitespace-nowrap">30초</button>
+                            <button id="timerBtn60" class="py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">60초</button>
+                        </div>
+                        <div class="flex gap-1 mb-1.5">
+                            <button id="startTimerBtn" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-1 rounded-lg text-xs font-bold shadow transition whitespace-nowrap">
+                                ▶️ 시작
+                            </button>
+                            <button id="resetTimerBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded-lg text-xs font-bold transition shrink-0 whitespace-nowrap">
+                                🔄
+                            </button>
+                        </div>
+                        <!-- Large Timer Display -->
+                        <div class="flex items-center justify-center bg-amber-50/80 rounded-xl py-1.5 md:py-2 border border-amber-200 shadow-inner">
+                            <span id="timerDisplay" class="text-2xl md:text-3xl font-black text-amber-600 font-mono tracking-wider whitespace-nowrap">00:30</span>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-1 mb-2">
-                        <button onclick="setTimer(15)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">15초</button>
-                        <button onclick="setTimer(30)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">30초</button>
-                        <button onclick="setTimer(60)" class="py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap">60초</button>
-                    </div>
-                    <div class="flex gap-1">
-                        <button id="startTimerBtn" onclick="toggleTimer()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-1.5 rounded-lg text-xs font-bold shadow transition whitespace-nowrap">
-                            ▶️ 시작
-                        </button>
-                        <button onclick="resetTimer()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition shrink-0 whitespace-nowrap">
-                            🔄
-                        </button>
-                    </div>
-                </div>
 
-                <div class="pt-1.5 border-t border-slate-100">
-                    <div class="text-[10px] text-slate-400 font-medium">범위 안내</div>
-                    <div id="rangeDescription" class="text-xs font-bold text-slate-700 truncate">치즈맛: 1 ~ 60</div>
+                    <div class="pt-1 border-t border-slate-100 mt-0.5">
+                        <div class="text-[10px] text-slate-400 font-medium">범위 안내</div>
+                        <div id="rangeDescription" class="text-xs font-bold text-slate-700 truncate">치즈맛: 1 ~ 60</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Center Stage: Animated Popcorn Bag & Popped Number -->
-            <div class="col-span-5 flex flex-col items-center justify-center relative bg-white/70 rounded-2xl p-2 border border-amber-200/80 shadow-inner overflow-hidden">
+            <div class="col-span-5 flex flex-col items-center justify-center relative bg-white/70 rounded-2xl p-1.5 border border-amber-200/80 shadow-inner overflow-hidden">
                 
-                <!-- Popcorn Popping Canvas Overlay -->
                 <canvas id="popcornCanvas" class="absolute inset-0 pointer-events-none z-20 w-full h-full"></canvas>
 
-                <!-- Popcorn Machine / Bag Display -->
                 <div class="relative flex flex-col items-center justify-center my-auto">
                     
-                    <!-- Main Popcorn Display Badge -->
-                    <div id="popcornTargetBox" class="relative z-10 cursor-pointer my-1" onclick="popNewNumber()">
-                        <div id="popcornBadge" class="hidden animate-pop-up bg-amber-100 border-4 border-amber-400 rounded-full w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center shadow-xl relative overflow-hidden">
-                            <div class="absolute top-1 text-xl md:text-2xl opacity-80">🍿</div>
-                            <span class="text-slate-500 text-[10px] md:text-xs font-bold whitespace-nowrap">팝콘 속 십진수</span>
-                            <span id="targetDecimalText" class="text-3xl md:text-4xl font-black text-red-600 tracking-tight drop-shadow my-0.5">--</span>
-                            <span id="popcornFlavorLabel" class="px-2 py-0.5 bg-amber-300 text-amber-900 rounded-full text-[10px] font-bold whitespace-nowrap">치즈맛</span>
+                    <div id="popcornTargetBox" class="relative z-10 cursor-pointer my-0.5">
+                        <div id="popcornBadge" class="hidden animate-pop-up bg-amber-100 border-4 border-amber-400 rounded-full w-28 h-28 md:w-36 md:h-36 flex flex-col items-center justify-center shadow-xl relative overflow-hidden">
+                            <button id="voiceReplayBtn" class="absolute top-1 right-2 text-xs bg-amber-200/80 hover:bg-amber-300 p-1 rounded-full text-amber-900 transition" title="팝콘 효과음 다시 듣기">🔊</button>
+                            <div class="absolute top-0.5 text-lg md:text-xl opacity-80">🍿</div>
+                            <span class="text-slate-500 text-[10px] font-bold whitespace-nowrap">팝콘 속 십진수</span>
+                            <span id="targetDecimalText" class="text-2xl md:text-3xl font-black text-red-600 tracking-tight drop-shadow my-0.5">--</span>
+                            <span id="popcornFlavorLabel" class="px-2 py-0.5 bg-amber-300 text-amber-900 rounded-full text-[9px] font-bold whitespace-nowrap">치즈맛</span>
                         </div>
 
-                        <!-- Initial Idle Placeholder -->
-                        <div id="popcornPlaceholder" class="bg-white border-2 border-dashed border-amber-300 rounded-full w-32 h-32 md:w-40 md:h-40 flex flex-col items-center justify-center p-2 text-center shadow-inner hover:border-amber-400 transition">
-                            <span class="text-2xl md:text-3xl mb-1 animate-bounce">🍿</span>
+                        <!-- Initial Placeholder -->
+                        <div id="popcornPlaceholder" class="bg-white border-2 border-dashed border-amber-300 rounded-full w-28 h-28 md:w-36 md:h-36 flex flex-col items-center justify-center p-1.5 text-center shadow-inner hover:border-amber-400 transition">
+                            <span class="text-xl md:text-2xl mb-0.5 animate-bounce">🍿</span>
                             <span class="text-amber-800 font-bold text-xs md:text-sm whitespace-nowrap">팝콘 튀기기!</span>
-                            <span class="text-amber-500 text-[10px] whitespace-nowrap">버튼을 누르세요</span>
+                            <span class="text-amber-500 text-[9px] whitespace-nowrap">버튼을 누르세요</span>
                         </div>
                     </div>
 
                     <!-- Trigger Action Button -->
-                    <button id="popBtn" onclick="popNewNumber()" class="mt-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm md:text-base px-5 py-1.5 rounded-2xl shadow-md transform hover:scale-105 transition-all border-b-2 border-orange-700 flex items-center gap-1.5 whitespace-nowrap">
+                    <button id="popBtn" class="mt-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs md:text-sm px-4 py-1.5 rounded-xl shadow-md transform hover:scale-105 transition-all border-b-2 border-orange-700 flex items-center gap-1.5 whitespace-nowrap">
                         <span>🍿</span>
                         <span>팝콘 튀기기!</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Right Panel: Classroom Dynamic Scoreboard -->
-            <div class="col-span-4 bg-white p-2.5 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
+            <!-- Right Panel: Scoreboard -->
+            <div class="col-span-4 bg-white p-2 md:p-3 rounded-2xl shadow-md border-2 border-amber-200 flex flex-col justify-between overflow-hidden">
                 <div class="flex flex-col h-full justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-2 gap-1 border-b border-slate-100 pb-1.5">
+                        <div class="flex items-center justify-between mb-1.5 gap-1 border-b border-slate-100 pb-1">
                             <h3 class="text-xs md:text-sm font-black text-slate-800 whitespace-nowrap shrink-0 flex items-center gap-1">
                                 <span>🏆</span> <span>모둠 점수판</span>
                             </h3>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="addTeam()" class="bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold shadow transition whitespace-nowrap" title="모둠 추가">
+                                <button id="addTeamBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold shadow transition whitespace-nowrap" title="모둠 추가">
                                     + 모둠
                                 </button>
-                                <button onclick="removeTeam()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap" title="모둠 삭제">
+                                <button id="removeTeamBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap" title="모둠 삭제">
                                     - 모둠
                                 </button>
-                                <button onclick="resetScores()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap shrink-0" title="점수 초기화">
+                                <button id="resetScoresBtn" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold transition whitespace-nowrap shrink-0" title="점수 초기화">
                                     초기화
                                 </button>
                             </div>
                         </div>
                         
-                        <div id="scoreboardList" class="space-y-1.5 max-h-36 md:max-h-44 overflow-y-auto pr-0.5 custom-scroll">
-                            <!-- Dynamic team items will be rendered by JS -->
+                        <div id="scoreboardList" class="space-y-1 max-h-28 md:max-h-36 overflow-y-auto pr-0.5 custom-scroll">
+                            <!-- Dynamic scoreboard items -->
                         </div>
                     </div>
 
@@ -258,18 +272,18 @@
 
                 <!-- Answer Reveal Actions -->
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button id="revealBtn" onclick="revealAnswer()" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-black text-xs md:text-sm px-3.5 py-1 rounded-xl shadow transition-all border-b-2 border-emerald-800 disabled:border-slate-400 flex items-center gap-1 whitespace-nowrap">
+                    <button id="revealBtn" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-black text-xs md:text-sm px-3.5 py-1 rounded-xl shadow transition-all border-b-2 border-emerald-800 disabled:border-slate-400 flex items-center gap-1 whitespace-nowrap">
                         <span>🔓 정답 뒤집기</span>
                     </button>
-                    <button id="explanationBtn" onclick="openExplanationModal()" disabled class="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-300 text-white font-bold text-xs px-2.5 py-1 rounded-xl shadow transition whitespace-nowrap">
+                    <button id="explanationBtn" disabled class="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-300 text-white font-bold text-xs px-2.5 py-1 rounded-xl shadow transition whitespace-nowrap">
                         💡 풀이
                     </button>
                 </div>
             </div>
 
-            <!-- Cards Grid: 7 Bits (64, 32, 16, 8, 4, 2, 1) -->
+            <!-- Cards Grid: 7 Bits -->
             <div id="cardsGrid" class="grid grid-cols-7 gap-1.5 md:gap-2.5 max-w-5xl mx-auto w-full py-0.5">
-                <!-- Cards will be generated dynamically by JavaScript -->
+                <!-- Cards dynamically rendered by JS -->
             </div>
 
             <!-- Live Calculation & Answer Bar -->
@@ -279,7 +293,6 @@
                     <span id="studentSumText" class="text-base md:text-lg font-black text-amber-700">0</span>
                 </div>
                 <div id="matchStatusBadge" class="hidden px-2.5 py-0.5 rounded-full font-bold text-xs whitespace-nowrap">
-                    <!-- Target Match Status -->
                 </div>
             </div>
 
@@ -295,7 +308,7 @@
     <!-- Explanation Modal -->
     <div id="explanationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-400 relative animate-pop-up">
-            <button onclick="closeExplanationModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
+            <button id="closeExplanationBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
             <div class="text-center mb-4">
                 <div class="inline-block p-2 bg-amber-100 rounded-2xl text-2xl mb-1">💡</div>
                 <h3 class="text-xl font-black text-slate-800">이진수 변환 풀이</h3>
@@ -306,28 +319,26 @@
                 <div class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
                     <div class="text-xs font-bold text-amber-800 mb-1">카드의 자릿값 덧셈</div>
                     <div id="modalFormulaText" class="text-base font-black text-slate-800 font-mono">
-                        <!-- Formula string -->
                     </div>
                 </div>
 
                 <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
                     <div class="text-xs font-bold text-slate-600 mb-2">자리별 카드 상태 (1: 켜짐, 0: 꺼짐)</div>
                     <div id="modalBitBreakdown" class="grid grid-cols-7 gap-1 text-center font-mono font-bold text-xs">
-                        <!-- Bit breakdown cards -->
                     </div>
                 </div>
             </div>
 
-            <button onclick="closeExplanationModal()" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
+            <button id="confirmExplanationBtn" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
                 확인
             </button>
         </div>
     </div>
 
-    <!-- How To Play Modal -->
+    <!-- Help Modal -->
     <div id="helpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-400 relative">
-            <button onclick="closeHelpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
+            <button id="closeHelpBtn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-black">✕</button>
             <h3 class="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
                 <span>🍿</span> <span>수업 진행 안내</span>
             </h3>
@@ -344,107 +355,186 @@
                     <li><strong class="text-amber-700">모드 선택:</strong> 치즈맛(1~60) 또는 카라멜맛(61~120)을 선택합니다.</li>
                     <li><strong class="text-amber-700">팝콘 튀기기:</strong> 선생님이 <span class="text-orange-600 font-bold">[팝콘 튀기기 🍿]</span> 버튼을 누르면 팝콘 속 십진수가 등장합니다.</li>
                     <li><strong class="text-amber-700">학생 활동:</strong> 학생들은 이진수 카드(64, 32, 16, 8, 4, 2, 1)로 십진수를 만듭니다.</li>
-                    <li><strong class="text-amber-700">정답 공개:</strong> <span class="text-emerald-600 font-bold">[정답 뒤집기 🔓]</span> 버튼을 누르면 카드가 뒤집히며 정답이 공개됩니다.</li>
+                    <li><strong class="text-amber-700">정답 공개:</strong> <span class="text-emerald-600 font-bold">[정답 뒤집기 🔓]</span> 버튼을 누르면 맞았을 때만 카드가 뒤집히며 정답 폭죽이 터집니다!</li>
                 </ol>
             </div>
 
-            <button onclick="closeHelpModal()" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
+            <button id="confirmHelpBtn" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow transition">
                 닫기
             </button>
         </div>
     </div>
 
     <script>
-        // Web Audio Synthesizer for game sound effects without external files
-        class SoundFX {
+        // Web Audio API 기반 리얼 팝콘 튀기는 효과음 및 사운드 관리자
+        class SoundManager {
             constructor() {
-                this.ctx = null;
                 this.enabled = true;
+                this.audioCtx = null;
+                this.isUnlocked = false;
+
+                // 사용자 첫 인터랙션을 통한 오디오 잠금 해제 설정
+                this.setupUnlockListeners();
             }
 
-            init() {
-                if (!this.ctx) {
-                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    this.ctx = new AudioCtx();
+            setupUnlockListeners() {
+                const unlock = () => {
+                    if (this.isUnlocked) return;
+                    this.initContext();
+                    this.isUnlocked = true;
+                    window.removeEventListener('click', unlock);
+                    window.removeEventListener('touchstart', unlock);
+                    window.removeEventListener('keydown', unlock);
+                };
+
+                window.addEventListener('click', unlock, { once: true });
+                window.addEventListener('touchstart', unlock, { once: true });
+                window.addEventListener('keydown', unlock, { once: true });
+            }
+
+            initContext() {
+                if (!this.audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass) {
+                        this.audioCtx = new AudioContextClass();
+                    }
+                }
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
                 }
             }
 
-            playPop() {
+            playPopcornSound() {
                 if (!this.enabled) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+                this.initContext();
+                if (!this.audioCtx) return;
 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
-
-                gain.gain.setValueAtTime(0.6, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc.start(now);
-                osc.stop(now + 0.09);
+                const popCount = 5 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < popCount; i++) {
+                    const delay = (i === 0 ? 0 : Math.random() * 0.35);
+                    const startTime = this.audioCtx.currentTime + delay;
+                    this.createSinglePop(startTime);
+                }
             }
 
-            playFlip() {
+            createSinglePop(startTime) {
+                const ctx = this.audioCtx;
+                if (!ctx) return;
+
+                try {
+                    const osc = ctx.createOscillator();
+                    const oscGain = ctx.createGain();
+                    const startFreq = 380 + Math.random() * 320;
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(startFreq, startTime);
+                    osc.frequency.exponentialRampToValueAtTime(60 + Math.random() * 40, startTime + 0.025);
+
+                    oscGain.gain.setValueAtTime(0.45, startTime);
+                    oscGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.025);
+
+                    osc.connect(oscGain);
+                    oscGain.connect(ctx.destination);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.03);
+
+                    const bufferSize = Math.floor(ctx.sampleRate * 0.02);
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(1300 + Math.random() * 1100, startTime);
+                    filter.Q.setValueAtTime(3.5 + Math.random() * 2.5, startTime);
+
+                    const noiseGain = ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.35, startTime);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.02);
+
+                    noise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(ctx.destination);
+
+                    noise.start(startTime);
+                    noise.stop(startTime + 0.025);
+                } catch(e) {
+                    console.warn("Pop sound error:", e);
+                }
+            }
+
+            playFlipSound() {
                 if (!this.enabled) return;
-                this.init();
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+                this.initContext();
+                if (!this.audioCtx) return;
 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+                try {
+                    const now = this.audioCtx.currentTime;
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
 
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
 
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-                osc.start(now);
-                osc.stop(now + 0.06);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } catch(e) {
+                    console.warn("Flip sound play error:", e);
+                }
             }
 
             playFanfare() {
                 if (!this.enabled) return;
-                this.init();
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-                notes.forEach((freq, idx) => {
-                    const now = this.ctx.currentTime + (idx * 0.1);
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                this.initContext();
+                if (!this.audioCtx) return;
 
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now);
+                try {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const now = this.audioCtx.currentTime + (idx * 0.1);
+                        const osc = this.audioCtx.createOscillator();
+                        const gain = this.audioCtx.createGain();
 
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now);
 
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
-                    osc.start(now);
-                    osc.stop(now + 0.35);
-                });
+                        osc.connect(gain);
+                        gain.connect(this.audioCtx.destination);
+
+                        osc.start(now);
+                        osc.stop(now + 0.35);
+                    });
+                } catch(e) {
+                    console.warn("Fanfare play error:", e);
+                }
             }
         }
 
-        const sfx = new SoundFX();
+        const soundManager = new SoundManager();
 
-        // Game State Variables
+        // Game State
         const BIT_VALUES = [64, 32, 16, 8, 4, 2, 1];
-        let currentMode = 'cheese'; // 'cheese' (1-60), 'caramel' (61-120), 'free' (1-127)
+        let currentMode = 'cheese'; // 'cheese', 'caramel', 'free'
         let targetDecimal = null;
         let isRevealed = false;
         let userBits = [0, 0, 0, 0, 0, 0, 0];
         
-        // Dynamic Scoreboard Teams State
         let teams = [
             { id: 1, name: '1모둠', score: 0 },
             { id: 2, name: '2모둠', score: 0 },
@@ -452,23 +542,69 @@
             { id: 4, name: '4모둠', score: 0 }
         ];
 
-        // Timer Variables
         let timerSeconds = 30;
         let timerInitial = 30;
         let timerInterval = null;
         let isTimerRunning = false;
 
-        // Initialize UI
-        window.addEventListener('DOMContentLoaded', () => {
-            renderCards();
-            renderScoreboard();
-            setupCanvas();
-        });
+        // Dynamic Binary Cards Renderer
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            if (!grid) return;
 
-        function toggleSound() {
-            sfx.enabled = !sfx.enabled;
-            const btn = document.getElementById('soundBtn');
-            btn.innerText = sfx.enabled ? '🔊' : '🔇';
+            grid.innerHTML = '';
+            const binaryStr = targetDecimal !== null ? targetDecimal.toString(2).padStart(7, '0') : '0000000';
+
+            BIT_VALUES.forEach((val, idx) => {
+                const isUserOn = userBits[idx] === 1;
+                const correctBit = binaryStr[idx];
+                const isCorrectOne = correctBit === '1';
+
+                const card = document.createElement('div');
+                card.className = 'perspective-1000 h-28 sm:h-32 md:h-36 cursor-pointer';
+                card.addEventListener('click', () => toggleUserCard(idx));
+
+                const cardInner = document.createElement('div');
+                cardInner.id = `cardInner-${idx}`;
+                cardInner.className = `card-inner ${isRevealed ? 'flipped' : ''}`;
+
+                // Front Side
+                const front = document.createElement('div');
+                front.className = `card-front p-1 sm:p-2 flex flex-col justify-between items-center transition-all ${
+                    isUserOn ? 'border-amber-400 bg-amber-950/80 ring-2 ring-amber-400 shadow-lg shadow-amber-500/20' : 'border-slate-700 bg-slate-900'
+                }`;
+
+                front.innerHTML = `
+                    <span class="text-[10px] md:text-xs font-bold text-amber-300 tracking-wider font-mono">${val}</span>
+                    <div class="my-auto text-center">
+                        <span class="text-xl md:text-3xl font-black ${isUserOn ? 'text-amber-400 drop-shadow' : 'text-slate-500'} font-mono">${isUserOn ? '1' : '0'}</span>
+                    </div>
+                    <span class="text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        isUserOn ? 'bg-amber-400 text-amber-950' : 'bg-slate-800 text-slate-400'
+                    }">${isUserOn ? '선택' : '해제'}</span>
+                `;
+
+                // Back Side
+                const back = document.createElement('div');
+                back.className = `card-back p-1 sm:p-2 flex flex-col justify-between items-center ${
+                    isCorrectOne ? '' : 'zero'
+                }`;
+
+                back.innerHTML = `
+                    <span class="text-[10px] md:text-xs font-bold ${isCorrectOne ? 'text-emerald-200' : 'text-slate-400'} font-mono">${val}</span>
+                    <div class="my-auto text-center">
+                        <span class="text-2xl md:text-4xl font-black ${isCorrectOne ? 'text-white drop-shadow' : 'text-slate-500'} font-mono">${correctBit}</span>
+                    </div>
+                    <span class="text-[9px] md:text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        isCorrectOne ? 'bg-emerald-300 text-emerald-950' : 'bg-slate-700 text-slate-300'
+                    }">${isCorrectOne ? '켜짐' : '꺼짐'}</span>
+                `;
+
+                cardInner.appendChild(front);
+                cardInner.appendChild(back);
+                card.appendChild(cardInner);
+                grid.appendChild(card);
+            });
         }
 
         function setGameMode(mode) {
@@ -495,12 +631,7 @@
             }
         }
 
-        // Pop popcorn & generate target decimal
         function popNewNumber() {
-            sfx.playPop();
-            triggerPopcornParticles();
-
-            // Reset Timer if configured
             resetTimer();
 
             let min = 1, max = 60;
@@ -514,15 +645,16 @@
             isRevealed = false;
             userBits = [0, 0, 0, 0, 0, 0, 0];
 
-            // UI Update
+            soundManager.playPopcornSound();
+            triggerPopcornParticles();
+
             document.getElementById('popcornPlaceholder').classList.add('hidden');
             const badge = document.getElementById('popcornBadge');
             badge.classList.remove('hidden', 'animate-pop-up');
-            void badge.offsetWidth; // Trigger reflow for animation reset
+            void badge.offsetWidth;
             badge.classList.add('animate-pop-up');
 
             document.getElementById('targetDecimalText').innerText = targetDecimal;
-
             document.getElementById('revealBtn').disabled = false;
             document.getElementById('explanationBtn').disabled = true;
 
@@ -530,74 +662,20 @@
             updateLiveSum();
         }
 
-        // Render Cards HTML
-        function renderCards() {
-            const grid = document.getElementById('cardsGrid');
-            grid.innerHTML = '';
-
-            const targetBinary = targetDecimal !== null ? targetDecimal.toString(2).padStart(7, '0') : null;
-
-            BIT_VALUES.forEach((val, idx) => {
-                const isBitOne = targetBinary ? targetBinary[idx] === '1' : false;
-                const userVal = userBits[idx];
-
-                // Card Column
-                const cardCol = document.createElement('div');
-                cardCol.className = 'flex flex-col items-center space-y-1 w-full';
-
-                // Top Value Header
-                const valHeader = document.createElement('div');
-                valHeader.className = 'text-[10px] md:text-xs font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200 whitespace-nowrap';
-                valHeader.innerText = val;
-
-                // 3D Card Element
-                const cardContainer = document.createElement('div');
-                cardContainer.className = 'w-full h-16 sm:h-20 md:h-24 perspective-1000 cursor-pointer';
-                cardContainer.onclick = () => toggleUserCard(idx);
-
-                const cardInner = document.createElement('div');
-                cardInner.id = `cardInner-${idx}`;
-                cardInner.className = `card-inner ${isRevealed ? 'flipped' : ''}`;
-
-                // Front Side (User manual guess mode)
-                const front = document.createElement('div');
-                front.className = 'card-front';
-                front.innerHTML = `
-                    <span class="text-[9px] text-slate-400 font-sans mb-0.5 whitespace-nowrap">${val}</span>
-                    <span class="text-xl md:text-3xl font-black text-amber-400 font-mono leading-none">${userVal}</span>
-                    <span class="text-[8px] md:text-[9px] text-slate-400 mt-0.5 whitespace-nowrap">클릭</span>
-                `;
-
-                // Back Side (Revealed Answer)
-                const back = document.createElement('div');
-                back.className = `card-back ${isBitOne ? '' : 'zero'}`;
-                back.innerHTML = `
-                    <span class="text-[9px] text-amber-200/80 font-sans mb-0.5 whitespace-nowrap">${val}</span>
-                    <span class="text-xl md:text-3xl font-black font-mono leading-none">${isBitOne ? '1' : '0'}</span>
-                    <span class="text-[8px] md:text-[9px] opacity-75 mt-0.5 whitespace-nowrap">${isBitOne ? 'ON' : 'OFF'}</span>
-                `;
-
-                cardInner.appendChild(front);
-                cardInner.appendChild(back);
-                cardContainer.appendChild(cardInner);
-
-                cardCol.appendChild(valHeader);
-                cardCol.appendChild(cardContainer);
-
-                grid.appendChild(cardCol);
-            });
+        function replayVoiceNumber() {
+            if (targetDecimal !== null) {
+                soundManager.playPopcornSound();
+            }
         }
 
-        // Toggle user card bit manually
         function toggleUserCard(index) {
-            if (isRevealed) return; // Locked once answer is revealed
+            if (isRevealed) return;
             userBits[index] = userBits[index] === 0 ? 1 : 0;
-            sfx.playFlip();
+            soundManager.playFlipSound();
             renderCards();
             updateLiveSum();
         }
 
-        // Update live user calculation sum
         function updateLiveSum() {
             let sum = 0;
             userBits.forEach((bit, i) => {
@@ -622,44 +700,124 @@
             }
         }
 
-        // Reveal answer with staggered 3D card flips
+        // 정답 뒤집기 및 검증 함수 (오답 시 폭죽 미방출 및 다시 풀기 처리)
         function revealAnswer() {
             if (targetDecimal === null || isRevealed) return;
 
+            // 선택한 카드의 합 계산
+            let userSum = 0;
+            userBits.forEach((bit, i) => {
+                if (bit === 1) userSum += BIT_VALUES[i];
+            });
+
+            // 오답 판정 처리
+            if (userSum !== targetDecimal) {
+                soundManager.playFlipSound();
+                
+                // 안내 상태 메시지 표시
+                const badge = document.getElementById('matchStatusBadge');
+                if (badge) {
+                    badge.className = 'px-3 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white border border-red-600 animate-bounce whitespace-nowrap';
+                    badge.innerText = '❌ 오답입니다! 카드를 처음 상태로 되돌립니다. 다시 맞춰보세요.';
+                }
+
+                // 카드 영역 흔들기 애니메이션 효과
+                const grid = document.getElementById('cardsGrid');
+                if (grid) {
+                    grid.classList.add('animate-shake');
+                    setTimeout(() => grid.classList.remove('animate-shake'), 400);
+                }
+
+                // 오답일 경우 선택한 카드를 모두 처음 상태(선택 해제)로 초기화
+                setTimeout(() => {
+                    userBits = [0, 0, 0, 0, 0, 0, 0];
+                    renderCards();
+                    updateLiveSum();
+                }, 400);
+
+                return; // 정답이 아니면 뒤집지 않고 다시 풀도록 종료
+            }
+
+            // 정답일 때만 뒤집기 및 팡파레/폭죽 실행
             isRevealed = true;
             document.getElementById('revealBtn').disabled = true;
             document.getElementById('explanationBtn').disabled = false;
 
-            // Staggered flip animation for 7 cards
             BIT_VALUES.forEach((_, idx) => {
                 setTimeout(() => {
                     const cardInner = document.getElementById(`cardInner-${idx}`);
                     if (cardInner) {
                         cardInner.classList.add('flipped');
-                        sfx.playFlip();
+                        soundManager.playFlipSound();
                     }
                 }, idx * 100);
             });
 
-            // Play fanfare sound & celebration confetti after all cards flip
             setTimeout(() => {
-                sfx.playFanfare();
+                soundManager.playFanfare();
+
                 if (typeof confetti === 'function') {
                     confetti({
-                        particleCount: 50,
-                        spread: 60,
+                        particleCount: 60,
+                        spread: 70,
                         origin: { y: 0.8 }
                     });
                 }
             }, BIT_VALUES.length * 100 + 80);
         }
 
-        // Canvas Popcorn Explosion Animation
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCards();
+            renderScoreboard();
+            setupCanvas();
+
+            document.getElementById('popBtn').addEventListener('click', popNewNumber);
+            document.getElementById('popcornTargetBox').addEventListener('click', (e) => {
+                if (e.target.id !== 'voiceReplayBtn') {
+                    popNewNumber();
+                }
+            });
+            document.getElementById('voiceReplayBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                replayVoiceNumber();
+            });
+
+            document.getElementById('revealBtn').addEventListener('click', revealAnswer);
+            document.getElementById('explanationBtn').addEventListener('click', openExplanationModal);
+
+            document.getElementById('modeCheese').addEventListener('click', () => setGameMode('cheese'));
+            document.getElementById('modeCaramel').addEventListener('click', () => setGameMode('caramel'));
+            document.getElementById('modeFree').addEventListener('click', () => setGameMode('free'));
+
+            document.getElementById('soundBtn').addEventListener('click', () => {
+                soundManager.enabled = !soundManager.enabled;
+                document.getElementById('soundBtn').innerText = soundManager.enabled ? '🔊' : '🔇';
+            });
+            document.getElementById('helpBtn').addEventListener('click', openHelpModal);
+
+            document.getElementById('timerBtn15').addEventListener('click', () => setTimer(15));
+            document.getElementById('timerBtn30').addEventListener('click', () => setTimer(30));
+            document.getElementById('timerBtn60').addEventListener('click', () => setTimer(60));
+            document.getElementById('startTimerBtn').addEventListener('click', toggleTimer);
+            document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+
+            document.getElementById('addTeamBtn').addEventListener('click', addTeam);
+            document.getElementById('removeTeamBtn').addEventListener('click', removeTeam);
+            document.getElementById('resetScoresBtn').addEventListener('click', resetScores);
+
+            document.getElementById('closeExplanationBtn').addEventListener('click', closeExplanationModal);
+            document.getElementById('confirmExplanationBtn').addEventListener('click', closeExplanationModal);
+            document.getElementById('closeHelpBtn').addEventListener('click', closeHelpModal);
+            document.getElementById('confirmHelpBtn').addEventListener('click', closeHelpModal);
+        });
+
+        // Canvas Popcorn Particles
         let canvas, ctx;
         let particles = [];
 
         function setupCanvas() {
             canvas = document.getElementById('popcornCanvas');
+            if (!canvas) return;
             ctx = canvas.getContext('2d');
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
@@ -702,7 +860,7 @@
             particles.forEach((p) => {
                 p.x += p.vx;
                 p.y += p.vy;
-                p.vy += 0.25; // Gravity
+                p.vy += 0.25;
                 p.rotation += p.vRot;
                 p.opacity -= 0.018;
 
@@ -711,7 +869,6 @@
                 ctx.rotate(p.rotation);
                 ctx.globalAlpha = Math.max(0, p.opacity);
 
-                // Draw popcorn shape
                 ctx.fillStyle = '#fef08a';
                 ctx.strokeStyle = '#f59e0b';
                 ctx.lineWidth = 1.5;
@@ -734,7 +891,7 @@
             }
         }
 
-        // Scoreboard Functions (Dynamic Teams)
+        // Scoreboard Operations
         function renderScoreboard() {
             const container = document.getElementById('scoreboardList');
             if (!container) return;
@@ -743,31 +900,51 @@
             teams.forEach((team) => {
                 const item = document.createElement('div');
                 item.className = 'flex items-center justify-between bg-amber-50 p-1 md:p-1.5 rounded-xl border border-amber-200 text-xs';
-                item.innerHTML = `
-                    <span class="font-bold text-slate-700 whitespace-nowrap text-xs shrink-0">${team.name}</span>
-                    <div class="flex items-center space-x-1 shrink-0">
-                        <button onclick="changeScore(${team.id}, -1)" class="w-4 h-4 md:w-5 md:h-5 bg-white rounded shadow text-xs font-black text-amber-700 hover:bg-amber-100 flex items-center justify-center shrink-0">-</button>
-                        <span class="font-black text-xs md:text-sm w-4 text-center text-orange-600 shrink-0">${team.score}</span>
-                        <button onclick="changeScore(${team.id}, 1)" class="w-4 h-4 md:w-5 md:h-5 bg-orange-500 text-white rounded shadow text-xs font-black hover:bg-orange-600 flex items-center justify-center shrink-0">+</button>
-                    </div>
-                `;
+                
+                const teamNameSpan = document.createElement('span');
+                teamNameSpan.className = 'font-bold text-slate-700 whitespace-nowrap text-xs shrink-0';
+                teamNameSpan.innerText = team.name;
+
+                const ctrls = document.createElement('div');
+                ctrls.className = 'flex items-center space-x-1 shrink-0';
+
+                const minusBtn = document.createElement('button');
+                minusBtn.className = 'w-4 h-4 md:w-5 md:h-5 bg-white rounded shadow text-xs font-black text-amber-700 hover:bg-amber-100 flex items-center justify-center shrink-0';
+                minusBtn.innerText = '-';
+                minusBtn.addEventListener('click', () => changeScore(team.id, -1));
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.className = 'font-black text-xs md:text-sm w-4 text-center text-orange-600 shrink-0';
+                scoreSpan.innerText = team.score;
+
+                const plusBtn = document.createElement('button');
+                plusBtn.className = 'w-4 h-4 md:w-5 md:h-5 bg-orange-500 text-white rounded shadow text-xs font-black hover:bg-orange-600 flex items-center justify-center shrink-0';
+                plusBtn.innerText = '+';
+                plusBtn.addEventListener('click', () => changeScore(team.id, 1));
+
+                ctrls.appendChild(minusBtn);
+                ctrls.appendChild(scoreSpan);
+                ctrls.appendChild(plusBtn);
+
+                item.appendChild(teamNameSpan);
+                item.appendChild(ctrls);
                 container.appendChild(item);
             });
         }
 
         function addTeam() {
-            if (teams.length >= 8) return; // Prevent excessive height
+            if (teams.length >= 8) return;
             const nextId = teams.length > 0 ? Math.max(...teams.map(t => t.id)) + 1 : 1;
             teams.push({ id: nextId, name: `${teams.length + 1}모둠`, score: 0 });
             renderScoreboard();
-            sfx.playFlip();
+            soundManager.playFlipSound();
         }
 
         function removeTeam() {
-            if (teams.length <= 1) return; // Maintain at least 1 team
+            if (teams.length <= 1) return;
             teams.pop();
             renderScoreboard();
-            sfx.playFlip();
+            soundManager.playFlipSound();
         }
 
         function changeScore(teamId, delta) {
@@ -775,27 +952,43 @@
             if (team) {
                 team.score = Math.max(0, team.score + delta);
                 renderScoreboard();
-                sfx.playFlip();
+                soundManager.playFlipSound();
             }
         }
 
         function resetScores() {
             teams.forEach(t => t.score = 0);
             renderScoreboard();
-            sfx.playFlip();
+            soundManager.playFlipSound();
         }
 
-        // Timer Functions
+        // Timer Logic
         function setTimer(sec) {
             timerSeconds = sec;
             timerInitial = sec;
             updateTimerDisplay();
+            updateTimerPresetButtons(sec);
+        }
+
+        function updateTimerPresetButtons(sec) {
+            const btn15 = document.getElementById('timerBtn15');
+            const btn30 = document.getElementById('timerBtn30');
+            const btn60 = document.getElementById('timerBtn60');
+            if (!btn15 || !btn30 || !btn60) return;
+
+            const activeClass = 'py-1 bg-amber-500 text-white rounded-lg text-[11px] font-bold transition shadow whitespace-nowrap';
+            const inactiveClass = 'py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition whitespace-nowrap';
+
+            btn15.className = sec === 15 ? activeClass : inactiveClass;
+            btn30.className = sec === 30 ? activeClass : inactiveClass;
+            btn60.className = sec === 60 ? activeClass : inactiveClass;
         }
 
         function updateTimerDisplay() {
             const mins = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
             const secs = (timerSeconds % 60).toString().padStart(2, '0');
-            document.getElementById('timerDisplay').innerText = `${mins}:${secs}`;
+            const el = document.getElementById('timerDisplay');
+            if (el) el.innerText = `${mins}:${secs}`;
         }
 
         function toggleTimer() {
@@ -816,7 +1009,7 @@
                         clearInterval(timerInterval);
                         isTimerRunning = false;
                         document.getElementById('startTimerBtn').innerText = '▶️ 시작';
-                        sfx.playFanfare();
+                        soundManager.playFanfare();
                     }
                 }, 1000);
             }
@@ -827,28 +1020,25 @@
             isTimerRunning = false;
             timerSeconds = timerInitial;
             updateTimerDisplay();
-            document.getElementById('startTimerBtn').innerText = '▶️ 시작';
+            const btn = document.getElementById('startTimerBtn');
+            if (btn) btn.innerText = '▶️ 시작';
         }
 
-        // Explanation Modal
+        // Explanation Modal Logic
         function openExplanationModal() {
             if (targetDecimal === null) return;
 
             const binaryStr = targetDecimal.toString(2).padStart(7, '0');
             document.getElementById('modalDecimalSubtitle').innerText = `십진수 ${targetDecimal} = 이진수 ${binaryStr}`;
 
-            // Build formula string (e.g. 64 + 16 + 8 + 2 = 90)
             const activeTerms = [];
             BIT_VALUES.forEach((val, idx) => {
-                if (binaryStr[idx] === '1') {
-                    activeTerms.push(val);
-                }
+                if (binaryStr[idx] === '1') activeTerms.push(val);
             });
 
             const formulaStr = activeTerms.length > 0 ? `${activeTerms.join(' + ')} = ${targetDecimal}` : `0 = ${targetDecimal}`;
             document.getElementById('modalFormulaText').innerText = formulaStr;
 
-            // Build Bit Breakdown Grid
             const breakdownGrid = document.getElementById('modalBitBreakdown');
             breakdownGrid.innerHTML = '';
 
