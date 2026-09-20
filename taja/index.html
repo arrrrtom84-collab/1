@@ -42,12 +42,35 @@
         }
 
         .key-cap:active, .key-cap.active-press {
-            background-color: #e06d53 !important;
+            background-color: #0ea5e9 !important;
             color: #ffffff !important;
-            border-color: #c04930 !important;
+            border-color: #0284c7 !important;
             border-bottom-width: 1px !important;
             transform: translateY(2px);
-            box-shadow: 0 0 10px rgba(224, 109, 83, 0.6) !important;
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.6) !important;
+        }
+
+        .order-badge {
+            position: absolute;
+            top: -6px;
+            right: -4px;
+            background-color: #ff5252;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1;
+            padding: 1px 4px;
+            border-radius: 9999px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1.5px solid #ffffff;
+            z-index: 30;
+            pointer-events: none;
+            animation: badge-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes badge-pop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .key-cap.target-key {
@@ -126,7 +149,7 @@
                     <span id="keyboardLabel" class="text-[11px] font-bold text-gray-500">두벌식 표준 한글 자판</span>
                 </div>
                 <div class="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
-                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#e06d53] inline-block"></span> 누른 키</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#0ea5e9] inline-block"></span> 누른 키</span>
                 </div>
             </div>
 
@@ -307,18 +330,20 @@
             return String.fromCharCode(code);
         }
 
-        function assembleTypedSequenceToSyllables(jamoArr) {
+        function disassembleSequenceToSyllableGroups(jamoArr) {
             if (!jamoArr || jamoArr.length === 0) return [];
-            let result = [];
-            let cho = -1, joung = -1, jong = 0;
+            let groups = [];
+            let currentGroup = { cho: -1, joung: -1, jong: 0, jamos: [] };
 
             const flush = () => {
-                if (cho !== -1 || joung !== -1) {
-                    result.push(makeChar(cho, joung, jong));
+                if (currentGroup.cho !== -1 || currentGroup.joung !== -1 || currentGroup.jamos.length > 0) {
+                    const char = makeChar(currentGroup.cho, currentGroup.joung, currentGroup.jong);
+                    groups.push({
+                        char: char || currentGroup.jamos.join(''),
+                        jamos: [...currentGroup.jamos]
+                    });
                 }
-                cho = -1;
-                joung = -1;
-                jong = 0;
+                currentGroup = { cho: -1, joung: -1, jong: 0, jamos: [] };
             };
 
             for (let i = 0; i < jamoArr.length; i++) {
@@ -326,97 +351,121 @@
                 const cIdx = CHO_LIST.indexOf(jamo);
                 const vIdx = JOUNG_LIST.indexOf(jamo);
 
-                if (cho === -1 && joung === -1) {
+                if (jamo === ' ') {
+                    flush();
+                    groups.push({ char: ' ', jamos: [' '] });
+                    continue;
+                }
+
+                if (currentGroup.cho === -1 && currentGroup.joung === -1) {
                     if (cIdx !== -1) {
-                        cho = cIdx;
+                        currentGroup.cho = cIdx;
+                        currentGroup.jamos.push(jamo);
                     } else if (vIdx !== -1) {
-                        joung = vIdx;
+                        currentGroup.joung = vIdx;
+                        currentGroup.jamos.push(jamo);
                     } else {
-                        result.push(jamo);
+                        currentGroup.jamos.push(jamo);
+                        flush();
                     }
-                } else if (cho !== -1 && joung === -1) {
+                } else if (currentGroup.cho !== -1 && currentGroup.joung === -1) {
                     if (vIdx !== -1) {
-                        joung = vIdx;
+                        currentGroup.joung = vIdx;
+                        currentGroup.jamos.push(jamo);
                     } else if (cIdx !== -1) {
                         flush();
-                        cho = cIdx;
+                        currentGroup.cho = cIdx;
+                        currentGroup.jamos.push(jamo);
                     } else {
                         flush();
-                        result.push(jamo);
+                        groups.push({ char: jamo, jamos: [jamo] });
                     }
-                } else if (cho === -1 && joung !== -1) {
+                } else if (currentGroup.cho === -1 && currentGroup.joung !== -1) {
                     if (vIdx !== -1) {
-                        const combined = DOUBLE_JOUNG[JOUNG_LIST[joung] + jamo];
+                        const combined = DOUBLE_JOUNG[JOUNG_LIST[currentGroup.joung] + jamo];
                         if (combined) {
-                            joung = JOUNG_LIST.indexOf(combined);
+                            currentGroup.joung = JOUNG_LIST.indexOf(combined);
+                            currentGroup.jamos.push(jamo);
                         } else {
                             flush();
-                            joung = vIdx;
+                            currentGroup.joung = vIdx;
+                            currentGroup.jamos.push(jamo);
                         }
                     } else if (cIdx !== -1) {
                         flush();
-                        cho = cIdx;
+                        currentGroup.cho = cIdx;
+                        currentGroup.jamos.push(jamo);
                     } else {
                         flush();
-                        result.push(jamo);
+                        groups.push({ char: jamo, jamos: [jamo] });
                     }
-                } else if (cho !== -1 && joung !== -1 && jong === 0) {
+                } else if (currentGroup.cho !== -1 && currentGroup.joung !== -1 && currentGroup.jong === 0) {
                     if (vIdx !== -1) {
-                        const combined = DOUBLE_JOUNG[JOUNG_LIST[joung] + jamo];
+                        const combined = DOUBLE_JOUNG[JOUNG_LIST[currentGroup.joung] + jamo];
                         if (combined) {
-                            joung = JOUNG_LIST.indexOf(combined);
+                            currentGroup.joung = JOUNG_LIST.indexOf(combined);
+                            currentGroup.jamos.push(jamo);
                         } else {
                             flush();
-                            joung = vIdx;
+                            currentGroup.joung = vIdx;
+                            currentGroup.jamos.push(jamo);
                         }
                     } else if (cIdx !== -1) {
                         const jIdx = JONG_LIST.indexOf(jamo);
                         if (jIdx > 0) {
-                            jong = jIdx;
+                            currentGroup.jong = jIdx;
+                            currentGroup.jamos.push(jamo);
                         } else {
                             flush();
-                            cho = cIdx;
+                            currentGroup.cho = cIdx;
+                            currentGroup.jamos.push(jamo);
                         }
                     } else {
                         flush();
-                        result.push(jamo);
+                        groups.push({ char: jamo, jamos: [jamo] });
                     }
-                } else if (cho !== -1 && joung !== -1 && jong > 0) {
+                } else if (currentGroup.cho !== -1 && currentGroup.joung !== -1 && currentGroup.jong > 0) {
                     if (vIdx !== -1) {
-                        const currentJongChar = JONG_LIST[jong];
+                        const currentJongChar = JONG_LIST[currentGroup.jong];
                         if (JONG_SPLIT[currentJongChar]) {
                             const [firstJong, secondCho] = JONG_SPLIT[currentJongChar];
-                            jong = JONG_LIST.indexOf(firstJong);
+                            currentGroup.jong = JONG_LIST.indexOf(firstJong);
+                            const poppedJamo = currentGroup.jamos.pop();
                             flush();
-                            cho = CHO_LIST.indexOf(secondCho);
-                            joung = vIdx;
+                            currentGroup.cho = CHO_LIST.indexOf(secondCho);
+                            currentGroup.joung = vIdx;
+                            currentGroup.jamos.push(poppedJamo, jamo);
                         } else {
-                            jong = 0;
+                            currentGroup.jong = 0;
+                            const poppedJamo = currentGroup.jamos.pop();
                             flush();
-                            cho = CHO_LIST.indexOf(currentJongChar);
-                            joung = vIdx;
+                            currentGroup.cho = CHO_LIST.indexOf(currentJongChar);
+                            currentGroup.joung = vIdx;
+                            currentGroup.jamos.push(poppedJamo, jamo);
                         }
                     } else if (cIdx !== -1) {
-                        const currentJongChar = JONG_LIST[jong];
+                        const currentJongChar = JONG_LIST[currentGroup.jong];
                         const combined = DOUBLE_JONG[currentJongChar + jamo];
                         if (combined) {
-                            jong = JONG_LIST.indexOf(combined);
+                            currentGroup.jong = JONG_LIST.indexOf(combined);
+                            currentGroup.jamos.push(jamo);
                         } else {
                             flush();
-                            cho = cIdx;
+                            currentGroup.cho = cIdx;
+                            currentGroup.jamos.push(jamo);
                         }
                     } else {
                         flush();
-                        result.push(jamo);
+                        groups.push({ char: jamo, jamos: [jamo] });
                     }
                 }
             }
+            flush();
+            return groups;
+        }
 
-            if (cho !== -1 || joung !== -1) {
-                result.push(makeChar(cho, joung, jong));
-            }
-
-            return result;
+        function assembleTypedSequenceToSyllables(jamoArr) {
+            return disassembleSequenceToSyllableGroups(jamoArr).map(g => g.char);
         }
 
         let audioCtx = null;
@@ -451,10 +500,92 @@
             } catch(e) {}
         }
 
+        function updateKeyHighlights() {
+            // Remove highlight and order badges from all key caps
+            const allKeys = document.querySelectorAll('.key-cap');
+            allKeys.forEach(k => {
+                k.classList.remove('active-press');
+                const badge = k.querySelector('.order-badge');
+                if (badge) badge.remove();
+            });
+
+            if (typedSequence.length === 0) return;
+
+            if (currentLang === 'KOR') {
+                const groups = disassembleSequenceToSyllableGroups(typedSequence);
+                if (groups.length === 0) return;
+
+                const lastGroup = groups[groups.length - 1];
+                const activeJamos = lastGroup.jamos;
+
+                const keyOrdersMap = new Map();
+
+                activeJamos.forEach((jamo, idx) => {
+                    const orderNum = idx + 1;
+                    let btn = null;
+
+                    if (jamo === ' ') {
+                        btn = document.querySelector('[data-key="Space"]');
+                    } else {
+                        btn = document.querySelector(`[data-kor="${jamo}"], [data-shift-kor="${jamo}"], [data-char="${jamo}"], [data-shift-char="${jamo}"]`);
+                    }
+
+                    if (btn) {
+                        if (!keyOrdersMap.has(btn)) {
+                            keyOrdersMap.set(btn, []);
+                        }
+                        keyOrdersMap.get(btn).push(orderNum);
+                    }
+                });
+
+                keyOrdersMap.forEach((orders, btn) => {
+                    btn.classList.add('active-press');
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'order-badge';
+                    badge.textContent = orders.join('');
+                    btn.appendChild(badge);
+                });
+            } else {
+                const keyOrdersMap = new Map();
+
+                typedSequence.forEach((char, idx) => {
+                    const orderNum = idx + 1;
+                    let btn = null;
+
+                    if (char === ' ') {
+                        btn = document.querySelector('[data-key="Space"]');
+                    } else {
+                        const lower = char.toLowerCase();
+                        const upper = char.toUpperCase();
+                        btn = document.querySelector(`[data-eng="${lower}"], [data-eng="${upper}"], [data-char="${char}"], [data-shift-char="${char}"]`);
+                    }
+
+                    if (btn) {
+                        if (!keyOrdersMap.has(btn)) {
+                            keyOrdersMap.set(btn, []);
+                        }
+                        keyOrdersMap.get(btn).push(orderNum);
+                    }
+                });
+
+                keyOrdersMap.forEach((orders, btn) => {
+                    btn.classList.add('active-press');
+                    
+                    const badge = document.createElement('span');
+                    badge.className = 'order-badge';
+                    badge.textContent = orders.join('');
+                    btn.appendChild(badge);
+                });
+            }
+        }
+
         /* Render Syllable & Alphabet Breakdown cards */
         function renderDecomposedStage() {
             const container = document.getElementById('decomposedStage');
             container.innerHTML = '';
+
+            updateKeyHighlights();
 
             if (typedSequence.length === 0) return;
 
@@ -532,11 +663,8 @@
             }
         }
 
-        function highlightPressedKey(keyCapElement) {
-            if (!keyCapElement) return;
-            keyCapElement.classList.add('active-press');
+        function triggerKeySound() {
             playKeySound('press');
-            setTimeout(() => keyCapElement.classList.remove('active-press'), 180);
         }
 
         function handleKeyCapClick(keyCode) {
@@ -559,7 +687,7 @@
 
             if (val) {
                 typedSequence.push(val);
-                highlightPressedKey(btn);
+                triggerKeySound();
                 renderDecomposedStage();
             }
         }
@@ -568,19 +696,18 @@
             if (keyName === 'Backspace') {
                 if (typedSequence.length > 0) {
                     typedSequence.pop();
+                    triggerKeySound();
                 }
             } else if (keyName === 'Enter') {
                 typedSequence = [];
                 playKeySound('correct');
             } else if (keyName === ' ') {
                 typedSequence.push(' ');
+                triggerKeySound();
             } else if (keyName === 'ShiftLeft' || keyName === 'ShiftRight') {
                 isShiftPressed = !isShiftPressed;
                 updateKeyboardLabels();
             }
-
-            const btn = document.querySelector(`[data-key="${keyName}"]`);
-            if (btn) highlightPressedKey(btn);
 
             renderDecomposedStage();
         }
@@ -603,8 +730,6 @@
                     isShiftPressed = true;
                     updateKeyboardLabels();
                 }
-                const shiftBtn = document.querySelector(`[data-key="${e.code}"]`);
-                if (shiftBtn) highlightPressedKey(shiftBtn);
                 return;
             }
 
@@ -649,15 +774,13 @@
 
                 if (charToAppend) {
                     typedSequence.push(charToAppend);
-                    highlightPressedKey(btn);
+                    triggerKeySound();
                     renderDecomposedStage();
-                } else {
-                    highlightPressedKey(btn);
                 }
             } else if (e.key && e.key.length === 1) {
                 // If physical key is pressed but doesn't map directly to a grid button (e.g. Numpad)
                 typedSequence.push(e.key);
-                playKeySound('press');
+                triggerKeySound();
                 renderDecomposedStage();
             }
         });
