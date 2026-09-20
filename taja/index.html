@@ -1,1 +1,755 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full overflow-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방과후 컴퓨터 타자 교실 (선생님 시범용)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Noto Sans KR & Gaegu -->
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 
+    <style>
+        html, body {
+            height: 100%;
+            max-height: 100vh;
+            overflow: hidden !important;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #ebf7f6;
+            background-image: 
+                radial-gradient(#2ec4b6 0.75px, transparent 0.75px),
+                radial-gradient(#2ec4b6 0.75px, #ebf7f6 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Keycaps visual styling - resized for no-scroll fit */
+        .key-cap {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-bottom: 3px solid #cbd5e1;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.08s ease-in-out;
+            position: relative;
+        }
+
+        .key-cap:active, .key-cap.active-press {
+            background-color: #e06d53 !important;
+            color: #ffffff !important;
+            border-color: #c04930 !important;
+            border-bottom-width: 1px !important;
+            transform: translateY(2px);
+            box-shadow: 0 0 10px rgba(224, 109, 83, 0.6) !important;
+        }
+
+        .key-cap.target-key {
+            border-color: #2ec4b6;
+            box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.4), 0 2px 4px rgba(0,0,0,0.1);
+            animation: pulse-border 1.2s infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            0% { transform: scale(1); box-shadow: 0 0 0 2px rgba(46, 196, 182, 0.4); }
+            100% { transform: scale(1.03); box-shadow: 0 0 0 5px rgba(46, 196, 182, 0.7); }
+        }
+    </style>
+</head>
+<body class="h-screen max-h-screen overflow-hidden flex flex-col justify-between text-gray-800 p-2 sm:p-3 md:p-4">
+
+    <!-- Top Header Bar -->
+    <header class="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 shrink-0 my-1">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#2ec4b6] flex items-center justify-center text-white shadow-sm text-lg">
+                <i class="fa-solid fa-keyboard"></i>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-lg md:text-xl font-black text-gray-800 leading-tight">방과후 컴퓨터 타자 교실</h1>
+                <p class="text-[11px] sm:text-xs text-teal-700 font-medium hidden sm:block">자판을 누르면 자음·모음 분해 및 완성 글자가 표시됩니다</p>
+            </div>
+        </div>
+
+        <!-- Controls: Sound Toggle, Reset, Language Toggle -->
+        <div class="flex items-center gap-1.5 sm:gap-2 bg-white/90 px-2 py-1 rounded-full shadow-xs border border-teal-100">
+            <button id="btnSoundToggle" onclick="toggleSound()" class="px-2.5 py-1 rounded-full text-xs font-bold text-teal-700 hover:bg-teal-50 transition flex items-center gap-1">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-teal-500"></i>
+                <span id="soundTxt" class="hidden sm:inline">소리 켬</span>
+            </button>
+            <div class="h-3.5 w-px bg-gray-200"></div>
+            <button onclick="resetInput()" class="px-2.5 py-1 rounded-full text-xs font-bold text-teal-700 hover:bg-teal-50 transition flex items-center gap-1">
+                <i class="fa-solid fa-rotate-left text-teal-500"></i>
+                <span class="hidden sm:inline">초기화</span>
+            </button>
+            <div class="h-3.5 w-px bg-gray-200"></div>
+            <div class="bg-gray-100 p-0.5 rounded-full flex items-center text-xs font-bold">
+                <button id="langKor" onclick="setLanguage('KOR')" class="px-2.5 py-0.5 rounded-full bg-[#2ec4b6] text-white shadow-xs transition">한국어</button>
+                <button id="langEng" onclick="setLanguage('ENG')" class="px-2.5 py-0.5 rounded-full text-gray-500 hover:text-gray-800 transition">ENG</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DEMO STAGE -->
+    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-evenly gap-2 my-auto overflow-hidden">
+
+        <!-- Real-time Analysis Section (Enlarged) -->
+        <section class="w-full flex flex-col items-center justify-center shrink-0 my-1">
+            <div class="w-full max-w-4xl bg-white/95 rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-teal-200 flex flex-col items-center justify-center gap-3">
+                <div class="flex items-center justify-between w-full border-b border-gray-100 pb-2 px-2">
+                    <span class="text-sm sm:text-base font-black text-teal-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-puzzle-piece text-teal-500 text-lg"></i> <span id="stageTitle">실시간 글자 분석 및 조합</span>
+                    </span>
+                    <span id="colorLegend" class="text-xs text-gray-500 font-bold">
+                        <span class="text-sky-600">파란색: 자음</span> | <span class="text-amber-600">주황색: 모음</span>
+                    </span>
+                </div>
+
+                <!-- Live Syllable Cards Container -->
+                <div id="decomposedStage" class="flex flex-wrap items-end justify-center gap-3 py-2 w-full min-h-[110px] sm:min-h-[130px]">
+                    <!-- Generated dynamically by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- KEYBOARD CONTAINER -->
+        <section class="w-full bg-white rounded-2xl p-2 sm:p-3 shadow-md border border-teal-50 relative overflow-hidden max-w-5xl shrink-0">
+            
+            <div class="flex items-center justify-between border-b border-gray-100 pb-1.5 mb-1.5 px-1">
+                <div class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-keyboard text-teal-500 text-sm"></i>
+                    <span id="keyboardLabel" class="text-[11px] font-bold text-gray-500">두벌식 표준 한글 자판</span>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#e06d53] inline-block"></span> 누른 키</span>
+                </div>
+            </div>
+
+            <!-- Virtual Keyboard Grid Box -->
+            <div id="keyboardGrid" class="relative max-w-4xl mx-auto flex flex-col gap-1 select-none">
+                
+                <!-- Row 1: Numbers -->
+                <div class="flex gap-1 w-full">
+                    <button data-key="Backquote" data-char="`" data-shift-char="~" onclick="handleKeyCapClick('Backquote')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>~</span><span class="text-[9px] text-gray-400">`</span></button>
+                    <button data-key="Digit1" data-char="1" data-shift-char="!" onclick="handleKeyCapClick('Digit1')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>!</span><span class="text-[9px] text-gray-500 font-bold">1</span></button>
+                    <button data-key="Digit2" data-char="2" data-shift-char="@" onclick="handleKeyCapClick('Digit2')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>@</span><span class="text-[9px] text-gray-500 font-bold">2</span></button>
+                    <button data-key="Digit3" data-char="3" data-shift-char="#" onclick="handleKeyCapClick('Digit3')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>#</span><span class="text-[9px] text-gray-500 font-bold">3</span></button>
+                    <button data-key="Digit4" data-char="4" data-shift-char="$" onclick="handleKeyCapClick('Digit4')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>$</span><span class="text-[9px] text-gray-500 font-bold">4</span></button>
+                    <button data-key="Digit5" data-char="5" data-shift-char="%" onclick="handleKeyCapClick('Digit5')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>%</span><span class="text-[9px] text-gray-500 font-bold">5</span></button>
+                    <button data-key="Digit6" data-char="6" data-shift-char="^" onclick="handleKeyCapClick('Digit6')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>^</span><span class="text-[9px] text-gray-500 font-bold">6</span></button>
+                    <button data-key="Digit7" data-char="7" data-shift-char="&" onclick="handleKeyCapClick('Digit7')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>&</span><span class="text-[9px] text-gray-500 font-bold">7</span></button>
+                    <button data-key="Digit8" data-char="8" data-shift-char="*" onclick="handleKeyCapClick('Digit8')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>*</span><span class="text-[9px] text-gray-500 font-bold">8</span></button>
+                    <button data-key="Digit9" data-char="9" data-shift-char="(" onclick="handleKeyCapClick('Digit9')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>(</span><span class="text-[9px] text-gray-500 font-bold">9</span></button>
+                    <button data-key="Digit0" data-char="0" data-shift-char=")" onclick="handleKeyCapClick('Digit0')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>)</span><span class="text-[9px] text-gray-500 font-bold">0</span></button>
+                    <button data-key="Minus" data-char="-" data-shift-char="_" onclick="handleKeyCapClick('Minus')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>_</span><span class="text-[9px] text-gray-400">-</span></button>
+                    <button data-key="Equal" data-char="=" data-shift-char="+" onclick="handleKeyCapClick('Equal')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>+</span><span class="text-[9px] text-gray-400">=</span></button>
+                    <button data-key="Backspace" onclick="handleVirtualKey('Backspace')" class="key-cap w-14 sm:w-20 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] sm:text-[10px] text-gray-500 font-bold">Backspace</button>
+                </div>
+
+                <!-- Row 2: Q W E R T Y U I O P -->
+                <div class="flex gap-1 w-full">
+                    <button data-key="Tab" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Tab</button>
+                    <button data-key="KeyQ" data-kor="ㅂ" data-shift-kor="ㅃ" data-eng="Q" onclick="handleKeyCapClick('KeyQ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅂ</span></button>
+                    <button data-key="KeyW" data-kor="ㅈ" data-shift-kor="ㅉ" data-eng="W" onclick="handleKeyCapClick('KeyW')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅈ</span></button>
+                    <button data-key="KeyE" data-kor="ㄷ" data-shift-kor="ㄸ" data-eng="E" onclick="handleKeyCapClick('KeyE')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄷ</span></button>
+                    <button data-key="KeyR" data-kor="ㄱ" data-shift-kor="ㄲ" data-eng="R" onclick="handleKeyCapClick('KeyR')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄱ</span></button>
+                    <button data-key="KeyT" data-kor="ㅅ" data-shift-kor="ㅆ" data-eng="T" onclick="handleKeyCapClick('KeyT')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅅ</span></button>
+                    <button data-key="KeyY" data-kor="ㅛ" data-eng="Y" onclick="handleKeyCapClick('KeyY')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅛ</span></button>
+                    <button data-key="KeyU" data-kor="ㅕ" data-eng="U" onclick="handleKeyCapClick('KeyU')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅕ</span></button>
+                    <button data-key="KeyI" data-kor="ㅑ" data-eng="I" onclick="handleKeyCapClick('KeyI')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅑ</span></button>
+                    <button data-key="KeyO" data-kor="ㅐ" data-shift-kor="ㅒ" data-eng="O" onclick="handleKeyCapClick('KeyO')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅐ</span></button>
+                    <button data-key="KeyP" data-kor="ㅔ" data-shift-kor="ㅖ" data-eng="P" onclick="handleKeyCapClick('KeyP')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅔ</span></button>
+                    <button data-key="BracketLeft" data-char="[" data-shift-char="{" onclick="handleKeyCapClick('BracketLeft')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>{</span><span class="text-[9px] text-gray-400">[</span></button>
+                    <button data-key="BracketRight" data-char="]" data-shift-char="}" onclick="handleKeyCapClick('BracketRight')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>}</span><span class="text-[9px] text-gray-400">]</span></button>
+                    <button data-key="Backslash" data-char="\" data-shift-char="|" onclick="handleKeyCapClick('Backslash')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>|</span><span class="text-[9px] text-gray-400">\</span></button>
+                </div>
+
+                <!-- Row 3: Home Row (A S D F G H J K L) -->
+                <div class="flex gap-1 w-full">
+                    <button data-key="CapsLock" class="key-cap w-12 sm:w-16 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Caps</button>
+                    <button data-key="KeyA" data-kor="ㅁ" data-eng="A" onclick="handleKeyCapClick('KeyA')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅁ</span></button>
+                    <button data-key="KeyS" data-kor="ㄴ" data-eng="S" onclick="handleKeyCapClick('KeyS')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄴ</span></button>
+                    <button data-key="KeyD" data-kor="ㅇ" data-eng="D" onclick="handleKeyCapClick('KeyD')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅇ</span></button>
+                    <button data-key="KeyF" data-kor="ㄹ" data-eng="F" onclick="handleKeyCapClick('KeyF')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㄹ</span></button>
+                    <button data-key="KeyG" data-kor="ㅎ" data-eng="G" onclick="handleKeyCapClick('KeyG')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅎ</span></button>
+                    <button data-key="KeyH" data-kor="ㅗ" data-eng="H" onclick="handleKeyCapClick('KeyH')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅗ</span></button>
+                    <button data-key="KeyJ" data-kor="ㅓ" data-eng="J" onclick="handleKeyCapClick('KeyJ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅓ</span></button>
+                    <button data-key="KeyK" data-kor="ㅏ" data-eng="K" onclick="handleKeyCapClick('KeyK')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅏ</span></button>
+                    <button data-key="KeyL" data-kor="ㅣ" data-eng="L" onclick="handleKeyCapClick('KeyL')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅣ</span></button>
+                    <button data-key="Semicolon" data-char=";" data-shift-char=":" onclick="handleKeyCapClick('Semicolon')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>:</span><span class="text-[9px] text-gray-500 font-bold">;</span></button>
+                    <button data-key="Quote" data-char="'" data-shift-char='"' onclick="handleKeyCapClick('Quote')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>"</span><span class="text-[9px] text-gray-400">'</span></button>
+                    <button data-key="Enter" onclick="handleVirtualKey('Enter')" class="key-cap w-14 sm:w-20 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] sm:text-[10px] text-gray-500 font-bold">Enter</button>
+                </div>
+
+                <!-- Row 4: Z X C V B N M -->
+                <div class="flex gap-1 w-full">
+                    <button data-key="ShiftLeft" onclick="handleVirtualKey('ShiftLeft')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-start px-1.5 text-[9px] text-gray-400">Shift</button>
+                    <button data-key="KeyZ" data-kor="ㅋ" data-eng="z" onclick="handleKeyCapClick('KeyZ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅋ</span></button>
+                    <button data-key="KeyX" data-kor="ㅌ" data-eng="x" onclick="handleKeyCapClick('KeyX')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅌ</span></button>
+                    <button data-key="KeyC" data-kor="ㅊ" data-eng="c" onclick="handleKeyCapClick('KeyC')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅊ</span></button>
+                    <button data-key="KeyV" data-kor="ㅍ" data-eng="v" onclick="handleKeyCapClick('KeyV')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅍ</span></button>
+                    <button data-key="KeyB" data-kor="ㅠ" data-eng="b" onclick="handleKeyCapClick('KeyB')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅠ</span></button>
+                    <button data-key="KeyN" data-kor="ㅜ" data-eng="n" onclick="handleKeyCapClick('KeyN')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅜ</span></button>
+                    <button data-key="KeyM" data-kor="ㅡ" data-eng="m" onclick="handleKeyCapClick('KeyM')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center py-0.5"><span class="key-label text-xs sm:text-sm font-bold text-gray-800">ㅡ</span></button>
+                    <button data-key="Comma" data-char="," data-shift-char="<" onclick="handleKeyCapClick('Comma')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span><</span><span class="text-[9px] text-gray-400">,</span></button>
+                    <button data-key="Period" data-char="." data-shift-char=">" onclick="handleKeyCapClick('Period')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>></span><span class="text-[9px] text-gray-400">.</span></button>
+                    <button data-key="Slash" data-char="/" data-shift-char="?" onclick="handleKeyCapClick('Slash')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex flex-col items-center justify-center text-[10px]"><span>?</span><span class="text-[9px] text-gray-400">/</span></button>
+                    <button data-key="ShiftRight" onclick="handleVirtualKey('ShiftRight')" class="key-cap w-16 sm:w-24 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-end px-1.5 text-[9px] text-gray-400">Shift</button>
+                </div>
+
+                <!-- Row 5: Spacebar & Modifiers -->
+                <div class="flex gap-1 w-full">
+                    <button data-key="ControlLeft" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center text-[9px] text-gray-400">Ctrl</button>
+                    <button data-key="AltLeft" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center text-[9px] text-gray-400">Alt</button>
+                    <button data-key="Space" onclick="handleVirtualKey(' ')" class="key-cap flex-1 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center text-xs text-gray-400 font-medium">
+                        Space
+                    </button>
+                    <button data-key="AltRight" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center text-[9px] text-gray-400">Alt</button>
+                    <button data-key="ControlRight" class="key-cap w-10 sm:w-14 h-8 sm:h-9 md:h-10 rounded-lg flex items-center justify-center text-[9px] text-gray-400">Ctrl</button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Hidden input to capture physical typing -->
+    <input type="text" id="hiddenInput" class="opacity-0 absolute -top-9999px -left-9999px w-1 h-1" autocomplete="off" />
+
+    <!-- Minimal Footer -->
+    <footer class="max-w-6xl w-full mx-auto text-center text-[11px] text-gray-500 py-0.5 border-t border-teal-100/60 flex items-center justify-between shrink-0">
+        <p class="font-medium truncate">💡 자판을 치면 실시간으로 자음·모음 분해와 완성 글자가 생성됩니다.</p>
+        <p class="text-teal-700 font-bold shrink-0">방과후 타자교실 v2.8</p>
+    </footer>
+
+    <script>
+        const CHO_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        // Added missing 'ㅣ' at index 20 (Total 21 vowels)
+        const JOUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+        // Correct JONG_LIST including 'ㄺ' at index 9 (total 28 items)
+        const JONG_LIST = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+        const DOUBLE_JOUNG = {
+            'ㅗㅏ': 'ㅘ', 'ㅗㅐ': 'ㅙ', 'ㅗㅣ': 'ㅚ',
+            'ㅜㅓ': 'ㅝ', 'ㅜㅔ': 'ㅞ', 'ㅜㅣ': 'ㅟ',
+            'ㅡㅣ': 'ㅢ'
+        };
+
+        const DOUBLE_JONG = {
+            'ㄱㅅ': 'ㄳ', 'ㄴㅈ': 'ㄵ', 'ㄴㅎ': 'ㄶ',
+            'ㄹㄱ': 'ㄺ', 'ㄹㅁ': 'ㄻ', 'ㄹㅂ': 'ㄼ',
+            'ㄹㅅ': 'ㄽ', 'ㄹㄾ': 'ㄾ', 'ㄹㅍ': 'ㄿ',
+            'ㄹㅎ': 'ㅀ', 'ㅂㅅ': 'ㅄ'
+        };
+
+        const JONG_SPLIT = {
+            'ㄳ': ['ㄱ', 'ㅅ'], 'ㄵ': ['ㄴ', 'ㅈ'], 'ㄶ': ['ㄴ', 'ㅎ'],
+            'ㄺ': ['ㄹ', 'ㄱ'], 'ㄻ': ['ㄹ', 'ㅁ'], 'ㄼ': ['ㄹ', 'ㅂ'],
+            'ㄽ': ['ㄹ', 'ㅅ'], 'ㄾ': ['ㄹ', 'ㅌ'], 'ㄿ': ['ㄹ', 'ㅍ'],
+            'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ']
+        };
+
+        const CODE_TO_KEY = {
+            'KeyQ': 'q', 'KeyW': 'w', 'KeyE': 'e', 'KeyR': 'r', 'KeyT': 't', 'KeyY': 'y', 'KeyU': 'u', 'KeyI': 'i', 'KeyO': 'o', 'KeyP': 'p',
+            'KeyA': 'a', 'KeyS': 's', 'KeyD': 'd', 'KeyF': 'f', 'KeyG': 'g', 'KeyH': 'h', 'KeyJ': 'j', 'KeyK': 'k', 'KeyL': 'l',
+            'KeyZ': 'z', 'KeyX': 'x', 'KeyC': 'c', 'KeyV': 'v', 'KeyB': 'b', 'KeyN': 'n', 'KeyM': 'm'
+        };
+
+        const KEY_TO_KOR = {
+            'q':'ㅂ', 'Q':'ㅃ', 'w':'ㅈ', 'W':'ㅉ', 'e':'ㄷ', 'E':'ㄸ', 'r':'ㄱ', 'R':'ㄲ', 't':'ㅅ', 'T':'ㅆ',
+            'y':'ㅛ', 'u':'ㅕ', 'i':'ㅑ', 'o':'ㅐ', 'O':'ㅒ', 'p':'ㅔ', 'P':'ㅖ',
+            'a':'ㅁ', 's':'ㄴ', 'd':'ㅇ', 'f':'ㄹ', 'g':'ㅎ', 'h':'ㅗ', 'j':'ㅓ', 'k':'ㅏ', 'l':'ㅣ',
+            'z':'ㅋ', 'x':'ㅌ', 'c':'ㅊ', 'v':'ㅍ', 'b':'ㅠ', 'n':'ㅜ', 'm':'ㅡ'
+        };
+
+        const ENGLISH_VOWELS = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
+
+        let currentLang = 'KOR';
+        let typedSequence = [];
+        let isAudioEnabled = true;
+        let isShiftPressed = false;
+
+        function decomposeChar(char) {
+            const code = char.charCodeAt(0);
+            if (code >= 0xAC00 && code <= 0xD7A3) {
+                const index = code - 0xAC00;
+                const jongIdx = index % 28;
+                const joungIdx = Math.floor((index - jongIdx) / 28) % 21;
+                const choIdx = Math.floor(Math.floor((index - jongIdx) / 28) / 21);
+                
+                const result = [CHO_LIST[choIdx], JOUNG_LIST[joungIdx]];
+                if (jongIdx > 0) {
+                    result.push(JONG_LIST[jongIdx]);
+                }
+                return result;
+            }
+            return [char];
+        }
+
+        function isVowel(char) {
+            if (currentLang === 'KOR') {
+                return JOUNG_LIST.includes(char);
+            } else {
+                return ENGLISH_VOWELS.includes(char);
+            }
+        }
+
+        function makeChar(cho, joung, jong = 0) {
+            if (cho === -1 && joung === -1) return '';
+            if (cho !== -1 && joung === -1) return CHO_LIST[cho];
+            if (cho === -1 && joung !== -1) return JOUNG_LIST[joung];
+            const code = 0xAC00 + (cho * 21 * 28) + (joung * 28) + (jong > 0 ? jong : 0);
+            return String.fromCharCode(code);
+        }
+
+        function assembleTypedSequenceToSyllables(jamoArr) {
+            if (!jamoArr || jamoArr.length === 0) return [];
+            let result = [];
+            let cho = -1, joung = -1, jong = 0;
+
+            const flush = () => {
+                if (cho !== -1 || joung !== -1) {
+                    result.push(makeChar(cho, joung, jong));
+                }
+                cho = -1;
+                joung = -1;
+                jong = 0;
+            };
+
+            for (let i = 0; i < jamoArr.length; i++) {
+                const jamo = jamoArr[i];
+                const cIdx = CHO_LIST.indexOf(jamo);
+                const vIdx = JOUNG_LIST.indexOf(jamo);
+
+                if (cho === -1 && joung === -1) {
+                    if (cIdx !== -1) {
+                        cho = cIdx;
+                    } else if (vIdx !== -1) {
+                        joung = vIdx;
+                    } else {
+                        result.push(jamo);
+                    }
+                } else if (cho !== -1 && joung === -1) {
+                    if (vIdx !== -1) {
+                        joung = vIdx;
+                    } else if (cIdx !== -1) {
+                        flush();
+                        cho = cIdx;
+                    } else {
+                        flush();
+                        result.push(jamo);
+                    }
+                } else if (cho === -1 && joung !== -1) {
+                    if (vIdx !== -1) {
+                        const combined = DOUBLE_JOUNG[JOUNG_LIST[joung] + jamo];
+                        if (combined) {
+                            joung = JOUNG_LIST.indexOf(combined);
+                        } else {
+                            flush();
+                            joung = vIdx;
+                        }
+                    } else if (cIdx !== -1) {
+                        flush();
+                        cho = cIdx;
+                    } else {
+                        flush();
+                        result.push(jamo);
+                    }
+                } else if (cho !== -1 && joung !== -1 && jong === 0) {
+                    if (vIdx !== -1) {
+                        const combined = DOUBLE_JOUNG[JOUNG_LIST[joung] + jamo];
+                        if (combined) {
+                            joung = JOUNG_LIST.indexOf(combined);
+                        } else {
+                            flush();
+                            joung = vIdx;
+                        }
+                    } else if (cIdx !== -1) {
+                        const jIdx = JONG_LIST.indexOf(jamo);
+                        if (jIdx > 0) {
+                            jong = jIdx;
+                        } else {
+                            flush();
+                            cho = cIdx;
+                        }
+                    } else {
+                        flush();
+                        result.push(jamo);
+                    }
+                } else if (cho !== -1 && joung !== -1 && jong > 0) {
+                    if (vIdx !== -1) {
+                        const currentJongChar = JONG_LIST[jong];
+                        if (JONG_SPLIT[currentJongChar]) {
+                            const [firstJong, secondCho] = JONG_SPLIT[currentJongChar];
+                            jong = JONG_LIST.indexOf(firstJong);
+                            flush();
+                            cho = CHO_LIST.indexOf(secondCho);
+                            joung = vIdx;
+                        } else {
+                            jong = 0;
+                            flush();
+                            cho = CHO_LIST.indexOf(currentJongChar);
+                            joung = vIdx;
+                        }
+                    } else if (cIdx !== -1) {
+                        const currentJongChar = JONG_LIST[jong];
+                        const combined = DOUBLE_JONG[currentJongChar + jamo];
+                        if (combined) {
+                            jong = JONG_LIST.indexOf(combined);
+                        } else {
+                            flush();
+                            cho = cIdx;
+                        }
+                    } else {
+                        flush();
+                        result.push(jamo);
+                    }
+                }
+            }
+
+            if (cho !== -1 || joung !== -1) {
+                result.push(makeChar(cho, joung, jong));
+            }
+
+            return result;
+        }
+
+        let audioCtx = null;
+        function playKeySound(type = 'press') {
+            if (!isAudioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'press') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.18);
+                }
+            } catch(e) {}
+        }
+
+        /* Render Syllable & Alphabet Breakdown cards */
+        function renderDecomposedStage() {
+            const container = document.getElementById('decomposedStage');
+            container.innerHTML = '';
+
+            if (typedSequence.length === 0) return;
+
+            if (currentLang === 'KOR') {
+                const syllables = assembleTypedSequenceToSyllables(typedSequence);
+                syllables.forEach((char) => {
+                    if (char === ' ') {
+                        // Display visual space block
+                        const spaceBlock = document.createElement('div');
+                        spaceBlock.className = 'flex flex-col items-center justify-center bg-gray-100/80 px-3 py-3 rounded-2xl border-2 border-dashed border-gray-300 min-w-[50px] sm:min-w-[60px] min-h-[100px] shadow-xs';
+                        spaceBlock.innerHTML = '<span class="text-xs font-bold text-gray-400">띄어쓰기</span><span class="text-xl font-black text-gray-400">␣</span>';
+                        container.appendChild(spaceBlock);
+                        return;
+                    }
+
+                    const jamos = decomposeChar(char);
+
+                    const block = document.createElement('div');
+                    block.className = 'flex flex-col items-center bg-teal-50/90 px-4 py-3 rounded-2xl border-2 border-teal-200 min-w-[90px] sm:min-w-[120px] shadow-sm';
+
+                    const completeCharEl = document.createElement('div');
+                    completeCharEl.className = 'text-4xl sm:text-5xl md:text-6xl font-black text-gray-800 bg-white px-4 py-1 rounded-xl shadow-xs border border-teal-100 mb-2 w-full text-center leading-none tracking-tight';
+                    completeCharEl.textContent = char;
+
+                    const jamoRow = document.createElement('div');
+                    jamoRow.className = 'flex items-center gap-1.5 justify-center w-full';
+
+                    jamos.forEach((jamo) => {
+                        const jamoBadge = document.createElement('span');
+                        if (isVowel(jamo)) {
+                            jamoBadge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                        } else {
+                            jamoBadge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                        }
+                        jamoBadge.textContent = jamo;
+                        jamoRow.appendChild(jamoBadge);
+                    });
+
+                    block.appendChild(completeCharEl);
+                    block.appendChild(jamoRow);
+                    container.appendChild(block);
+                });
+            } else {
+                // English Mode: Display English letters and word
+                const fullWord = typedSequence.join('');
+                
+                const block = document.createElement('div');
+                block.className = 'flex flex-col items-center bg-teal-50/90 px-5 py-3 rounded-2xl border-2 border-teal-200 min-w-[140px] shadow-sm';
+
+                const wordEl = document.createElement('div');
+                wordEl.className = 'text-4xl sm:text-5xl md:text-6xl font-black text-gray-800 bg-white px-5 py-1.5 rounded-xl shadow-xs border border-teal-100 mb-2 text-center tracking-wide whitespace-pre';
+                wordEl.textContent = fullWord.replace(/ /g, ' ␣ ');
+
+                const letterRow = document.createElement('div');
+                letterRow.className = 'flex items-center gap-1.5 justify-center w-full flex-wrap';
+
+                typedSequence.forEach((char) => {
+                    const badge = document.createElement('span');
+                    if (char === ' ') {
+                        badge.className = 'px-2 py-1 rounded-lg text-sm sm:text-base font-black bg-gray-200 text-gray-600 border border-gray-300 shadow-2xs';
+                        badge.textContent = '␣';
+                    } else if (isVowel(char)) {
+                        badge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs';
+                        badge.textContent = char;
+                    } else {
+                        badge.className = 'px-2.5 py-1 rounded-lg text-sm sm:text-base font-black bg-sky-100 text-sky-900 border border-sky-300 shadow-2xs';
+                        badge.textContent = char;
+                    }
+                    letterRow.appendChild(badge);
+                });
+
+                block.appendChild(wordEl);
+                block.appendChild(letterRow);
+                container.appendChild(block);
+            }
+        }
+
+        function highlightPressedKey(keyCapElement) {
+            if (!keyCapElement) return;
+            keyCapElement.classList.add('active-press');
+            playKeySound('press');
+            setTimeout(() => keyCapElement.classList.remove('active-press'), 180);
+        }
+
+        function handleKeyCapClick(keyCode) {
+            const btn = document.querySelector(`[data-key="${keyCode}"]`);
+            if (!btn) return;
+
+            let val = '';
+            if (btn.hasAttribute('data-char')) {
+                val = isShiftPressed && btn.hasAttribute('data-shift-char')
+                    ? btn.getAttribute('data-shift-char')
+                    : btn.getAttribute('data-char');
+            } else if (currentLang === 'KOR') {
+                val = isShiftPressed && btn.getAttribute('data-shift-kor') 
+                    ? btn.getAttribute('data-shift-kor') 
+                    : btn.getAttribute('data-kor');
+            } else {
+                const rawEng = btn.getAttribute('data-eng') || '';
+                val = isShiftPressed ? rawEng.toUpperCase() : rawEng.toLowerCase();
+            }
+
+            if (val) {
+                typedSequence.push(val);
+                highlightPressedKey(btn);
+                renderDecomposedStage();
+            }
+        }
+
+        function handleVirtualKey(keyName) {
+            if (keyName === 'Backspace') {
+                if (typedSequence.length > 0) {
+                    typedSequence.pop();
+                }
+            } else if (keyName === 'Enter') {
+                typedSequence = [];
+                playKeySound('correct');
+            } else if (keyName === ' ') {
+                typedSequence.push(' ');
+            } else if (keyName === 'ShiftLeft' || keyName === 'ShiftRight') {
+                isShiftPressed = !isShiftPressed;
+                updateKeyboardLabels();
+            }
+
+            const btn = document.querySelector(`[data-key="${keyName}"]`);
+            if (btn) highlightPressedKey(btn);
+
+            renderDecomposedStage();
+        }
+
+        function resetInput() {
+            typedSequence = [];
+            playKeySound('correct');
+            renderDecomposedStage();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleVirtualKey(' ');
+                return;
+            }
+
+            if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                if (!isShiftPressed) {
+                    isShiftPressed = true;
+                    updateKeyboardLabels();
+                }
+                const shiftBtn = document.querySelector(`[data-key="${e.code}"]`);
+                if (shiftBtn) highlightPressedKey(shiftBtn);
+                return;
+            }
+
+            if (e.code === 'Backspace') {
+                handleVirtualKey('Backspace');
+                return;
+            }
+
+            if (e.code === 'Enter') {
+                handleVirtualKey('Enter');
+                return;
+            }
+
+            const btn = document.querySelector(`[data-key="${e.code}"]`);
+            if (btn) {
+                let charToAppend = null;
+                
+                // 1. Check direct data-char for digits and punctuation
+                if (btn.hasAttribute('data-char')) {
+                    charToAppend = (e.shiftKey || isShiftPressed) && btn.hasAttribute('data-shift-char')
+                        ? btn.getAttribute('data-shift-char')
+                        : btn.getAttribute('data-char');
+                } else if (currentLang === 'KOR') {
+                    if (e.key && KEY_TO_KOR[e.key]) {
+                        charToAppend = KEY_TO_KOR[e.key];
+                    } else if (CODE_TO_KEY[e.code] && KEY_TO_KOR[CODE_TO_KEY[e.code]]) {
+                        charToAppend = KEY_TO_KOR[CODE_TO_KEY[e.code]];
+                    }
+                } else {
+                    if (CODE_TO_KEY[e.code]) {
+                        const baseKey = CODE_TO_KEY[e.code];
+                        charToAppend = (e.shiftKey || isShiftPressed) ? baseKey.toUpperCase() : baseKey.toLowerCase();
+                    } else if (e.key && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                        charToAppend = (e.shiftKey || isShiftPressed) ? e.key.toUpperCase() : e.key.toLowerCase();
+                    }
+                }
+
+                // Fallback for numpad digits or direct key character inputs
+                if (!charToAppend && e.key && e.key.length === 1) {
+                    charToAppend = e.key;
+                }
+
+                if (charToAppend) {
+                    typedSequence.push(charToAppend);
+                    highlightPressedKey(btn);
+                    renderDecomposedStage();
+                } else {
+                    highlightPressedKey(btn);
+                }
+            } else if (e.key && e.key.length === 1) {
+                // If physical key is pressed but doesn't map directly to a grid button (e.g. Numpad)
+                typedSequence.push(e.key);
+                playKeySound('press');
+                renderDecomposedStage();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                isShiftPressed = false;
+                updateKeyboardLabels();
+            }
+        });
+
+        function updateKeyboardLabels() {
+            const buttons = document.querySelectorAll('.key-cap[data-key^="Key"]');
+            buttons.forEach(btn => {
+                const labelSpan = btn.querySelector('.key-label');
+                if (!labelSpan) return;
+
+                if (currentLang === 'KOR') {
+                    if (isShiftPressed && btn.getAttribute('data-shift-kor')) {
+                        labelSpan.textContent = btn.getAttribute('data-shift-kor');
+                    } else {
+                        labelSpan.textContent = btn.getAttribute('data-kor');
+                    }
+                } else {
+                    const engVal = btn.getAttribute('data-eng') || '';
+                    labelSpan.textContent = isShiftPressed ? engVal.toUpperCase() : engVal.toLowerCase();
+                }
+            });
+
+            const shiftButtons = document.querySelectorAll('[data-key^="Shift"]');
+            shiftButtons.forEach(btn => {
+                if (isShiftPressed) {
+                    btn.classList.add('bg-teal-100', 'border-teal-400');
+                } else {
+                    btn.classList.remove('bg-teal-100', 'border-teal-400');
+                }
+            });
+
+            const kbdLabel = document.getElementById('keyboardLabel');
+            const colorLegend = document.getElementById('colorLegend');
+            const stageTitle = document.getElementById('stageTitle');
+
+            if (currentLang === 'KOR') {
+                kbdLabel.textContent = '두벌식 표준 한글 자판';
+                colorLegend.innerHTML = '<span class="text-sky-600">파란색: 자음</span> | <span class="text-amber-600">주황색: 모음</span>';
+                stageTitle.textContent = '실시간 글자 분석 및 조합';
+            } else {
+                kbdLabel.textContent = 'QWERTY 영문 자판';
+                colorLegend.innerHTML = '<span class="text-sky-600">파란색: 자음</span> | <span class="text-amber-600">주황색: 모음</span>';
+                stageTitle.textContent = '실시간 영문 알파벳 분석';
+            }
+
+            renderDecomposedStage();
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const korBtn = document.getElementById('langKor');
+            const engBtn = document.getElementById('langEng');
+
+            if (lang === 'KOR') {
+                korBtn.className = 'px-2.5 py-0.5 rounded-full bg-[#2ec4b6] text-white shadow-xs transition';
+                engBtn.className = 'px-2.5 py-0.5 rounded-full text-gray-500 hover:text-gray-800 transition';
+            } else {
+                engBtn.className = 'px-2.5 py-0.5 rounded-full bg-[#2ec4b6] text-white shadow-xs transition';
+                korBtn.className = 'px-2.5 py-0.5 rounded-full text-gray-500 hover:text-gray-800 transition';
+            }
+
+            typedSequence = [];
+            updateKeyboardLabels();
+        }
+
+        function toggleSound() {
+            isAudioEnabled = !isAudioEnabled;
+            const icon = document.getElementById('soundIcon');
+            const txt = document.getElementById('soundTxt');
+            if (isAudioEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-teal-500';
+                txt.textContent = '소리 켬';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-gray-400';
+                txt.textContent = '소리 끔';
+            }
+        }
+
+        window.onload = function() {
+            updateKeyboardLabels();
+            document.addEventListener('click', () => {
+                const hiddenInput = document.getElementById('hiddenInput');
+                if (hiddenInput) hiddenInput.focus();
+            });
+        };
+    </script>
+</body>
+</html>
