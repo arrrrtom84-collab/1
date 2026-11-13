@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 손인식 그림판 & 캐릭터 색칠놀이</title>
+    <!-- Tailwind CSS 로드 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Jua & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Jua&display=swap" rel="stylesheet">
+    <!-- MediaPipe Hands & Camera Utils CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdf4ff; /* 화사한 파스텔 핑크/퍼플 톤 배경 */
+            overflow: hidden;
+            user-select: none;
+        }
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+        .mirror-canvas {
+            transform: scaleX(-1);
+        }
+        /* 색상 버튼 선택 시 링 효과 */
+        .color-btn.active {
+            transform: scale(1.18);
+            box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #ec4899;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col justify-between text-slate-800">
+
+    <!-- 상단 헤더 -->
+    <header class="bg-white shadow-xs border-b border-pink-100 shrink-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xl sm:text-2xl">🎨✨</span>
+                <h1 class="font-jua text-lg sm:text-xl text-pink-600 tracking-wide">AI 손가락 그림판 & 색칠놀이</h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- 카메라 투명도 조절 (색칠할 때 도안이 잘 보이도록 배경 어둡기/투명도 전환) -->
+                <button id="bgModeBtn" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer" title="배경 밝기 전환">
+                    <span>🌓 배경 전환</span>
+                </button>
+                <!-- 상태 표시 뱃지 -->
+                <div id="statusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse" id="statusDot"></span>
+                    <span id="statusText">카메라 준비 대기 중...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 학습/놀이 영역 (스크롤 없는 한 화면 구성) -->
+    <main class="flex-1 min-h-0 max-w-7xl w-full mx-auto px-2.5 sm:px-4 py-2 flex flex-col lg:flex-row gap-2.5 sm:gap-4 items-center justify-center">
+        
+        <!-- 왼쪽: 카메라 & 다중 레이어 그림판 캔버스 -->
+        <div class="w-full lg:w-[68%] h-[54%] lg:h-full flex flex-col items-center justify-center min-h-0">
+            <div id="canvasContainer" class="relative w-full h-full max-h-[720px] bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg border-4 border-white ring-2 ring-pink-200">
+                <!-- 숨겨진 원본 비디오 -->
+                <video id="inputVideo" class="hidden" playsinline></video>
+                
+                <!-- Layer 1: 웹캠 영상 & 손 뼈대 캔버스 -->
+                <canvas id="cameraCanvas" class="absolute inset-0 w-full h-full object-cover mirror-canvas"></canvas>
+                
+                <!-- Layer 2: 사용자가 색칠하고 그리는 캔버스 -->
+                <canvas id="drawCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+                <!-- Layer 3: 캐릭터 색칠공부 선화 오버레이 캔버스 (칠한 색 위에 검은 선이 깔끔하게 유지됨!) -->
+                <canvas id="lineArtCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+                <!-- Layer 4: 손가락 끝 실시간 커서 캔버스 (선택한 색상과 굵기 미리보기) -->
+                <canvas id="cursorCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
+                <!-- 초기 시작 오버레이 -->
+                <div id="startOverlay" class="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center z-20">
+                    <div class="bg-white/10 p-3 rounded-full mb-2 text-3xl sm:text-4xl">🖌️🧚‍♀️⚡</div>
+                    <h2 class="font-jua text-xl sm:text-3xl text-white mb-1.5">손가락으로 슥슥! 신나는 캐릭터 색칠놀이</h2>
+                    <p class="text-pink-200 text-xs sm:text-sm max-w-md mb-4">
+                        검지 손가락을 펴서 귀여운 캐릭터를 예쁘게 색칠해 보세요!<br>
+                        <span class="text-[11px] text-slate-300">(웹캠이 없어도 터치나 마우스로 바로 그릴 수 있어요!)</span>
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2.5">
+                        <button id="startCameraBtn" class="px-5 py-2.5 sm:py-3 bg-pink-500 hover:bg-pink-400 active:scale-95 text-white font-jua text-base sm:text-lg rounded-xl sm:rounded-2xl shadow-lg shadow-pink-500/30 transition-all flex items-center gap-2 cursor-pointer">
+                            <span>🎥 카메라 켜고 시작하기</span>
+                        </button>
+                        <button id="touchModeBtn" class="px-4 py-2.5 sm:py-3 bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-semibold text-xs sm:text-sm rounded-xl sm:rounded-2xl transition-all cursor-pointer">
+                            👆 터치/마우스로 그리기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 로딩 스피너 오버레이 -->
+                <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-900/85 flex flex-col items-center justify-center p-4 text-center z-20">
+                    <div class="w-10 h-10 border-4 border-pink-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p class="font-jua text-lg sm:text-xl text-white">AI 손가락 인식 모델을 불러오는 중...</p>
+                    <p class="text-xs text-pink-300 mt-1">잠시만 기다려 주세요 (약 3~5초 소요)</p>
+                </div>
+
+                <!-- 좌측 상단 현재 제스처 가이드 -->
+                <div id="gestureGuide" class="hidden absolute top-2.5 left-2.5 bg-black/65 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 z-10 border border-white/15">
+                    <span id="gestureIcon" class="text-base">☝️</span>
+                    <span id="gestureHint">검지 손가락을 펴서 칠해보세요!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 도안 선택, 팔레트, 지우개, 저장 컨트롤 패널 -->
+        <div class="w-full lg:w-[32%] h-[46%] lg:h-full max-h-[720px] flex flex-col justify-between gap-2 min-h-0">
+            
+            <!-- 1. 색칠공부 캐릭터 도안 선택 -->
+            <div class="bg-white rounded-2xl p-2.5 sm:p-3 shadow-xs border border-pink-100 shrink-0">
+                <div class="flex items-center justify-between mb-1.5 px-0.5">
+                    <h2 class="text-xs font-bold text-pink-600 flex items-center gap-1">🖼️ 그림 도안 고르기</h2>
+                    <span id="currentTemplateName" class="text-[11px] font-semibold text-slate-400">자유 스케치북</span>
+                </div>
+                <div id="templateList" class="grid grid-cols-5 gap-1.5">
+                    <!-- JS로 동적 생성 -->
+                </div>
+            </div>
+
+            <!-- 2. 크레파스 색상 팔레트 & 지우개 -->
+            <div class="bg-white rounded-2xl p-2.5 sm:p-3 shadow-xs border border-pink-100 flex-1 flex flex-col justify-center min-h-0">
+                <div class="flex items-center justify-between mb-2 px-0.5">
+                    <h2 class="text-xs font-bold text-slate-600 flex items-center gap-1">🖍️ 크레파스 색깔 & 도구</h2>
+                    <!-- 붓 굵기 조절 버튼 3단계 -->
+                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
+                        <button data-size="8" class="size-btn px-2 py-0.5 text-[10px] font-bold rounded-md text-slate-500 hover:text-slate-800 cursor-pointer">얇게</button>
+                        <button data-size="16" class="size-btn active px-2 py-0.5 text-[10px] font-bold rounded-md bg-white text-pink-600 shadow-2xs cursor-pointer">보통</button>
+                        <button data-size="28" class="size-btn px-2 py-0.5 text-[10px] font-bold rounded-md text-slate-500 hover:text-slate-800 cursor-pointer">굵게</button>
+                    </div>
+                </div>
+
+                <!-- 8색 팔레트 + 지우개 (총 9개 그리드) -->
+                <div id="paletteGrid" class="grid grid-cols-5 gap-2 place-items-center py-1">
+                    <!-- JS로 동적 생성 -->
+                </div>
+            </div>
+
+            <!-- 3. 하단 액션 버튼 (전체 지우기 / 그림 저장하기) -->
+            <div class="grid grid-cols-2 gap-2 shrink-0">
+                <button id="clearAllBtn" class="py-2.5 px-3 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs sm:text-sm rounded-xl shadow-2xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>🗑️ 전체 지우기</span>
+                </button>
+                <button id="saveArtBtn" class="py-2.5 px-3 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-jua text-sm sm:text-base rounded-xl shadow-sm active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>📸 그림 저장하기</span>
+                </button>
+            </div>
+
+            <!-- 사용 안내 팁 (데스크탑/태블릿 표시) -->
+            <div class="hidden sm:block bg-purple-50/90 border border-purple-200/70 rounded-2xl p-2.5 text-[11px] text-purple-900 shrink-0">
+                <p class="font-bold flex items-center gap-1 mb-0.5">💡 손가락 그림판 사용법</p>
+                <ul class="list-disc list-inside text-purple-800 space-y-0.5 pl-0.5 leading-tight">
+                    <li><strong>검지 손가락 하나만</strong> 펴면 색칠이 되고, 손을 펴거나 주먹을 쥐면 이동해요.</li>
+                    <li>도안 선이 위에 있어서 <strong>선 밖으로 나가도 예쁘게</strong> 칠해져요!</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 토스트 알림 -->
+    <div id="toastBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs sm:text-sm font-medium opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center gap-2">
+        <span id="toastIcon">🎨</span>
+        <span id="toastMessage">알림 메시지</span>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * 1. 캐릭터 도안 및 팔레트 데이터 정의
+         * ============================================================================
+         */
+        const TEMPLATES = [
+            { id: 'free', name: '자유 스케치북', emoji: '📝' },
+            { id: 'pikachu', name: '번개 전기쥐', emoji: '⚡' },
+            { id: 'teenieping', name: '하트 요정 공주', emoji: '🧚‍♀️' },
+            { id: 'bunny', name: '딸기 토끼', emoji: '🐰' },
+            { id: 'rocket', name: '우주 탐험 로켓', emoji: '🚀' }
+        ];
+
+        const PALETTE = [
+            { name: '노랑', color: '#facc15' },
+            { name: '빨강', color: '#ef4444' },
+            { name: '분홍', color: '#f472b6' },
+            { name: '주황', color: '#fb923c' },
+            { name: '연두', color: '#4ade80' },
+            { name: '하늘', color: '#38bdf8' },
+            { name: '보라', color: '#c084fc' },
+            { name: '갈색', color: '#a16207' },
+            { name: '검정', color: '#1e293b' },
+            { name: '지우개', color: 'ERASER' }
+        ];
+
+        // 앱 상태 변수
+        let currentTemplateId = 'pikachu'; // 기본으로 아이들이 좋아하는 캐릭터 도안 선택
+        let currentColor = '#facc15';      // 기본 노란색 크레파스
+        let isEraser = false;
+        let brushRadius = 16;
+        let isCameraActive = false;
+        let isTouchMode = false;
+        let isWhitePaperBg = true;         // 색칠 선명도를 위해 기본적으로 반투명 흰 도화지 배경 적용
+
+        // 좌표 스무딩 변수
+        let lastPoint = null;
+        let smoothedPoint = null;
+        const SMOOTHING_FACTOR = 0.45;
+
+        // 캔버스 참조
+        const videoElement = document.getElementById('inputVideo');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const drawCanvas = document.getElementById('drawCanvas');
+        const lineArtCanvas = document.getElementById('lineArtCanvas');
+        const cursorCanvas = document.getElementById('cursorCanvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        const cameraCtx = cameraCanvas.getContext('2d');
+        const drawCtx = drawCanvas.getContext('2d');
+        const lineArtCtx = lineArtCanvas.getContext('2d');
+        const cursorCtx = cursorCanvas.getContext('2d');
+
+        // UI 요소
+        const startOverlay = document.getElementById('startOverlay');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const statusBadge = document.getElementById('statusBadge');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const gestureGuide = document.getElementById('gestureGuide');
+        const gestureIcon = document.getElementById('gestureIcon');
+        const gestureHint = document.getElementById('gestureHint');
+
+        let toastTimeout;
+        function showToast(message, icon = "🎨") {
+            const toastBox = document.getElementById('toastBox');
+            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastIcon').textContent = icon;
+            toastBox.classList.remove('opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toastBox.classList.add('opacity-0'), 2800);
+        }
+
+        /**
+         * ============================================================================
+         * 2. 캐릭터 색칠공부 벡터 선화(Line Art) 렌더링 엔진
+         * ============================================================================
+         */
+        function renderCharacterLineArt() {
+            const w = lineArtCanvas.width;
+            const h = lineArtCanvas.height;
+            lineArtCtx.clearRect(0, 0, w, h);
+
+            if (currentTemplateId === 'free') return;
+
+            const cx = w / 2;
+            const cy = h / 2 + h * 0.04;
+            const scale = Math.min(w, h) / 420; // 화면 크기에 비례하는 스케일
+
+            lineArtCtx.save();
+            lineArtCtx.translate(cx, cy);
+            lineArtCtx.scale(scale, scale);
+
+            lineArtCtx.strokeStyle = '#1e293b';
+            lineArtCtx.lineWidth = 6;
+            lineArtCtx.lineCap = 'round';
+            lineArtCtx.lineJoin = 'round';
+
+            if (currentTemplateId === 'pikachu') {
+                // --- 귀여운 번개 전기쥐 (피카츄 스타일) ---
+                // 왼쪽 귀
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-45, -65);
+                lineArtCtx.quadraticCurveTo(-115, -145, -135, -175);
+                lineArtCtx.quadraticCurveTo(-80, -140, -25, -80);
+                lineArtCtx.stroke();
+                // 왼쪽 귀 끝 검은 포인트
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-105, -142);
+                lineArtCtx.lineTo(-135, -175);
+                lineArtCtx.lineTo(-95, -150);
+                lineArtCtx.closePath();
+                lineArtCtx.fillStyle = '#1e293b';
+                lineArtCtx.fill();
+
+                // 오른쪽 귀
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(45, -65);
+                lineArtCtx.quadraticCurveTo(115, -145, 135, -175);
+                lineArtCtx.quadraticCurveTo(80, -140, 25, -80);
+                lineArtCtx.stroke();
+                // 오른쪽 귀 끝 검은 포인트
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(105, -142);
+                lineArtCtx.lineTo(135, -175);
+                lineArtCtx.lineTo(95, -150);
+                lineArtCtx.closePath();
+                lineArtCtx.fill();
+
+                // 얼굴 윤곽 (통통한 볼)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-55, -65);
+                lineArtCtx.quadraticCurveTo(0, -85, 55, -65);
+                lineArtCtx.quadraticCurveTo(95, -20, 88, 35);
+                lineArtCtx.quadraticCurveTo(75, 85, 0, 85);
+                lineArtCtx.quadraticCurveTo(-75, 85, -88, 35);
+                lineArtCtx.quadraticCurveTo(-95, -20, -55, -65);
+                lineArtCtx.stroke();
+
+                // 눈 (반짝이는 큰 눈)
+                [-36, 36].forEach(ex => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex, -10, 14, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#1e293b';
+                    lineArtCtx.fill();
+                    // 눈동자 하이라이트
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex - 4, -14, 5, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#ffffff';
+                    lineArtCtx.fill();
+                });
+
+                // 코
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-4, 12);
+                lineArtCtx.lineTo(4, 12);
+                lineArtCtx.lineTo(0, 17);
+                lineArtCtx.closePath();
+                lineArtCtx.fillStyle = '#1e293b';
+                lineArtCtx.fill();
+
+                // 전기 볼터치 (원형 가이드)
+                [-58, 58].forEach(bx => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(bx, 28, 17, 0, Math.PI * 2);
+                    lineArtCtx.stroke();
+                });
+
+                // 귀여운 고양이 입 (w 모양)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-20, 34);
+                lineArtCtx.quadraticCurveTo(-10, 46, 0, 34);
+                lineArtCtx.quadraticCurveTo(10, 46, 20, 34);
+                lineArtCtx.stroke();
+
+                // 번개 꼬리 (우측 배경)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(85, 50);
+                lineArtCtx.lineTo(125, 25);
+                lineArtCtx.lineTo(115, 0);
+                lineArtCtx.lineTo(160, -35);
+                lineArtCtx.lineTo(145, 10);
+                lineArtCtx.lineTo(155, 30);
+                lineArtCtx.lineTo(90, 70);
+                lineArtCtx.stroke();
+
+            } else if (currentTemplateId === 'teenieping') {
+                // --- 하트 요정 공주 (티니핑 스타일) ---
+                // 왕관 (티아라)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-32, -88);
+                lineArtCtx.lineTo(-22, -122);
+                lineArtCtx.lineTo(0, -102);
+                lineArtCtx.lineTo(0, -132);
+                lineArtCtx.lineTo(0, -102);
+                lineArtCtx.lineTo(22, -122);
+                lineArtCtx.lineTo(32, -88);
+                lineArtCtx.closePath();
+                lineArtCtx.stroke();
+
+                // 양갈래 하트 트윈테일 머리
+                [-1, 1].forEach(dir => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.moveTo(dir * 68, -45);
+                    lineArtCtx.bezierCurveTo(dir * 135, -95, dir * 155, -10, dir * 95, 35);
+                    lineArtCtx.bezierCurveTo(dir * 135, 65, dir * 105, 115, dir * 65, 75);
+                    lineArtCtx.stroke();
+                });
+
+                // 둥근 요정 얼굴
+                lineArtCtx.beginPath();
+                lineArtCtx.arc(0, -5, 78, 0, Math.PI * 2);
+                lineArtCtx.stroke();
+
+                // 웨이브 앞머리
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-75, -20);
+                lineArtCtx.quadraticCurveTo(-35, -10, -15, -45);
+                lineArtCtx.quadraticCurveTo(0, -15, 20, -45);
+                lineArtCtx.quadraticCurveTo(45, -10, 75, -20);
+                lineArtCtx.stroke();
+
+                // 초롱초롱한 요정 눈 + 속눈썹
+                [-32, 32].forEach(ex => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.ellipse(ex, 5, 14, 18, 0, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#1e293b';
+                    lineArtCtx.fill();
+                    // 큰 별빛 하이라이트
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex - 4, -2, 6, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#ffffff';
+                    lineArtCtx.fill();
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex + 5, 10, 3, 0, Math.PI * 2);
+                    lineArtCtx.fill();
+                });
+
+                // 이마의 작은 하트 보석
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(0, -56);
+                lineArtCtx.bezierCurveTo(-10, -68, -20, -54, 0, -42);
+                lineArtCtx.bezierCurveTo(20, -54, 10, -68, 0, -56);
+                lineArtCtx.stroke();
+
+                // 방긋 웃는 입
+                lineArtCtx.beginPath();
+                lineArtCtx.arc(0, 32, 14, 0.1 * Math.PI, 0.9 * Math.PI);
+                lineArtCtx.stroke();
+
+                // 하트 요술봉 (우측 하단)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(115, 130);
+                lineArtCtx.lineTo(135, 65);
+                lineArtCtx.stroke();
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(135, 55);
+                lineArtCtx.bezierCurveTo(115, 35, 105, 60, 135, 78);
+                lineArtCtx.bezierCurveTo(165, 60, 155, 35, 135, 55);
+                lineArtCtx.stroke();
+
+            } else if (currentTemplateId === 'bunny') {
+                // --- 귀여운 딸기 토끼 ---
+                // 긴 토끼 귀 2개
+                [-35, 35].forEach(earX => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.ellipse(earX, -105, 20, 62, earX < 0 ? -0.15 : 0.15, 0, Math.PI * 2);
+                    lineArtCtx.stroke();
+                    // 속귀
+                    lineArtCtx.beginPath();
+                    lineArtCtx.ellipse(earX, -102, 9, 42, earX < 0 ? -0.15 : 0.15, 0, Math.PI * 2);
+                    lineArtCtx.stroke();
+                });
+
+                // 얼굴
+                lineArtCtx.beginPath();
+                lineArtCtx.ellipse(0, 10, 85, 72, 0, 0, Math.PI * 2);
+                lineArtCtx.stroke();
+
+                // 눈
+                [-32, 32].forEach(ex => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex, 0, 10, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#1e293b';
+                    lineArtCtx.fill();
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(ex - 3, -3, 3.5, 0, Math.PI * 2);
+                    lineArtCtx.fillStyle = '#ffffff';
+                    lineArtCtx.fill();
+                });
+
+                // 코 & 입
+                lineArtCtx.beginPath();
+                lineArtCtx.arc(0, 18, 6, 0, Math.PI * 2);
+                lineArtCtx.stroke();
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(0, 24);
+                lineArtCtx.lineTo(0, 34);
+                lineArtCtx.moveTo(-16, 32);
+                lineArtCtx.quadraticCurveTo(0, 46, 16, 32);
+                lineArtCtx.stroke();
+
+                // 수염
+                [-1, 1].forEach(dir => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.moveTo(dir * 52, 16);
+                    lineArtCtx.lineTo(dir * 78, 10);
+                    lineArtCtx.moveTo(dir * 52, 26);
+                    lineArtCtx.lineTo(dir * 78, 30);
+                    lineArtCtx.stroke();
+                });
+
+            } else if (currentTemplateId === 'rocket') {
+                // --- 우주 탐험 로켓 ---
+                // 로켓 몸통
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(0, -140);
+                lineArtCtx.quadraticCurveTo(65, -60, 50, 75);
+                lineArtCtx.lineTo(-50, 75);
+                lineArtCtx.quadraticCurveTo(-65, -60, 0, -140);
+                lineArtCtx.stroke();
+
+                // 날개 (좌/우)
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-52, 20);
+                lineArtCtx.lineTo(-95, 85);
+                lineArtCtx.lineTo(-48, 70);
+                lineArtCtx.stroke();
+
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(52, 20);
+                lineArtCtx.lineTo(95, 85);
+                lineArtCtx.lineTo(48, 70);
+                lineArtCtx.stroke();
+
+                // 둥근 우주 창문
+                lineArtCtx.beginPath();
+                lineArtCtx.arc(0, -25, 28, 0, Math.PI * 2);
+                lineArtCtx.stroke();
+                lineArtCtx.beginPath();
+                lineArtCtx.arc(0, -25, 20, 0, Math.PI * 2);
+                lineArtCtx.stroke();
+
+                // 불꽃 엔진
+                lineArtCtx.beginPath();
+                lineArtCtx.moveTo(-30, 75);
+                lineArtCtx.quadraticCurveTo(-20, 125, 0, 145);
+                lineArtCtx.quadraticCurveTo(20, 125, 30, 75);
+                lineArtCtx.stroke();
+
+                // 주변 별 장식
+                [[-115, -75], [115, -55], [-110, 10]].forEach(([sx, sy]) => {
+                    lineArtCtx.beginPath();
+                    lineArtCtx.arc(sx, sy, 8, 0, Math.PI * 2);
+                    lineArtCtx.stroke();
+                });
+            }
+
+            lineArtCtx.restore();
+        }
+
+        /**
+         * ============================================================================
+         * 3. 캔버스 리사이징 및 그리기 / 지우개 엔진
+         * ============================================================================
+         */
+        function resizeCanvases() {
+            const rect = canvasContainer.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            // 기존 그린 그림 백업
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = drawCanvas.width;
+            tempCanvas.height = drawCanvas.height;
+            if (drawCanvas.width > 0 && drawCanvas.height > 0) {
+                tempCanvas.getContext('2d').drawImage(drawCanvas, 0, 0);
+            }
+
+            [cameraCanvas, drawCanvas, lineArtCanvas, cursorCanvas].forEach(c => {
+                c.width = width;
+                c.height = height;
+            });
+
+            renderCharacterLineArt();
+
+            if (tempCanvas.width > 0 && tempCanvas.height > 0) {
+                drawCtx.drawImage(tempCanvas, 0, 0, width, height);
+            }
+        }
+
+        function drawStroke(x, y) {
+            if (!smoothedPoint) {
+                smoothedPoint = { x, y };
+            } else {
+                smoothedPoint.x = smoothedPoint.x * (1 - SMOOTHING_FACTOR) + x * SMOOTHING_FACTOR;
+                smoothedPoint.y = smoothedPoint.y * (1 - SMOOTHING_FACTOR) + y * SMOOTHING_FACTOR;
+            }
+
+            drawCtx.save();
+            drawCtx.lineCap = 'round';
+            drawCtx.lineJoin = 'round';
+            drawCtx.lineWidth = brushRadius * 2;
+
+            if (isEraser) {
+                // 지우개 모드: 그린 픽셀만 투명하게 지움 (도안 선화는 보호됨)
+                drawCtx.globalCompositeOperation = 'destination-out';
+                drawCtx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                drawCtx.globalCompositeOperation = 'source-over';
+                drawCtx.strokeStyle = currentColor;
+            }
+
+            if (lastPoint) {
+                drawCtx.beginPath();
+                drawCtx.moveTo(lastPoint.x, lastPoint.y);
+                drawCtx.lineTo(smoothedPoint.x, smoothedPoint.y);
+                drawCtx.stroke();
+            } else {
+                drawCtx.beginPath();
+                drawCtx.arc(smoothedPoint.x, smoothedPoint.y, brushRadius, 0, Math.PI * 2);
+                drawCtx.fillStyle = isEraser ? 'rgba(0,0,0,1)' : currentColor;
+                drawCtx.fill();
+            }
+            drawCtx.restore();
+
+            lastPoint = { x: smoothedPoint.x, y: smoothedPoint.y };
+        }
+
+        function resetStrokeState() {
+            lastPoint = null;
+            smoothedPoint = null;
+        }
+
+        function clearDrawing() {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            resetStrokeState();
+        }
+
+        // 현재 손가락 끝 위치에 선택한 색상 & 브러시 크기 커서 표시
+        function renderCursor(x, y, isDrawing) {
+            cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+            if (x === null || y === null) return;
+
+            cursorCtx.save();
+            cursorCtx.beginPath();
+            cursorCtx.arc(x, y, brushRadius, 0, Math.PI * 2);
+            
+            if (isEraser) {
+                cursorCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                cursorCtx.fill();
+                cursorCtx.lineWidth = 2.5;
+                cursorCtx.strokeStyle = '#64748b';
+                cursorCtx.setLineDash([4, 3]);
+                cursorCtx.stroke();
+            } else {
+                cursorCtx.fillStyle = isDrawing ? currentColor : 'rgba(255, 255, 255, 0.4)';
+                cursorCtx.fill();
+                cursorCtx.lineWidth = isDrawing ? 3 : 2.5;
+                cursorCtx.strokeStyle = isDrawing ? '#ffffff' : currentColor;
+                cursorCtx.stroke();
+            }
+            cursorCtx.restore();
+        }
+
+        /**
+         * ============================================================================
+         * 4. 완성 작품 이미지 파일(.png) 저장 기능
+         * ============================================================================
+         */
+        function saveArtwork() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = drawCanvas.width;
+            exportCanvas.height = drawCanvas.height;
+            const ctx = exportCanvas.getContext('2d');
+
+            // 1. 깨끗한 흰색 도화지 배경 채우기
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // 2. 아이가 색칠한 레이어 합성
+            ctx.drawImage(drawCanvas, 0, 0);
+
+            // 3. 최상단 캐릭터 선화 레이어 합성
+            ctx.drawImage(lineArtCanvas, 0, 0);
+
+            // 다운로드 트리거
+            const link = document.createElement('a');
+            const templateObj = TEMPLATES.find(t => t.id === currentTemplateId);
+            link.download = `AI손가락그림_${templateObj ? templateObj.name : '작품'}.png`;
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+
+            showToast("멋진 그림이 앨범에 저장되었어요!", "📸");
+        }
+
+        /**
+         * ============================================================================
+         * 5. MediaPipe Hands AI 모션 인식 설정
+         * ============================================================================
+         */
+        function isIndexFingerPointing(landmarks) {
+            const indexExtended = landmarks[8].y < landmarks[6].y;
+            const middleFolded = landmarks[12].y > landmarks[10].y;
+            const ringFolded = landmarks[16].y > landmarks[14].y;
+            return indexExtended && middleFolded && ringFolded;
+        }
+
+        function onHandResults(results) {
+            const w = cameraCanvas.width;
+            const h = cameraCanvas.height;
+
+            cameraCtx.save();
+            cameraCtx.clearRect(0, 0, w, h);
+
+            if (results.image) {
+                cameraCtx.drawImage(results.image, 0, 0, w, h);
+                // 색칠 도안과 크레파스 색상이 잘 보이도록 반투명 도화지 레이어 적용
+                cameraCtx.fillStyle = isWhitePaperBg ? 'rgba(255, 255, 255, 0.78)' : 'rgba(15, 23, 42, 0.25)';
+                cameraCtx.fillRect(0, 0, w, h);
+            }
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+
+                // 손 뼈대 은은하게 표시
+                drawConnectors(cameraCtx, landmarks, HAND_CONNECTIONS, {
+                    color: isWhitePaperBg ? 'rgba(236, 72, 153, 0.25)' : 'rgba(255, 255, 255, 0.35)',
+                    lineWidth: 2
+                });
+
+                // 좌우 반전 매핑된 실제 그리기 좌표
+                const rawX = (1 - landmarks[8].x) * w;
+                const rawY = landmarks[8].y * h;
+                const isDrawingGesture = isIndexFingerPointing(landmarks);
+
+                if (isDrawingGesture) {
+                    gestureIcon.textContent = isEraser ? "🧽" : "🖍️";
+                    gestureHint.textContent = isEraser ? "지우개 모드! 문질러서 지워보세요" : "색칠 중! 검지를 움직여 칠해보세요";
+                    gestureGuide.classList.replace('bg-black/65', 'bg-pink-600/90');
+
+                    drawStroke(rawX, rawY);
+                    renderCursor(smoothedPoint.x, smoothedPoint.y, true);
+                } else {
+                    gestureIcon.textContent = "✋";
+                    gestureHint.textContent = "이동 중 (검지만 펴면 다시 그려져요)";
+                    gestureGuide.classList.replace('bg-pink-600/90', 'bg-black/65');
+
+                    resetStrokeState();
+                    renderCursor(rawX, rawY, false);
+                }
+            } else {
+                gestureIcon.textContent = "👋";
+                gestureHint.textContent = "카메라 앞에 손을 올려주세요!";
+                gestureGuide.classList.replace('bg-pink-600/90', 'bg-black/65');
+                resetStrokeState();
+                renderCursor(null, null, false);
+            }
+
+            cameraCtx.restore();
+        }
+
+        async function initCameraAndAI() {
+            startOverlay.classList.add('hidden');
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const hands = new Hands({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                });
+
+                hands.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.65,
+                    minTrackingConfidence: 0.65
+                });
+
+                hands.onResults(onHandResults);
+
+                const camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        await hands.send({ image: videoElement });
+                    },
+                    width: 640,
+                    height: 480
+                });
+
+                await camera.start();
+
+                isCameraActive = true;
+                loadingOverlay.classList.add('hidden');
+                gestureGuide.classList.remove('hidden');
+                document.getElementById('bgModeBtn').classList.remove('hidden');
+
+                statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800";
+                statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-ping";
+                statusText.textContent = "AI 손가락 인식 작동 중";
+
+                showToast("카메라가 켜졌어요! 검지 손가락으로 캐릭터를 색칠해 보세요.", "🎨");
+            } catch (error) {
+                console.error("Camera/AI Error:", error);
+                loadingOverlay.classList.add('hidden');
+                startOverlay.classList.remove('hidden');
+                showToast("카메라를 실행할 수 없습니다. 터치/마우스 모드를 이용해 주세요.", "⚠️");
+            }
+        }
+
+        /**
+         * ============================================================================
+         * 6. 터치 / 마우스 보조 그리기 모드
+         * ============================================================================
+         */
+        function enableTouchMode() {
+            isTouchMode = true;
+            startOverlay.classList.add('hidden');
+            cameraCanvas.style.backgroundColor = "#ffffff";
+
+            statusBadge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-pink-800";
+            statusDot.className = "w-2 h-2 rounded-full bg-pink-500";
+            statusText.textContent = "터치 / 마우스 그리기 모드";
+
+            gestureGuide.classList.remove('hidden');
+            gestureIcon.textContent = "👆";
+            gestureHint.textContent = "화면을 드래그하여 자유롭게 색칠해 보세요!";
+
+            let isPointerDown = false;
+
+            const getCoords = (e) => {
+                const rect = drawCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            };
+
+            const startDraw = (e) => {
+                if (!isTouchMode) return;
+                isPointerDown = true;
+                const { x, y } = getCoords(e);
+                drawStroke(x, y);
+                renderCursor(x, y, true);
+            };
+
+            const moveDraw = (e) => {
+                if (!isTouchMode) return;
+                const { x, y } = getCoords(e);
+                if (isPointerDown) {
+                    e.preventDefault();
+                    drawStroke(x, y);
+                    renderCursor(x, y, true);
+                } else {
+                    renderCursor(x, y, false);
+                }
+            };
+
+            const endDraw = () => {
+                if (!isTouchMode) return;
+                isPointerDown = false;
+                resetStrokeState();
+            };
+
+            canvasContainer.addEventListener('mousedown', startDraw);
+            canvasContainer.addEventListener('mousemove', moveDraw);
+            window.addEventListener('mouseup', endDraw);
+
+            canvasContainer.addEventListener('touchstart', startDraw, { passive: false });
+            canvasContainer.addEventListener('touchmove', moveDraw, { passive: false });
+            window.addEventListener('touchend', endDraw);
+
+            showToast("터치/마우스 그리기 모드가 시작되었습니다!", "🖌️");
+        }
+
+        /**
+         * ============================================================================
+         * 7. UI 초기화 (도안 버튼, 팔레트, 굵기 버튼)
+         * ============================================================================
+         */
+        function initUI() {
+            // 1) 캐릭터 도안 선택 버튼 생성
+            const templateList = document.getElementById('templateList');
+            templateList.innerHTML = '';
+            TEMPLATES.forEach(tpl => {
+                const btn = document.createElement('button');
+                const isSelected = tpl.id === currentTemplateId;
+                btn.className = `tpl-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border transition cursor-pointer ${
+                    isSelected
+                        ? 'bg-pink-50 border-pink-400 text-pink-700 shadow-2xs scale-105'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-pink-50/50'
+                }`;
+                btn.innerHTML = `<span class="text-lg sm:text-xl leading-none mb-0.5">${tpl.emoji}</span><span class="text-[10px] font-bold truncate w-full text-center">${tpl.name.split(' ')[0]}</span>`;
+                btn.onclick = () => {
+                    currentTemplateId = tpl.id;
+                    document.getElementById('currentTemplateName').textContent = tpl.name;
+                    document.querySelectorAll('.tpl-btn').forEach(b => {
+                        b.className = 'tpl-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border transition cursor-pointer bg-slate-50 border-slate-200 text-slate-600 hover:bg-pink-50/50';
+                    });
+                    btn.className = 'tpl-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl border transition cursor-pointer bg-pink-50 border-pink-400 text-pink-700 shadow-2xs scale-105';
+                    
+                    clearDrawing();
+                    renderCharacterLineArt();
+                    showToast(`'${tpl.name}' 도안을 골랐어요!`, tpl.emoji);
+                };
+                templateList.appendChild(btn);
+            });
+            document.getElementById('currentTemplateName').textContent = TEMPLATES.find(t => t.id === currentTemplateId).name;
+
+            // 2) 색상 팔레트 & 지우개 버튼 생성
+            const paletteGrid = document.getElementById('paletteGrid');
+            paletteGrid.innerHTML = '';
+            PALETTE.forEach(item => {
+                const btn = document.createElement('button');
+                if (item.color === 'ERASER') {
+                    btn.className = 'color-btn w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-sm sm:text-base transition cursor-pointer';
+                    btn.innerHTML = '🧽';
+                    btn.title = '지우개';
+                } else {
+                    const isActive = !isEraser && item.color === currentColor;
+                    btn.className = `color-btn w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white shadow-xs transition cursor-pointer ${isActive ? 'active' : ''}`;
+                    btn.style.backgroundColor = item.color;
+                    btn.title = item.name;
+                }
+
+                btn.onclick = () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    if (item.color === 'ERASER') {
+                        isEraser = true;
+                        showToast("지우개를 선택했어요! 틀린 부분을 문질러 지워보세요.", "🧽");
+                    } else {
+                        isEraser = false;
+                        currentColor = item.color;
+                        showToast(`${item.name} 크레파스를 골랐어요!`, "🖍️");
+                    }
+                };
+                paletteGrid.appendChild(btn);
+            });
+
+            // 3) 붓 굵기 조절 이벤트
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.onclick = () => {
+                    brushRadius = parseInt(btn.dataset.size, 10);
+                    document.querySelectorAll('.size-btn').forEach(b => {
+                        b.className = 'size-btn px-2 py-0.5 text-[10px] font-bold rounded-md text-slate-500 hover:text-slate-800 cursor-pointer';
+                    });
+                    btn.className = 'size-btn active px-2 py-0.5 text-[10px] font-bold rounded-md bg-white text-pink-600 shadow-2xs cursor-pointer';
+                };
+            });
+        }
+
+        // 버튼 이벤트 바인딩
+        document.getElementById('startCameraBtn').addEventListener('click', initCameraAndAI);
+        document.getElementById('touchModeBtn').addEventListener('click', enableTouchMode);
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            clearDrawing();
+            showToast("도화지를 깨끗하게 지웠어요!", "🗑️");
+        });
+        document.getElementById('saveArtBtn').addEventListener('click', saveArtwork);
+        document.getElementById('bgModeBtn').addEventListener('click', () => {
+            isWhitePaperBg = !isWhitePaperBg;
+            showToast(isWhitePaperBg ? "하얀 도화지 배경으로 바꿨어요!" : "내 얼굴이 잘 보이는 투명 배경으로 바꿨어요!", "🌓");
+        });
+
+        window.addEventListener('resize', resizeCanvases);
+        window.onload = () => {
+            initUI();
+            resizeCanvases();
+        };
+    </script>
+</body>
+</html>
