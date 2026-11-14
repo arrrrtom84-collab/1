@@ -79,6 +79,9 @@
                 <!-- Layer 4: 손가락 끝 실시간 커서 캔버스 (선택한 색상과 굵기 미리보기) -->
                 <canvas id="cursorCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
 
+                <!-- Layer 5: 공중 손가락 툴바 (Air-Touch HUD 캔버스 - 손가락으로 색상/지우개/굵기 선택) -->
+                <canvas id="hudCanvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+
                 <!-- 초기 시작 오버레이 -->
                 <div id="startOverlay" class="absolute inset-0 bg-slate-900/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center z-20">
                     <div class="bg-white/10 p-3 rounded-full mb-2 text-3xl sm:text-4xl">🖌️🧚‍♀️⚡</div>
@@ -104,8 +107,8 @@
                     <p class="text-xs text-pink-300 mt-1">잠시만 기다려 주세요 (약 3~5초 소요)</p>
                 </div>
 
-                <!-- 좌측 상단 현재 제스처 가이드 -->
-                <div id="gestureGuide" class="hidden absolute top-2.5 left-2.5 bg-black/65 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 z-10 border border-white/15">
+                <!-- 좌측 하단 현재 제스처 가이드 (상단 공중 툴바와 겹치지 않도록 하단 배치) -->
+                <div id="gestureGuide" class="hidden absolute bottom-2.5 left-2.5 bg-black/65 backdrop-blur-md text-white px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 z-10 border border-white/15">
                     <span id="gestureIcon" class="text-base">☝️</span>
                     <span id="gestureHint">검지 손가락을 펴서 칠해보세요!</span>
                 </div>
@@ -158,8 +161,8 @@
             <div class="hidden sm:block bg-purple-50/90 border border-purple-200/70 rounded-2xl p-2.5 text-[11px] text-purple-900 shrink-0">
                 <p class="font-bold flex items-center gap-1 mb-0.5">💡 손가락 그림판 사용법</p>
                 <ul class="list-disc list-inside text-purple-800 space-y-0.5 pl-0.5 leading-tight">
+                    <li>화면 <strong>위쪽 크레파스·굵기 아이콘</strong> 위에 손가락을 0.7초 올리면 바꿀 수 있어요!</li>
                     <li><strong>검지 손가락 하나만</strong> 펴면 색칠이 되고, 손을 펴거나 주먹을 쥐면 이동해요.</li>
-                    <li>도안 선이 위에 있어서 <strong>선 밖으로 나가도 예쁘게</strong> 칠해져요!</li>
                 </ul>
             </div>
 
@@ -213,18 +216,26 @@
         let smoothedPoint = null;
         const SMOOTHING_FACTOR = 0.45;
 
+        // 공중 손가락 툴바(Air-Touch) 상태 변수
+        let airButtons = [];
+        let hoveredButtonId = null;
+        let hoverStartTime = 0;
+        const HOVER_SELECT_MS = 700; // 0.7초 머무르면 자동 선택
+
         // 캔버스 참조
         const videoElement = document.getElementById('inputVideo');
         const cameraCanvas = document.getElementById('cameraCanvas');
         const drawCanvas = document.getElementById('drawCanvas');
         const lineArtCanvas = document.getElementById('lineArtCanvas');
         const cursorCanvas = document.getElementById('cursorCanvas');
+        const hudCanvas = document.getElementById('hudCanvas');
         const canvasContainer = document.getElementById('canvasContainer');
 
         const cameraCtx = cameraCanvas.getContext('2d');
         const drawCtx = drawCanvas.getContext('2d');
         const lineArtCtx = lineArtCanvas.getContext('2d');
         const cursorCtx = cursorCanvas.getContext('2d');
+        const hudCtx = hudCanvas.getContext('2d');
 
         // UI 요소
         const startOverlay = document.getElementById('startOverlay');
@@ -536,9 +547,209 @@
 
         /**
          * ============================================================================
-         * 3. 캔버스 리사이징 및 그리기 / 지우개 엔진
+         * 3. 캔버스 리사이징 및 공중 손가락 툴바(Air-Touch HUD) 엔진
          * ============================================================================
          */
+        function buildAirToolbarLayout(w, h) {
+            airButtons = [];
+            const isMobile = w < 520;
+            const btnRadius = isMobile ? 14 : 18;
+            const gap = isMobile ? 6 : 10;
+            const topY = isMobile ? 24 : 30;
+
+            // 좌측 그룹: 9색 크레파스 + 지우개 (총 10개)
+            // 우측 그룹: 붓 굵기 3단계 (얇게 8, 보통 16, 굵게 28)
+            const totalItems = PALETTE.length + 3;
+            const groupGap = isMobile ? 12 : 22;
+            const totalWidth = totalItems * (btnRadius * 2) + (totalItems - 2) * gap + groupGap;
+            let startX = Math.max(btnRadius + 8, (w - totalWidth) / 2 + btnRadius);
+
+            PALETTE.forEach((item, idx) => {
+                airButtons.push({
+                    id: `color_${idx}`,
+                    type: item.color === 'ERASER' ? 'eraser' : 'color',
+                    value: item.color,
+                    label: item.name,
+                    x: startX,
+                    y: topY,
+                    r: btnRadius
+                });
+                startX += btnRadius * 2 + gap;
+            });
+
+            startX += (groupGap - gap);
+
+            const sizes = [
+                { size: 8, dotR: 3.5, label: '얇은 붓' },
+                { size: 16, dotR: 6.5, label: '보통 붓' },
+                { size: 28, dotR: 10.5, label: '굵은 붓' }
+            ];
+            sizes.forEach(s => {
+                airButtons.push({
+                    id: `size_${s.size}`,
+                    type: 'size',
+                    value: s.size,
+                    dotR: s.dotR,
+                    label: s.label,
+                    x: startX,
+                    y: topY,
+                    r: btnRadius
+                });
+                startX += btnRadius * 2 + gap;
+            });
+        }
+
+        function renderAirToolbar(fingerX, fingerY) {
+            const w = hudCanvas.width;
+            const h = hudCanvas.height;
+            hudCtx.clearRect(0, 0, w, h);
+
+            if (airButtons.length === 0) return;
+
+            // 툴바 반투명 배경 캡슐 바
+            const firstBtn = airButtons[0];
+            const lastBtn = airButtons[airButtons.length - 1];
+            const barX = firstBtn.x - firstBtn.r - 10;
+            const barY = firstBtn.y - firstBtn.r - 6;
+            const barW = (lastBtn.x + lastBtn.r + 10) - barX;
+            const barH = (firstBtn.r + 6) * 2;
+
+            hudCtx.save();
+            hudCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            hudCtx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+            hudCtx.shadowBlur = 10;
+            hudCtx.beginPath();
+            hudCtx.roundRect(barX, barY, barW, barH, barH / 2);
+            hudCtx.fill();
+            hudCtx.shadowBlur = 0;
+            hudCtx.strokeStyle = 'rgba(244, 114, 182, 0.45)';
+            hudCtx.lineWidth = 1.5;
+            hudCtx.stroke();
+
+            // 손가락 호버 감지
+            let currentHover = null;
+            if (fingerX !== null && fingerY !== null) {
+                for (const btn of airButtons) {
+                    const dist = Math.hypot(fingerX - btn.x, fingerY - btn.y);
+                    if (dist <= btn.r + 6) {
+                        currentHover = btn;
+                        break;
+                    }
+                }
+            }
+
+            let hoverProgress = 0;
+            if (currentHover) {
+                if (hoveredButtonId !== currentHover.id) {
+                    hoveredButtonId = currentHover.id;
+                    hoverStartTime = performance.now();
+                } else {
+                    const elapsed = performance.now() - hoverStartTime;
+                    hoverProgress = Math.min(1, elapsed / HOVER_SELECT_MS);
+                    if (hoverProgress >= 1) {
+                        applyAirButtonSelection(currentHover);
+                        hoverStartTime = performance.now() + 999999; // 연속 트리거 방지
+                    }
+                }
+            } else {
+                hoveredButtonId = null;
+                hoverStartTime = 0;
+            }
+
+            // 개별 공중 버튼 렌더링
+            airButtons.forEach(btn => {
+                const isSelected =
+                    (btn.type === 'color' && !isEraser && currentColor === btn.value) ||
+                    (btn.type === 'eraser' && isEraser) ||
+                    (btn.type === 'size' && brushRadius === btn.value);
+
+                const isHovered = currentHover && currentHover.id === btn.id;
+                const drawR = isSelected || isHovered ? btn.r * 1.12 : btn.r;
+
+                hudCtx.beginPath();
+                hudCtx.arc(btn.x, btn.y, drawR, 0, Math.PI * 2);
+
+                if (btn.type === 'color') {
+                    hudCtx.fillStyle = btn.value;
+                    hudCtx.fill();
+                    hudCtx.lineWidth = isSelected ? 3 : 1.5;
+                    hudCtx.strokeStyle = isSelected ? '#ec4899' : '#ffffff';
+                    hudCtx.stroke();
+                } else if (btn.type === 'eraser') {
+                    hudCtx.fillStyle = '#f1f5f9';
+                    hudCtx.fill();
+                    hudCtx.lineWidth = isSelected ? 3 : 1.5;
+                    hudCtx.strokeStyle = isSelected ? '#ec4899' : '#94a3b8';
+                    hudCtx.stroke();
+                    hudCtx.font = `${Math.round(drawR * 1.15)}px sans-serif`;
+                    hudCtx.textAlign = 'center';
+                    hudCtx.textBaseline = 'middle';
+                    hudCtx.fillText('🧽', btn.x, btn.y + 1);
+                } else if (btn.type === 'size') {
+                    hudCtx.fillStyle = isSelected ? '#fdf2f8' : '#f8fafc';
+                    hudCtx.fill();
+                    hudCtx.lineWidth = isSelected ? 2.5 : 1.5;
+                    hudCtx.strokeStyle = isSelected ? '#ec4899' : '#cbd5e1';
+                    hudCtx.stroke();
+
+                    // 내부 굵기 점 표시
+                    hudCtx.beginPath();
+                    hudCtx.arc(btn.x, btn.y, btn.dotR, 0, Math.PI * 2);
+                    hudCtx.fillStyle = isEraser ? '#64748b' : currentColor;
+                    hudCtx.fill();
+                }
+
+                // 호버 게이지 원형 링 표시
+                if (isHovered && hoverProgress > 0 && hoverProgress < 1) {
+                    hudCtx.beginPath();
+                    hudCtx.arc(btn.x, btn.y, drawR + 4, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * hoverProgress);
+                    hudCtx.strokeStyle = '#ec4899';
+                    hudCtx.lineWidth = 3.5;
+                    hudCtx.lineCap = 'round';
+                    hudCtx.stroke();
+                }
+            });
+
+            hudCtx.restore();
+            return currentHover !== null;
+        }
+
+        function applyAirButtonSelection(btn) {
+            if (btn.type === 'color') {
+                isEraser = false;
+                currentColor = btn.value;
+                showToast(`${btn.label} 크레파스를 골랐어요!`, "🖍️");
+            } else if (btn.type === 'eraser') {
+                isEraser = true;
+                showToast("지우개를 선택했어요!", "🧽");
+            } else if (btn.type === 'size') {
+                brushRadius = btn.value;
+                showToast(`${btn.label} 굵기로 바꿨어요!`, "🖌️");
+            }
+            syncSidePanelSelection();
+        }
+
+        function syncSidePanelSelection() {
+            // 우측 패널 색상/지우개 버튼 상태 동기화
+            document.querySelectorAll('.color-btn').forEach(b => {
+                const val = b.dataset.colorValue;
+                if ((isEraser && val === 'ERASER') || (!isEraser && val === currentColor)) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
+            // 우측 패널 굵기 버튼 상태 동기화
+            document.querySelectorAll('.size-btn').forEach(b => {
+                const s = parseInt(b.dataset.size, 10);
+                if (s === brushRadius) {
+                    b.className = 'size-btn active px-2 py-0.5 text-[10px] font-bold rounded-md bg-white text-pink-600 shadow-2xs cursor-pointer';
+                } else {
+                    b.className = 'size-btn px-2 py-0.5 text-[10px] font-bold rounded-md text-slate-500 hover:text-slate-800 cursor-pointer';
+                }
+            });
+        }
+
         function resizeCanvases() {
             const rect = canvasContainer.getBoundingClientRect();
             const width = rect.width;
@@ -552,11 +763,13 @@
                 tempCanvas.getContext('2d').drawImage(drawCanvas, 0, 0);
             }
 
-            [cameraCanvas, drawCanvas, lineArtCanvas, cursorCanvas].forEach(c => {
+            [cameraCanvas, drawCanvas, lineArtCanvas, cursorCanvas, hudCanvas].forEach(c => {
                 c.width = width;
                 c.height = height;
             });
 
+            buildAirToolbarLayout(width, height);
+            renderAirToolbar(null, null);
             renderCharacterLineArt();
 
             if (tempCanvas.width > 0 && tempCanvas.height > 0) {
@@ -707,9 +920,17 @@
                 // 좌우 반전 매핑된 실제 그리기 좌표
                 const rawX = (1 - landmarks[8].x) * w;
                 const rawY = landmarks[8].y * h;
+                const isHoveringToolbar = renderAirToolbar(rawX, rawY);
                 const isDrawingGesture = isIndexFingerPointing(landmarks);
 
-                if (isDrawingGesture) {
+                if (isHoveringToolbar) {
+                    // 상단 공중 툴바 위에서는 도화지에 그려지지 않도록 보호
+                    gestureIcon.textContent = "👆";
+                    gestureHint.textContent = "잠시 멈추면 색깔·굵기가 바뀌어요!";
+                    gestureGuide.classList.replace('bg-pink-600/90', 'bg-black/65');
+                    resetStrokeState();
+                    renderCursor(rawX, rawY, false);
+                } else if (isDrawingGesture) {
                     gestureIcon.textContent = isEraser ? "🧽" : "🖍️";
                     gestureHint.textContent = isEraser ? "지우개 모드! 문질러서 지워보세요" : "색칠 중! 검지를 움직여 칠해보세요";
                     gestureGuide.classList.replace('bg-black/65', 'bg-pink-600/90');
@@ -725,6 +946,7 @@
                     renderCursor(rawX, rawY, false);
                 }
             } else {
+                renderAirToolbar(null, null);
                 gestureIcon.textContent = "👋";
                 gestureHint.textContent = "카메라 앞에 손을 올려주세요!";
                 gestureGuide.classList.replace('bg-pink-600/90', 'bg-black/65');
@@ -884,6 +1106,7 @@
             paletteGrid.innerHTML = '';
             PALETTE.forEach(item => {
                 const btn = document.createElement('button');
+                btn.dataset.colorValue = item.color;
                 if (item.color === 'ERASER') {
                     btn.className = 'color-btn w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-sm sm:text-base transition cursor-pointer';
                     btn.innerHTML = '🧽';
@@ -896,8 +1119,6 @@
                 }
 
                 btn.onclick = () => {
-                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
                     if (item.color === 'ERASER') {
                         isEraser = true;
                         showToast("지우개를 선택했어요! 틀린 부분을 문질러 지워보세요.", "🧽");
@@ -906,6 +1127,8 @@
                         currentColor = item.color;
                         showToast(`${item.name} 크레파스를 골랐어요!`, "🖍️");
                     }
+                    syncSidePanelSelection();
+                    renderAirToolbar(null, null);
                 };
                 paletteGrid.appendChild(btn);
             });
@@ -914,10 +1137,8 @@
             document.querySelectorAll('.size-btn').forEach(btn => {
                 btn.onclick = () => {
                     brushRadius = parseInt(btn.dataset.size, 10);
-                    document.querySelectorAll('.size-btn').forEach(b => {
-                        b.className = 'size-btn px-2 py-0.5 text-[10px] font-bold rounded-md text-slate-500 hover:text-slate-800 cursor-pointer';
-                    });
-                    btn.className = 'size-btn active px-2 py-0.5 text-[10px] font-bold rounded-md bg-white text-pink-600 shadow-2xs cursor-pointer';
+                    syncSidePanelSelection();
+                    renderAirToolbar(null, null);
                 };
             });
         }
