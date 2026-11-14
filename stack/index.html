@@ -261,7 +261,7 @@
             <!-- Status Guidance Message -->
             <div class="text-center shrink-0 mt-0.5">
                 <p id="gameStatusMsg" class="text-[10px] sm:text-xs lg:text-sm font-bold text-amber-900 bg-amber-100 py-0.5 px-2.5 rounded-xl border border-amber-300 inline-block shadow-xs">
-                    다음 쌓을 재료: [참깨빵 🍞] 타일을 찾으세요!
+                    다음 쌓을 재료: [햄버거빵 🥯] 타일을 찾으세요!
                 </p>
             </div>
 
@@ -357,11 +357,11 @@
                 <div class="bg-blue-50 p-2.5 rounded-xl border border-blue-200">
                     <h3 class="font-bold text-blue-900 text-xs sm:text-sm mb-1">🎮 플레이 규칙</h3>
                     <ol class="list-decimal list-inside space-y-1 font-semibold text-slate-800">
-                        <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료</span>부터 순서대로 찾습니다.</li>
+                        <li>상단 주문 카드의 <span class="text-amber-600 font-bold">가장 아래 재료(햄버거빵)</span>부터 순서대로 찾습니다.</li>
                         <li>올바른 타일을 맞추면 계속해서 다음 재료를 뒤집을 수 있습니다.</li>
                         <li><span class="text-rose-600 font-bold">2인 대결 모드:</span> 틀린 타일을 뒤집으면 카드가 엎어지고 <span class="text-blue-600 font-bold">상대방에게 차례가 넘어갑니다!</span></li>
                         <li><span class="text-red-600 font-bold">스피드런 모드:</span> 제한 시간(60초) 동안 빠르게 버거를 만드세요! 성공 시 +10초 보너스!</li>
-                        <li>버거의 마지막 재료까지 완성시킨 플레이어가 점수를 얻습니다!</li>
+                        <li>버거의 마지막 재료(참깨빵)까지 완성시킨 플레이어가 점수를 얻습니다!</li>
                     </ol>
                 </div>
 
@@ -453,14 +453,15 @@
 
         const sound = new AudioSynth();
 
+        // 아래빵(햄버거빵)과 윗빵(참깨빵)의 명칭과 역할을 실제 햄버거 순서에 맞게 교정
         const INGREDIENTS = {
-            BOTTOM_BUN: { id: 'BOTTOM_BUN', name: '참깨빵', emoji: '🍞', cardColor: 'bg-amber-200 border-amber-500 text-amber-950', h: 'h-2.5 sm:h-3.5' },
+            BOTTOM_BUN: { id: 'BOTTOM_BUN', name: '햄버거빵', emoji: '🥯', cardColor: 'bg-amber-300 border-amber-600 text-amber-950', h: 'h-2.5 sm:h-3.5' },
             PATTY:      { id: 'PATTY',      name: '고기패티', emoji: '🥩', cardColor: 'bg-amber-800 border-amber-950 text-white', h: 'h-2.5 sm:h-3.5' },
             CHEESE:     { id: 'CHEESE',     name: '치즈',    emoji: '🧀', cardColor: 'bg-yellow-300 border-yellow-600 text-amber-950', h: 'h-2 sm:h-3' },
             LETTUCE:    { id: 'LETTUCE',    name: '양상추',  emoji: '🥬', cardColor: 'bg-emerald-400 border-emerald-700 text-emerald-950', h: 'h-2 sm:h-3' },
             TOMATO:     { id: 'TOMATO',     name: '토마토',  emoji: '🍅', cardColor: 'bg-red-500 border-red-700 text-white', h: 'h-2 sm:h-3' },
             CHICKEN:    { id: 'CHICKEN',    name: '치킨패티', emoji: '🍗', cardColor: 'bg-orange-300 border-orange-600 text-amber-950', h: 'h-2.5 sm:h-3.5' },
-            TOP_BUN:    { id: 'TOP_BUN',    name: '햄버거빵', emoji: '🥯', cardColor: 'bg-amber-300 border-amber-600 text-amber-950', h: 'h-2.5 sm:h-3.5' }
+            TOP_BUN:    { id: 'TOP_BUN',    name: '참깨빵',  emoji: '🍞', cardColor: 'bg-amber-200 border-amber-500 text-amber-950', h: 'h-2.5 sm:h-3.5' }
         };
 
         const BURGER_NAMES = [
@@ -469,7 +470,9 @@
             { name: "살찌는버거", hats: "👨‍🍳👨‍🍳👨‍🍳" },
             { name: "치킨치즈버거", hats: "👨‍🍳👨‍🍳" },
             { name: "더블패티버거", hats: "👨‍🍳👨‍🍳" },
-            { name: "빅스택버거", hats: "👨‍🍳👨‍🍳👨‍🍳" }
+            { name: "빅스택버거", hats: "👨‍🍳👨‍🍳👨‍🍳" },
+            { name: "슈퍼디럭스버거", hats: "👨‍🍳👨‍🍳👨‍🍳" },
+            { name: "상큼야채버거", hats: "👨‍🍳" }
         ];
 
         const CUSTOMERS = ["🐻 아기곰", "🐰 토끼", "🦊 여우", "🐱 고양이", "🐶 강아지", "🐼 판다"];
@@ -489,6 +492,8 @@
         let hintsLeft = 3;
 
         let currentRecipe = [];
+        let lastRecipeSignature = ''; // 직전 레시피 중복 방지용 시그니처
+        let lastBurgerName = '';      // 직전 버거 이름 중복 방지
         let currentStepIndex = 0;
         let gridTiles = [];
         let isProcessing = false;
@@ -503,6 +508,8 @@
             p2Score = 0;
             activePlayer = 1;
             burgerCount = 0;
+            lastRecipeSignature = '';
+            lastBurgerName = '';
             
             stopTimer();
             if (gameMode === 'speedrun') {
@@ -652,7 +659,13 @@
             const customer = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
             document.getElementById('customerTag').textContent = customer;
 
-            const burgerInfo = BURGER_NAMES[Math.floor(Math.random() * BURGER_NAMES.length)];
+            // 직전과 다른 버거 이름 선택
+            let burgerInfo;
+            do {
+                burgerInfo = BURGER_NAMES[Math.floor(Math.random() * BURGER_NAMES.length)];
+            } while (burgerInfo.name === lastBurgerName && BURGER_NAMES.length > 1);
+            lastBurgerName = burgerInfo.name;
+
             document.getElementById('burgerTitle').textContent = burgerInfo.name;
             document.getElementById('chefHats').textContent = burgerInfo.hats;
 
@@ -662,26 +675,35 @@
             });
 
             const middlePool = [INGREDIENTS.PATTY.id, INGREDIENTS.CHEESE.id, INGREDIENTS.LETTUCE.id, INGREDIENTS.TOMATO.id, INGREDIENTS.CHICKEN.id];
-            
-            currentRecipe = [INGREDIENTS.BOTTOM_BUN.id];
-            const recipeCounts = { [INGREDIENTS.BOTTOM_BUN.id]: 1 };
-
             const middleCount = config.recipeLength - 2;
-            for (let i = 0; i < middleCount; i++) {
-                const validMiddles = middlePool.filter(ingId => {
-                    const inRecipe = recipeCounts[ingId] || 0;
-                    const onBoard = tileCounts[ingId] || 0;
-                    return inRecipe < onBoard;
-                });
 
-                const poolToUse = validMiddles.length > 0 ? validMiddles : middlePool;
-                const selected = poolToUse[Math.floor(Math.random() * poolToUse.length)];
-                
-                currentRecipe.push(selected);
-                recipeCounts[selected] = (recipeCounts[selected] || 0) + 1;
-            }
+            // 직전 레시피와 똑같은 구성이 연속으로 나오지 않도록 최대 15회 재추첨
+            let candidateRecipe = [];
+            let attempts = 0;
+            do {
+                candidateRecipe = [INGREDIENTS.BOTTOM_BUN.id]; // 맨 아래(1단계): 햄버거빵
+                const recipeCounts = { [INGREDIENTS.BOTTOM_BUN.id]: 1 };
 
-            currentRecipe.push(INGREDIENTS.TOP_BUN.id);
+                for (let i = 0; i < middleCount; i++) {
+                    const validMiddles = middlePool.filter(ingId => {
+                        const inRecipe = recipeCounts[ingId] || 0;
+                        const onBoard = tileCounts[ingId] || 0;
+                        return inRecipe < onBoard;
+                    });
+
+                    const poolToUse = validMiddles.length > 0 ? validMiddles : middlePool;
+                    const selected = poolToUse[Math.floor(Math.random() * poolToUse.length)];
+                    
+                    candidateRecipe.push(selected);
+                    recipeCounts[selected] = (recipeCounts[selected] || 0) + 1;
+                }
+
+                candidateRecipe.push(INGREDIENTS.TOP_BUN.id); // 맨 위(마지막 단계): 참깨빵
+                attempts++;
+            } while (candidateRecipe.join(',') === lastRecipeSignature && attempts < 15);
+
+            currentRecipe = candidateRecipe;
+            lastRecipeSignature = currentRecipe.join(',');
 
             currentStepIndex = 0;
 
