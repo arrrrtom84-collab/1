@@ -1,1 +1,857 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 클래스룸 - 실시간 화면 모니터링</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+        }
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
+    <!-- 상단 네비게이션 바 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">클래스 뷰 (ClassView)</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">실시간 수업 화면 모니터링 시스템</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <span id="connectionStatus" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <span class="w-2 h-2 mr-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+                    연결 준비 중...
+                </span>
+                <button id="toggleTeacherAuthBtn" class="text-xs font-medium text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition">
+                    선생님 모드
+                </button>
+                <button id="homeBtn" class="hidden text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition">
+                    처음으로
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 알림 메시지 토스트 -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="flex-grow flex flex-col">
+        
+        <!-- 1. 초기 접속 화면 (학생 전용 기본 화면 + 숨겨진 선생님 패널) -->
+        <section id="roleSelectionView" class="flex-grow flex items-center justify-center p-4">
+            <div class="max-w-md w-full">
+                <!-- 학생 카드 (기본 표시) -->
+                <div id="studentLoginCard" class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                    <div class="text-center mb-6">
+                        <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-slate-900 mb-1">수업 화면 공유 입장</h2>
+                        <p class="text-slate-500 text-sm">선생님이 알려준 수업 코드와 이름을 입력하세요.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">수업 코드 (4자리)</label>
+                            <input type="text" id="studentRoomInput" placeholder="예: A1B2" maxlength="6" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-mono tracking-widest text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">학번 및 이름</label>
+                            <input type="text" id="studentNameInput" placeholder="예: 10101 홍길동" maxlength="15" class="w-full px-4 py-3 border border-slate-300 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center">
+                        </div>
+                        <button id="joinAsStudentBtn" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition mt-2 text-base">
+                            수업 참여하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 선생님 카드 (우측 상단 '선생님 모드' 클릭 시 표시) -->
+                <div id="teacherLoginCard" class="hidden bg-white rounded-2xl p-8 border border-indigo-200 shadow-md">
+                    <div class="text-center mb-6">
+                        <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-extrabold text-slate-900 mb-1">선생님 대시보드 개설</h2>
+                        <p class="text-slate-500 text-sm">새로운 수업을 열거나 기존 수업에 입장합니다.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <button id="createRoomBtn" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition flex items-center justify-center space-x-2">
+                            <span>새 수업 개설하기</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div class="relative flex py-1 items-center">
+                            <div class="flex-grow border-t border-slate-200"></div>
+                            <span class="flex-shrink mx-3 text-xs text-slate-400">또는 기존 코드로 재입장</span>
+                            <div class="flex-grow border-t border-slate-200"></div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" id="teacherRoomInput" placeholder="수업 코드" maxlength="6" class="flex-grow px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase text-center font-mono tracking-wider">
+                            <button id="joinAsTeacherBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition">
+                                입장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 선생님 대시보드 화면 -->
+        <section id="teacherDashboardView" class="hidden flex-grow flex flex-col max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <!-- 상단 컨트롤 패널 -->
+            <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="bg-indigo-50 border border-indigo-100 px-4 py-2.5 rounded-xl flex items-center space-x-3">
+                        <div>
+                            <span class="block text-xs text-indigo-600 font-semibold">수업 참여 코드</span>
+                            <span id="displayRoomCode" class="text-2xl font-extrabold text-indigo-900 font-mono tracking-widest">------</span>
+                        </div>
+                        <button id="copyCodeBtn" title="수업 코드 복사" class="p-2 bg-white hover:bg-indigo-100 text-indigo-600 rounded-lg border border-indigo-200 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                        <button id="copyInviteLinkBtn" title="코드가 입력된 학생용 접속 링크 복사" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center space-x-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                            <span>초대 링크 복사</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-2 bg-slate-100 px-4 py-3 rounded-xl">
+                        <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-slate-700">접속 학생: <strong id="studentCount" class="text-slate-900 text-base">0</strong>명</span>
+                    </div>
+                </div>
+
+                <!-- 공지사항 전송 및 그리드 조절 -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="noticeInput" placeholder="학생 화면에 띄울 안내 메시지 입력..." class="w-full sm:w-64 px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="sendNoticeBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl whitespace-nowrap transition">
+                            공지 전송
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+                        <button data-cols="2" class="grid-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900">2열</button>
+                        <button data-cols="3" class="grid-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-indigo-600 shadow-sm">3열</button>
+                        <button data-cols="4" class="grid-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900">4열</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 학생 화면 그리드 영역 -->
+            <div id="emptyStudentsPlaceholder" class="flex-grow flex flex-col items-center justify-center bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-1">아직 화면을 공유한 학생이 없습니다</h3>
+                <p class="text-sm text-slate-500 max-w-md">
+                    학생들에게 상단의 수업 코드(<span id="placeholderRoomCode" class="font-mono font-bold text-indigo-600"></span>)를 알려주세요. 학생들이 접속하여 화면 공유를 시작하면 이곳에 실시간으로 표시됩니다.
+                </p>
+            </div>
+
+            <div id="studentsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- 학생 카드들이 동적으로 추가됩니다 -->
+            </div>
+        </section>
+
+        <!-- 3. 학생 화면 공유 뷰 -->
+        <section id="studentShareView" class="hidden flex-grow flex items-center justify-center p-4">
+            <div class="max-w-xl w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+                <!-- 선생님 공지 배너 -->
+                <div id="studentNoticeBanner" class="hidden mb-6 bg-indigo-50 border-l-4 border-indigo-600 p-4 rounded-r-xl flex items-start space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <div>
+                        <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider">선생님 안내 메시지</h4>
+                        <p id="studentNoticeText" class="text-sm text-indigo-800 font-medium mt-0.5"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md">수업 코드: <span id="studentActiveRoom" class="font-mono"></span></span>
+                        <h2 id="studentActiveName" class="text-xl font-bold text-slate-900 mt-2">학생 이름</h2>
+                    </div>
+                    <div id="shareBadge" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span>공유 대기 중</span>
+                    </div>
+                </div>
+
+                <!-- 미리보기 화면 -->
+                <div class="relative bg-slate-900 rounded-xl overflow-hidden aspect-video mb-6 flex items-center justify-center border border-slate-200">
+                    <video id="localVideoPreview" autoplay playsinline muted class="w-full h-full object-contain hidden"></video>
+                    <div id="previewPlaceholder" class="text-center p-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-slate-400 text-sm">아래 버튼을 눌러 공유할 화면(전체 화면 또는 창)을 선택하세요.</p>
+                    </div>
+                </div>
+
+                <!-- 컨트롤 버튼 -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="startShareBtn" class="flex-grow py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        <span>내 모니터 화면 공유 시작</span>
+                    </button>
+                    <button id="stopShareBtn" class="hidden flex-grow py-3.5 px-6 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-sm transition flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+                        </svg>
+                        <span>화면 공유 중지</span>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400 text-center mt-4">
+                    공유가 시작되면 선생님 화면에 2초 간격으로 현재 작업 화면이 전송됩니다.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 확대 보기 모달 (선생님용) -->
+    <div id="zoomModal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-5xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <h3 id="zoomStudentName" class="text-lg font-bold text-slate-900">학생 이름</h3>
+                    <span id="zoomLastUpdated" class="text-xs text-slate-500 bg-white px-2.5 py-1 rounded-md border border-slate-200">방금 전</span>
+                </div>
+                <button id="closeZoomBtn" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 bg-slate-950 flex-grow flex items-center justify-center overflow-auto">
+                <img id="zoomImage" src="" alt="학생 확대 화면" class="max-w-full max-h-[75vh] object-contain rounded-lg">
+            </div>
+        </div>
+    </div>
+
+    <!-- 숨겨진 캡처용 캔버스 -->
+    <canvas id="captureCanvas" class="hidden"></canvas>
+
+    <!-- Firebase SDK 연동 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 환경 변수 설정
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'classroom-monitor-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let app, auth, db;
+        let currentUser = null;
+        let currentRoomCode = null;
+        let userRole = null; // 'teacher' | 'student'
+        
+        // 리스너 및 인터벌 정리용 변수
+        let unsubscribeRoom = null;
+        let unsubscribeStudents = null;
+        let captureInterval = null;
+        let mediaStream = null;
+        let zoomedStudentId = null;
+        let studentsCache = {};
+
+        // DOM 요소 참조
+        const views = {
+            role: document.getElementById('roleSelectionView'),
+            teacher: document.getElementById('teacherDashboardView'),
+            student: document.getElementById('studentShareView')
+        };
+
+        // 알림 토스트 함수
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = {
+                info: 'bg-slate-800 text-white',
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white'
+            };
+            toast.className = `${colors[type]} px-4 py-3 rounded-xl shadow-lg text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 flex items-center space-x-2`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // 화면 전환 함수
+        function switchView(viewName) {
+            Object.values(views).forEach(el => el.classList.add('hidden'));
+            views[viewName].classList.remove('hidden');
+            
+            const homeBtn = document.getElementById('homeBtn');
+            const toggleTeacherBtn = document.getElementById('toggleTeacherAuthBtn');
+            
+            if (viewName === 'role') {
+                homeBtn.classList.add('hidden');
+                toggleTeacherBtn.classList.remove('hidden');
+            } else {
+                homeBtn.classList.remove('hidden');
+                toggleTeacherBtn.classList.add('hidden');
+            }
+        }
+
+        // 초기 화면에서 학생/선생님 모드 전환 토글
+        let isTeacherLoginVisible = false;
+        document.getElementById('toggleTeacherAuthBtn').addEventListener('click', (e) => {
+            isTeacherLoginVisible = !isTeacherLoginVisible;
+            const studentCard = document.getElementById('studentLoginCard');
+            const teacherCard = document.getElementById('teacherLoginCard');
+            
+            if (isTeacherLoginVisible) {
+                studentCard.classList.add('hidden');
+                teacherCard.classList.remove('hidden');
+                e.target.textContent = '학생 화면으로';
+            } else {
+                teacherCard.classList.add('hidden');
+                studentCard.classList.remove('hidden');
+                e.target.textContent = '선생님 모드';
+            }
+        });
+
+        // URL 파라미터에 수업 코드(?code=XXXX)가 있으면 자동 입력
+        function checkUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const codeParam = params.get('code');
+            if (codeParam) {
+                document.getElementById('studentRoomInput').value = codeParam.toUpperCase();
+                document.getElementById('studentNameInput').focus();
+            }
+        }
+
+        // Firebase 초기화 및 익명 인증
+        async function initFirebase() {
+            const statusEl = document.getElementById('connectionStatus');
+            if (!firebaseConfig) {
+                statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-rose-500 rounded-full"></span>설정 오류`;
+                statusEl.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-800";
+                showToast("클라우드 동기화 설정을 불러올 수 없습니다.", "error");
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full"></span>실시간 서버 연결됨`;
+                        statusEl.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800";
+                    }
+                });
+            } catch (error) {
+                console.error("Auth Error:", error);
+                statusEl.innerHTML = `<span class="w-2 h-2 mr-1.5 bg-rose-500 rounded-full"></span>연결 실패`;
+                showToast("서버 연결에 실패했습니다. 새로고침해 주세요.", "error");
+            }
+        }
+
+        // 랜덤 4자리 수업 코드 생성
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // ==========================================
+        // 선생님 기능 로직
+        // ==========================================
+        async function enterTeacherMode(code) {
+            if (!currentUser) {
+                showToast("서버와 연결 중입니다. 잠시 후 다시 시도해 주세요.", "error");
+                return;
+            }
+            currentRoomCode = code.toUpperCase();
+            userRole = 'teacher';
+
+            try {
+                // 방 문서 생성 또는 업데이트 (규칙 1 준수: /artifacts/{appId}/public/data/rooms)
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomCode);
+                const roomSnap = await getDoc(roomRef);
+                
+                if (!roomSnap.exists()) {
+                    await setDoc(roomRef, {
+                        code: currentRoomCode,
+                        createdAt: Date.now(),
+                        notice: ""
+                    });
+                }
+
+                document.getElementById('displayRoomCode').textContent = currentRoomCode;
+                document.getElementById('placeholderRoomCode').textContent = currentRoomCode;
+                switchView('teacher');
+                showToast(`수업 방(${currentRoomCode})에 입장했습니다.`, "success");
+
+                // 학생 목록 실시간 구독 (규칙 1 & 2 준수: 복합 쿼리 없이 단순 collection 구독)
+                const studentsColRef = collection(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}_students`);
+                unsubscribeStudents = onSnapshot(studentsColRef, (snapshot) => {
+                    studentsCache = {};
+                    snapshot.forEach((docSnap) => {
+                        studentsCache[docSnap.id] = { id: docSnap.id, ...docSnap.data() };
+                    });
+                    renderStudentsGrid();
+                }, (error) => {
+                    console.error("학생 데이터 구독 오류:", error);
+                });
+
+            } catch (err) {
+                console.error(err);
+                showToast("수업 방 개설 중 오류가 발생했습니다.", "error");
+            }
+        }
+
+        // 학생 그리드 화면 렌더링
+        function renderStudentsGrid() {
+            const gridEl = document.getElementById('studentsGrid');
+            const emptyEl = document.getElementById('emptyStudentsPlaceholder');
+            const countEl = document.getElementById('studentCount');
+
+            // 이름순 정렬 (메모리 내 정렬)
+            const studentList = Object.values(studentsCache).sort((a, b) => 
+                (a.name || '').localeCompare(b.name || '', 'ko')
+            );
+
+            countEl.textContent = studentList.length;
+
+            if (studentList.length === 0) {
+                gridEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            gridEl.classList.remove('hidden');
+
+            // 확대 모달이 열려있다면 이미지 실시간 갱신
+            if (zoomedStudentId && studentsCache[zoomedStudentId]) {
+                const zoomedStudent = studentsCache[zoomedStudentId];
+                if (zoomedStudent.image) {
+                    document.getElementById('zoomImage').src = zoomedStudent.image;
+                }
+                document.getElementById('zoomLastUpdated').textContent = formatTimeAgo(zoomedStudent.updatedAt);
+            }
+
+            gridEl.innerHTML = studentList.map(student => {
+                const isSharing = student.isSharing && student.image;
+                const timeAgo = formatTimeAgo(student.updatedAt);
+                const isStale = (Date.now() - (student.updatedAt || 0)) > 15000; // 15초 이상 갱신 없음
+
+                return `
+                    <div class="bg-white rounded-2xl border ${isSharing && !isStale ? 'border-slate-200' : 'border-amber-200'} shadow-sm overflow-hidden flex flex-col transition hover:shadow-md group">
+                        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${isSharing && !isStale ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}"></span>
+                                <span class="font-bold text-slate-800 text-sm truncate">${escapeHtml(student.name)}</span>
+                            </div>
+                            <span class="text-xs text-slate-400 flex-shrink-0">${timeAgo}</span>
+                        </div>
+                        
+                        <div class="relative aspect-video bg-slate-900 flex items-center justify-center overflow-hidden cursor-pointer" onclick="window.openZoomModal('${student.id}')">
+                            ${isSharing ? `
+                                <img src="${student.image}" alt="${escapeHtml(student.name)} 화면" class="w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition flex items-center justify-center">
+                                    <span class="opacity-0 group-hover:opacity-100 bg-white/90 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transform scale-95 group-hover:scale-100 transition">
+                                        크게 보기
+                                    </span>
+                                </div>
+                            ` : `
+                                <div class="text-center p-4">
+                                    <p class="text-slate-400 text-xs">화면 공유 대기 중...</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 확대 모달 제어
+        window.openZoomModal = function(studentId) {
+            const student = studentsCache[studentId];
+            if (!student || !student.image) {
+                showToast("아직 공유된 화면 이미지가 없습니다.", "info");
+                return;
+            }
+            zoomedStudentId = studentId;
+            document.getElementById('zoomStudentName').textContent = student.name;
+            document.getElementById('zoomImage').src = student.image;
+            document.getElementById('zoomLastUpdated').textContent = formatTimeAgo(student.updatedAt);
+            document.getElementById('zoomModal').classList.remove('hidden');
+        };
+
+        document.getElementById('closeZoomBtn').addEventListener('click', () => {
+            zoomedStudentId = null;
+            document.getElementById('zoomModal').classList.add('hidden');
+        });
+
+        // 공지사항 전송
+        document.getElementById('sendNoticeBtn').addEventListener('click', async () => {
+            const input = document.getElementById('noticeInput');
+            const text = input.value.trim();
+            if (!currentRoomCode) return;
+
+            try {
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomCode);
+                await updateDoc(roomRef, {
+                    notice: text,
+                    noticeUpdatedAt: Date.now()
+                });
+                showToast(text ? "학생들에게 안내 메시지를 보냈습니다." : "공지사항을 지웠습니다.", "success");
+                input.value = '';
+            } catch (err) {
+                console.error(err);
+                showToast("공지 전송에 실패했습니다.", "error");
+            }
+        });
+
+        // 그리드 열 개수 변경
+        document.querySelectorAll('.grid-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.grid-btn').forEach(b => {
+                    b.className = 'grid-btn px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900';
+                });
+                e.target.className = 'grid-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-indigo-600 shadow-sm';
+                
+                const cols = e.target.dataset.cols;
+                const gridEl = document.getElementById('studentsGrid');
+                gridEl.className = `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${cols} gap-5`;
+            });
+        });
+
+        // 수업 코드 복사
+        document.getElementById('copyCodeBtn').addEventListener('click', () => {
+            const tempInput = document.createElement('input');
+            tempInput.value = currentRoomCode;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast(`수업 코드 [${currentRoomCode}]가 복사되었습니다.`, "success");
+        });
+
+        // 학생용 초대 링크 복사 (?code=XXXX 포함)
+        document.getElementById('copyInviteLinkBtn').addEventListener('click', () => {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const inviteUrl = `${baseUrl}?code=${currentRoomCode}`;
+            const tempInput = document.createElement('input');
+            tempInput.value = inviteUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast("수업 코드가 자동 입력되는 학생용 초대 링크가 복사되었습니다!", "success");
+        });
+
+        // ==========================================
+        // 학생 기능 로직
+        // ==========================================
+        async function enterStudentMode(code, name) {
+            if (!currentUser) {
+                showToast("서버와 연결 중입니다. 잠시 후 다시 시도해 주세요.", "error");
+                return;
+            }
+            const cleanCode = code.toUpperCase().trim();
+            const cleanName = name.trim();
+
+            if (!cleanCode || !cleanName) {
+                showToast("수업 코드와 학번·이름을 모두 입력해 주세요.", "error");
+                return;
+            }
+
+            try {
+                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', cleanCode);
+                const roomSnap = await getDoc(roomRef);
+
+                if (!roomSnap.exists()) {
+                    showToast("존재하지 않는 수업 코드입니다. 선생님께 확인해 주세요.", "error");
+                    return;
+                }
+
+                currentRoomCode = cleanCode;
+                userRole = 'student';
+
+                // 학생 문서 등록
+                const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}_students`, currentUser.uid);
+                await setDoc(studentDocRef, {
+                    name: cleanName,
+                    isSharing: false,
+                    image: "",
+                    updatedAt: Date.now()
+                });
+
+                document.getElementById('studentActiveRoom').textContent = currentRoomCode;
+                document.getElementById('studentActiveName').textContent = cleanName;
+                switchView('student');
+                showToast("수업에 입장했습니다. 화면 공유를 시작해 주세요.", "success");
+
+                // 선생님 공지사항 실시간 구독
+                unsubscribeRoom = onSnapshot(roomRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const banner = document.getElementById('studentNoticeBanner');
+                        const textEl = document.getElementById('studentNoticeText');
+                        if (data.notice) {
+                            textEl.textContent = data.notice;
+                            banner.classList.remove('hidden');
+                        } else {
+                            banner.classList.add('hidden');
+                        }
+                    }
+                }, (err) => console.error(err));
+
+            } catch (err) {
+                console.error(err);
+                showToast("수업 참여 중 오류가 발생했습니다.", "error");
+            }
+        }
+
+        // 화면 공유 시작
+        document.getElementById('startShareBtn').addEventListener('click', async () => {
+            try {
+                // 브라우저 화면 캡처 API 호출
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: false
+                });
+
+                const videoEl = document.getElementById('localVideoPreview');
+                videoEl.srcObject = mediaStream;
+                videoEl.classList.remove('hidden');
+                document.getElementById('previewPlaceholder').classList.add('hidden');
+
+                // UI 상태 업데이트
+                document.getElementById('startShareBtn').classList.add('hidden');
+                document.getElementById('stopShareBtn').classList.remove('hidden');
+                const badge = document.getElementById('shareBadge');
+                badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center space-x-1.5";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span><span>실시간 공유 중</span>`;
+
+                // 사용자가 브라우저 기본 '공유 중지' 버튼을 눌렀을 때 처리
+                mediaStream.getVideoTracks()[0].onended = () => {
+                    stopScreenSharing();
+                };
+
+                // 즉시 1회 캡처 전송 후 2.5초마다 주기적 전송
+                setTimeout(captureAndUploadFrame, 500);
+                captureInterval = setInterval(captureAndUploadFrame, 2500);
+
+                showToast("선생님 화면으로 내 모니터가 공유되기 시작했습니다.", "success");
+
+            } catch (err) {
+                console.error("화면 공유 취소 또는 오류:", err);
+                if (err.name !== 'NotAllowedError') {
+                    showToast("화면 공유를 시작할 수 없습니다. 브라우저 권한을 확인하세요.", "error");
+                }
+            }
+        });
+
+        // 화면 캡처 및 압축 후 Firestore 업로드
+        async function captureAndUploadFrame() {
+            if (!mediaStream || !currentUser || !currentRoomCode) return;
+
+            const videoEl = document.getElementById('localVideoPreview');
+            if (videoEl.videoWidth === 0 || videoEl.videoHeight === 0) return;
+
+            const canvas = document.getElementById('captureCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 전송 용량 최적화를 위해 가로 최대 800px 비율 유지 리사이징
+            const MAX_WIDTH = 800;
+            const scale = Math.min(1, MAX_WIDTH / videoEl.videoWidth);
+            canvas.width = videoEl.videoWidth * scale;
+            canvas.height = videoEl.videoHeight * scale;
+
+            ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+            // JPEG 포맷 및 품질 0.55로 압축 (약 40~90KB 수준으로 1MB 문서 한도 내 안전 유지)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.55);
+
+            try {
+                const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}_students`, currentUser.uid);
+                await updateDoc(studentDocRef, {
+                    isSharing: true,
+                    image: compressedBase64,
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.error("프레임 업로드 오류:", err);
+            }
+        }
+
+        // 화면 공유 중지
+        async function stopScreenSharing() {
+            if (captureInterval) {
+                clearInterval(captureInterval);
+                captureInterval = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            const videoEl = document.getElementById('localVideoPreview');
+            videoEl.srcObject = null;
+            videoEl.classList.add('hidden');
+            document.getElementById('previewPlaceholder').classList.remove('hidden');
+
+            document.getElementById('startShareBtn').classList.remove('hidden');
+            document.getElementById('stopShareBtn').classList.add('hidden');
+            
+            const badge = document.getElementById('shareBadge');
+            badge.className = "px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 flex items-center space-x-1.5";
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span><span>공유 중지됨</span>`;
+
+            if (currentUser && currentRoomCode) {
+                try {
+                    const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}_students`, currentUser.uid);
+                    await updateDoc(studentDocRef, {
+                        isSharing: false,
+                        updatedAt: Date.now()
+                    });
+                } catch (e) {}
+            }
+            showToast("화면 공유가 중지되었습니다.", "info");
+        }
+
+        document.getElementById('stopShareBtn').addEventListener('click', stopScreenSharing);
+
+        // ==========================================
+        // 공통 이벤트 및 유틸리티
+        // ==========================================
+        document.getElementById('createRoomBtn').addEventListener('click', () => {
+            const newCode = generateRoomCode();
+            enterTeacherMode(newCode);
+        });
+
+        document.getElementById('joinAsTeacherBtn').addEventListener('click', () => {
+            const code = document.getElementById('teacherRoomInput').value.trim();
+            if (!code) {
+                showToast("입장할 수업 코드를 입력해 주세요.", "error");
+                return;
+            }
+            enterTeacherMode(code);
+        });
+
+        document.getElementById('joinAsStudentBtn').addEventListener('click', () => {
+            const code = document.getElementById('studentRoomInput').value;
+            const name = document.getElementById('studentNameInput').value;
+            enterStudentMode(code, name);
+        });
+
+        // 처음으로 돌아가기 (리소스 정리)
+        document.getElementById('homeBtn').addEventListener('click', async () => {
+            if (userRole === 'student') {
+                await stopScreenSharing();
+                if (currentUser && currentRoomCode) {
+                    try {
+                        const studentDocRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${currentRoomCode}_students`, currentUser.uid);
+                        await deleteDoc(studentDocRef);
+                    } catch (e) {}
+                }
+            }
+            if (unsubscribeStudents) { unsubscribeStudents(); unsubscribeStudents = null; }
+            if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+            
+            currentRoomCode = null;
+            userRole = null;
+            switchView('role');
+        });
+
+        // 시간 포맷 유틸리티
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '대기 중';
+            const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+            if (diffSec < 5) return '방금 전';
+            if (diffSec < 60) return `${diffSec}초 전`;
+            const diffMin = Math.floor(diffSec / 60);
+            return `${diffMin}분 전`;
+        }
+
+        // XSS 방지 이스케이프
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        // 주기적으로 '몇 초 전' 텍스트 갱신
+        setInterval(() => {
+            if (userRole === 'teacher' && Object.keys(studentsCache).length > 0) {
+                renderStudentsGrid();
+            }
+        }, 5000);
+
+        // 앱 시작
+        checkUrlParameters();
+        initFirebase();
+    </script>
+</body>
+</html>
